@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "frostbound-gametest",
+	"version": "1.0.0",
+	"name": "Frostbound Game Tests",
+	"description": "Dev-only automated tests for Frostbound. Never shipped.",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": ["com.frostbound.test.FrozenMobTests"]
+	},
+	"depends": {
+		"frostbound": "*",
+		"fabric-gametest-api-v1": "*"
+	}
+}

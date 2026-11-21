@@ -1,0 +1,4 @@
+{
+	"gamerule.frostboundSpawnChance": "Frostbound: chance (%) for eligible mobs to spawn Frozen",
+	"gamerule.frostboundColdBiomeChance": "Frostbound: chance (%) in cold biomes"
+}
