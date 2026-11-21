@@ -6,7 +6,10 @@
 	"description": "Dev-only automated tests for Frostbound. Never shipped.",
 	"environment": "*",
 	"entrypoints": {
-		"fabric-gametest": ["com.frostbound.test.FrozenMobTests"]
+		"fabric-gametest": [
+			"com.frostbound.test.FrozenMobTests",
+			"com.frostbound.test.WinterEnvironmentTests"
+		]
 	},
 	"depends": {
 		"frostbound": "*",

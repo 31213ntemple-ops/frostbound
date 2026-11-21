@@ -1,8 +1,8 @@
-package com.frostbound.mixin;
+package com.frostbound.mixin.mobs;
 
-import com.frostbound.FrostStats;
-import com.frostbound.Frostbound;
-import com.frostbound.FrozenMob;
+import com.frostbound.mobs.FrostStats;
+import com.frostbound.mobs.FrozenMobs;
+import com.frostbound.mobs.FrozenMob;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -93,7 +93,7 @@ public abstract class LivingEntityMixin extends Entity {
 			builder = builder.add(LootContextParameters.LAST_DAMAGE_PLAYER, this.attackingPlayer)
 					.luck(this.attackingPlayer.getLuck());
 		}
-		LootTable table = world.getServer().getReloadableRegistries().getLootTable(Frostbound.FROZEN_LOOT);
+		LootTable table = world.getServer().getReloadableRegistries().getLootTable(FrozenMobs.FROZEN_LOOT);
 		table.generateLoot(builder.build(LootContextTypes.ENTITY), this::dropStack);
 	}
 

@@ -1,4 +1,6 @@
-package com.frostbound;
+package com.frostbound.mobs;
+
+import com.frostbound.Frostbound;
 
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeInstance;

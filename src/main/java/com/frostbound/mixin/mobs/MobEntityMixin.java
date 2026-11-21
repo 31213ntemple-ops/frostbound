@@ -1,8 +1,9 @@
-package com.frostbound.mixin;
+package com.frostbound.mixin.mobs;
 
-import com.frostbound.FrostStats;
-import com.frostbound.Frostbound;
-import com.frostbound.FrozenMob;
+import com.frostbound.environment.FrostboundClimate;
+import com.frostbound.mobs.FrostStats;
+import com.frostbound.mobs.FrozenMobs;
+import com.frostbound.mobs.FrozenMob;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -89,12 +90,14 @@ public abstract class MobEntityMixin extends LivingEntity implements FrozenMob {
 	@Inject(method = "initialize", at = @At("TAIL"))
 	private void frostbound$rollFrozen(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason,
 			@Nullable EntityData entityData, CallbackInfoReturnable<EntityData> cir) {
-		if (this.frostbound$isFrozen() || !this.getType().isIn(Frostbound.CAN_BE_FROZEN)) {
+		if (!FrozenMobs.isEnabled() || this.frostbound$isFrozen() || !this.getType().isIn(FrozenMobs.CAN_BE_FROZEN)) {
 			return;
 		}
 		GameRules rules = world.toServerWorld().getGameRules();
-		boolean cold = world.getBiome(this.getBlockPos()).value().getTemperature() < 0.15f;
-		int chance = rules.getInt(cold ? Frostbound.COLD_BIOME_CHANCE : Frostbound.SPAWN_CHANCE);
+		// "Cold" = arctic band (≤ -20 °C). Every biome is below freezing in the winter
+		// environment, so plain vanilla "snowy" would match everywhere.
+		boolean cold = FrostboundClimate.isArctic(world.getBiome(this.getBlockPos()));
+		int chance = rules.getInt(cold ? FrozenMobs.COLD_BIOME_CHANCE : FrozenMobs.SPAWN_CHANCE);
 		if (this.random.nextInt(100) < chance) {
 			this.frostbound$setFrozen(true);
 		}

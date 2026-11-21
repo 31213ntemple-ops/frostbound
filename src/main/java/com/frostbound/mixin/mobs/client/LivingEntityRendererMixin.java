@@ -1,6 +1,6 @@
-package com.frostbound.mixin.client;
+package com.frostbound.mixin.mobs.client;
 
-import com.frostbound.FrozenMob;
+import com.frostbound.mobs.FrozenMob;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.entity.LivingEntity;

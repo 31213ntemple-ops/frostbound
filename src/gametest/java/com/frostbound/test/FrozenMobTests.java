@@ -1,8 +1,8 @@
 package com.frostbound.test;
 
-import com.frostbound.FrostStats;
-import com.frostbound.Frostbound;
-import com.frostbound.FrozenMob;
+import com.frostbound.mobs.FrostStats;
+import com.frostbound.mobs.FrozenMobs;
+import com.frostbound.mobs.FrozenMob;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -131,9 +131,9 @@ public class FrozenMobTests implements FabricGameTest {
 
 	@GameTest(templateName = EMPTY_STRUCTURE)
 	public void spawnTagContainsExpectedMobs(TestContext ctx) {
-		check(EntityType.ZOMBIE.isIn(Frostbound.CAN_BE_FROZEN), "zombie should be in can_be_frozen");
-		check(EntityType.CREEPER.isIn(Frostbound.CAN_BE_FROZEN), "creeper should be in can_be_frozen");
-		check(!EntityType.COW.isIn(Frostbound.CAN_BE_FROZEN), "cow should NOT be in can_be_frozen");
+		check(EntityType.ZOMBIE.isIn(FrozenMobs.CAN_BE_FROZEN), "zombie should be in can_be_frozen");
+		check(EntityType.CREEPER.isIn(FrozenMobs.CAN_BE_FROZEN), "creeper should be in can_be_frozen");
+		check(!EntityType.COW.isIn(FrozenMobs.CAN_BE_FROZEN), "cow should NOT be in can_be_frozen");
 		ctx.complete();
 	}
 
