@@ -24,6 +24,7 @@ Every Overworld biome keeps its ID and terrain but becomes a cold, snowy version
 | Dry | desert, badlands, warm ocean | −1 to −2 | frozen solid (warm ocean: stays open) |
 
 - **Snow everywhere:** it snows instead of raining, snow builds up, and grass turns snowy. Each band has its own colour palette (grass, foliage, water, sky, fog).
+- **Snow on plants:** snow settles *into* short grass, ferns, flowers, dead bushes, saplings, mushrooms, sweet berry bushes, pink petals and the bottom of tall plants, instead of leaving holes around them. These plants have a `snowy` block state, and the snowy version draws a thin snow layer around the plant. Breaking it gives the plant as normal. Modded plants that extend these vanilla plant types get it too.
 - **Water:** "ice floes" uses vanilla's frozen-ocean pattern, so about half is open water (it rains over the open patches). The warm ocean never freezes, though snow still falls on it.
 - **Wildlife:** snow foxes, white rabbits and cold frogs everywhere. Strays join skeletons outside the arctic. Mushroom fields stay free of monsters.
 - **Modded biomes** get a winter version automatically, based on how warm they originally were.
@@ -90,6 +91,7 @@ If you edit `build.gradle`, click the Gradle **Reload** (elephant) icon in Intel
 
 They live in `src/gametest/java/com/frostbound/test/`:
 - `WinterEnvironmentTests`: every vanilla biome has a winter profile; temperatures and snowfall match the table; water freezes except in open-water biomes; the Nether and caves are untouched; the temperature-mod tags are filled; colours and strays are applied.
+- `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -103,6 +105,7 @@ Environment (make a **new world** to see generated snow and ice):
 /locate biome minecraft:warm_ocean       # open water with snowfall
 /weather rain                            # = snowfall everywhere
 /time set night
+/setblock ~ ~ ~ minecraft:poppy[snowy=true]   # stand on grass; a snowy flower
 ```
 
 Frozen Mobs:
@@ -152,12 +155,18 @@ com.frostbound
 │   ├── WinterClimate             the climate table (single source of truth)
 │   ├── WinterBiomeModifications  applies it with Fabric's biome modification API
 │   ├── WinterEnvironment         module entry; registers the built-in data pack
+│   ├── SnowyPlants               which plants can hold snow, and the snowy property
 │   └── FrostboundClimate         public API (°C per biome)
+├── client/                 client entrypoint; SnowyPlantModel draws snow on snowy plants
 ├── mobs/                   frozen mobs module (FrozenMobs, FrozenMob, FrostStats)
 └── mixin/
-    ├── environment/BiomeMixin    open water never freezes
+    ├── environment/              BiomeMixin (open water, snow into plants), BlockMixin (adds
+    │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
+    │                             snowy plants instead of snow), SnowyBlockMixin (snowy grass)
     └── mobs/                     frozen flag, combat, loot, visuals
 ```
+
+- The `snowy` plant property is always added (even with the environment module off), so client and server always agree on block states. With the module off, snow simply stops settling into plants.
 
 - The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.

@@ -8,7 +8,8 @@
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["com.frostbound.Frostbound"]
+		"main": ["com.frostbound.Frostbound"],
+		"client": ["com.frostbound.client.FrostboundClient"]
 	},
 	"mixins": ["frostbound.mixins.json"],
 	"depends": {

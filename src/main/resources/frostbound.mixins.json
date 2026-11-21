@@ -5,6 +5,10 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"environment.BiomeMixin",
+		"environment.BlockMixin",
+		"environment.FreezeTopLayerFeatureMixin",
+		"environment.ServerWorldMixin",
+		"environment.SnowyBlockMixin",
 		"mobs.LivingEntityMixin",
 		"mobs.MobEntityMixin"
 	],

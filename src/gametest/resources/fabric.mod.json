@@ -8,7 +8,8 @@
 	"entrypoints": {
 		"fabric-gametest": [
 			"com.frostbound.test.FrozenMobTests",
-			"com.frostbound.test.WinterEnvironmentTests"
+			"com.frostbound.test.WinterEnvironmentTests",
+			"com.frostbound.test.SnowyPlantTests"
 		]
 	},
 	"depends": {
