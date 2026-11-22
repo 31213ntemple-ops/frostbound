@@ -5,5 +5,7 @@
 	"frostbound.present.gift": "A gift from Santa!",
 	"frostbound.present.coal": "A lump of coal. Someone's been naughty...",
 	"frostbound.present.mobs": "Something was waiting inside!",
-	"frostbound.present.explode": "It's ticking..."
+	"frostbound.present.explode": "It's ticking...",
+	"item.frostbound.ice_ball": "Ice Ball",
+	"entity.frostbound.ice_ball": "Ice Ball"
 }

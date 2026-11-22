@@ -1,0 +1,9 @@
+{
+	"parent": "minecraft:recipes/root",
+	"criteria": {
+		"has_ice": { "trigger": "minecraft:inventory_changed", "conditions": { "items": [ { "items": "minecraft:ice" } ] } },
+		"has_the_recipe": { "trigger": "minecraft:recipe_unlocked", "conditions": { "recipe": "frostbound:ice_ball" } }
+	},
+	"requirements": [ [ "has_ice", "has_the_recipe" ] ],
+	"rewards": { "recipes": [ "frostbound:ice_ball" ] }
+}

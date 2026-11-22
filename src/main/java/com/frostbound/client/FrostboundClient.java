@@ -1,9 +1,12 @@
 package com.frostbound.client;
 
 import com.frostbound.environment.SnowyPlants;
+import com.frostbound.items.FrostboundItems;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.ModelRotation;
 import net.minecraft.client.util.ModelIdentifier;
@@ -16,6 +19,9 @@ public class FrostboundClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		// Thrown ice balls draw as their item, like snowballs.
+		EntityRendererRegistry.register(FrostboundItems.ICE_BALL_ENTITY, FlyingItemEntityRenderer::new);
+
 		// Snowy plants: wrap the model of every "snowy=true" plant state so it also draws a
 		// thin snow layer. Vanilla's blockstate files already match the snowy states (they
 		// don't mention the property), so no new model or blockstate files are needed.

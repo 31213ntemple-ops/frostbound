@@ -64,6 +64,23 @@ public final class FrostboundConfig {
 		public float explosionPower = 2.0f;
 	}
 
+	/** Ice balls (always available; these are balance numbers). */
+	public IceBalls iceBalls = new IceBalls();
+
+	public static final class IceBalls {
+		/** Damage per hit (2 = one heart). */
+		public float damage = 3.0f;
+		/** Damage multiplier against frostbound:weak_to_ice mobs (blaze, magma cube, strider). */
+		public float weakToIceMultiplier = 2.0f;
+		/** Slowness on hit: how long and how strong (1 = Slowness I). 0 seconds turns it off. */
+		public int slownessSeconds = 4;
+		public int slownessLevel = 2;
+		/** Radius of the frosted ice disc when one lands in water (0 turns it off). */
+		public int freezeWaterRadius = 2;
+		/** Ticks before you can throw another (20 = 1 second). */
+		public int cooldownTicks = 10;
+	}
+
 	public static synchronized FrostboundConfig get() {
 		if (instance == null) {
 			instance = load(FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
@@ -90,6 +107,9 @@ public final class FrostboundConfig {
 				}
 				if (config.christmas.presents == null) {
 					config.christmas.presents = new Presents();
+				}
+				if (config.iceBalls == null) {
+					config.iceBalls = new IceBalls();
 				}
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);

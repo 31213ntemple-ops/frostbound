@@ -6,7 +6,8 @@ A collection of winter features, built as one mod split into **modules**. Each m
 {
   "modules": { "environment": true, "frozenMobs": true, "christmas": true },
   "environment": { "coldBiomesOnly": true },
-  "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } }
+  "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
+  "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 }
 }
 ```
 
@@ -15,6 +16,8 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `environment` | Only cold biomes generate, and every Overworld biome becomes a winter variant with its own temperature, snow, ice and colours |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
+
+Items like the **Ice Ball** aren't a module: they're always there (so saved items never disappear), and `iceBalls` in the config only sets their balance.
 
 ## Winter Environment
 
@@ -105,10 +108,29 @@ Try it: `/locate structure frostbound:christmas_tree`, or `/place structure fros
 | Frostbite | Their hits give you Slowness I (3s) and frost your screen edges |
 | Weakness | Take ×2 fire/lava damage |
 | Heft | +30% knockback resistance |
-| Drops | 1–2 ice, 0–3 snowballs, rare packed ice (Looting boosts all of these) |
+| Drops | 1–2 ice, 0–3 snowballs, 0–2 ice balls, rare packed ice (Looting boosts all of these) |
 | Visuals | Shiver (the powder-snow shake), pale ice-blue tint, drifting snowflakes, shatter on death |
 
 Spawn chance: **8%** normally, **30%** in arctic biomes (≤ −20 °C). Mobs that can roll Frozen: zombie, zombie villager, husk, drowned, skeleton, spider, cave spider, creeper, slime, witch, pillager, vindicator.
+
+## Ice Balls
+
+`frostbound:ice_ball`, in the Combat tab next to snowballs. Stacks to 16. Right-click to throw it like a snowball (same arc and speed), with a half-second cooldown. It shatters into ice chips and snowflakes on whatever it hits:
+
+| Hits | What happens |
+|---|---|
+| A mob or player | 3 damage (1½ hearts), Slowness II for 4 s, frosted screen edges (no freeze damage), and puts them out if they're burning |
+| Blaze, magma cube, strider | double damage (the tag `frostbound:weak_to_ice`) |
+| A Frozen mob | takes the damage, but it's made of ice: no Slowness, no frost |
+| Still water | freezes a disc of frosted ice (radius 2) on the surface, like Frost Walker. A quick bridge over open water; it melts again in daylight |
+| Fire, a lit campfire or candle | puts it out, like a water splash potion |
+
+- **Dispensers** fire them, so they work in traps.
+- **Crafting:** an ice block surrounded by 4 snowballs (plus shape) makes 4 ice balls. Unlocks in the recipe book once you pick up ice.
+- **Drops:** Frozen mobs drop 0–2.
+- **Balance:** `iceBalls` in `config/frostbound.json` (restart to apply): `damage`, `weakToIceMultiplier`, `slownessSeconds` (0 turns it off), `slownessLevel` (1 = Slowness I), `freezeWaterRadius` (0 turns it off), `cooldownTicks` (20 = 1 second).
+
+Try it: `/give @s frostbound:ice_ball 16`.
 
 ## Development workflow
 
@@ -154,6 +176,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
 - `ChristmasTests`: the structure only loads with DecorationX; every tree style has the tree, the snow floor and five gift presents; the templates place (directly and through `/place structure`, landing on the surface); gifts are one decent stack (never coal); snow can't settle on the tree, presents or lanterns but still lands on the floor; each present outcome works (gift, one coal, 1–3 Frozen mobs, explosion after the fuse) and the chances match the config. A chest with the present loot table stands in for the Supplementaries present, which can't run in dev.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
+- `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
 
@@ -207,6 +230,7 @@ Test natural spawning:
 - **Frozen mob spawn chances:** use the game rules above. They're saved per world.
 - **Which mobs can be Frozen:** `data/frostbound/tags/entity_type/can_be_frozen.json`. A modpack datapack can add mobs from other mods to `frostbound:can_be_frozen`.
 - **Frozen mob drops:** `data/frostbound/loot_table/entities/frozen_mob.json`.
+- **Ice balls:** numbers in the config (`iceBalls`); which mobs take extra damage in `data/frostbound/tags/entity_type/weak_to_ice.json`; the recipe in `data/frostbound/recipe/ice_ball.json`; the texture is `assets/frostbound/textures/item/ice_ball.png` (16×16).
 - **Frozen mob balance:** `mobs/FrostStats.java`. **Tint colour:** `ICE_TINT` in `LivingEntityRendererMixin.java`.
 
 ## How it's put together
@@ -224,6 +248,8 @@ com.frostbound
 │   └── FrostboundClimate         public API (°C per biome)
 ├── client/                 client entrypoint; SnowyPlantModel draws snow on snowy plants
 ├── mobs/                   frozen mobs module (FrozenMobs, FrozenMob, FrostStats)
+├── items/                  always-on items: FrostboundItems (registers items, entities, dispenser and
+│                           creative tab), IceBallItem (throwing), IceBallEntity (what a hit does)
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
 │                           installed), ChristmasPresents (what opening a tree present does)
 └── mixin/
