@@ -3,6 +3,7 @@ package com.frostbound;
 import com.frostbound.christmas.Christmas;
 import com.frostbound.config.FrostboundConfig;
 import com.frostbound.environment.WinterEnvironment;
+import com.frostbound.ice.IceChanges;
 import com.frostbound.items.FrostboundItems;
 import com.frostbound.mobs.FrozenMobs;
 import net.fabricmc.api.ModInitializer;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
  * that can be switched off in config/frostbound.json:
  *
  *  - environment (com.frostbound.environment): the winter Overworld
+ *  - ice          (com.frostbound.ice):         breakable ice, no crafted/blue ice, new textures
  *  - frozenMobs  (com.frostbound.mobs):        Frozen mob variants
  *  - christmas   (com.frostbound.christmas):   festive structures (with DecorationX: Christmas)
  *
@@ -36,6 +38,9 @@ public class Frostbound implements ModInitializer {
 
 		if (modules.environment) {
 			WinterEnvironment.init();
+		}
+		if (modules.ice) {
+			IceChanges.init();
 		}
 		if (modules.frozenMobs) {
 			FrozenMobs.init();

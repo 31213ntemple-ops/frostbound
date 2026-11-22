@@ -28,6 +28,8 @@ public final class FrostboundConfig {
 		public boolean environment = true;
 		/** Some hostile mobs spawn Frozen (tougher, slower, icy). */
 		public boolean frozenMobs = true;
+		/** Ice drops without Silk Touch, packed and blue ice can't be crafted, no blue ice worldgen, new textures. */
+		public boolean ice = true;
 		/** Christmas structures (needs DecorationX: Christmas; presents need Supplementaries). */
 		public boolean christmas = true;
 	}

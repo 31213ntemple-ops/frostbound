@@ -4,7 +4,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 
 ```json
 {
-  "modules": { "environment": true, "frozenMobs": true, "christmas": true },
+  "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true },
   "environment": { "coldBiomesOnly": true },
   "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
   "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 }
@@ -14,6 +14,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | Module | What it does |
 |---|---|
 | `environment` | Only cold biomes generate, and every Overworld biome becomes a winter variant with its own temperature, snow, ice and colours |
+| `ice` | Ice drops when mined with a pickaxe better than stone (iron or up; tag `frostbound:ice_mining_tools`, copper pickaxe included if it exists), no Silk Touch needed, and it no longer melts to water, packed and blue ice can't be crafted, blue ice doesn't generate, new ice textures |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 

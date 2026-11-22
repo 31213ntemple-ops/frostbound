@@ -8,6 +8,7 @@
 		"environment.BiomeMixin",
 		"environment.BlockMixin",
 		"environment.FreezeTopLayerFeatureMixin",
+		"environment.IceBlockMixin",
 		"environment.MultiNoiseBiomeSourceParameterListMixin",
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",

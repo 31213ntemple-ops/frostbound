@@ -12,7 +12,8 @@
 			"com.frostbound.test.SnowyPlantTests",
 			"com.frostbound.test.ChristmasStructureBuilder",
 			"com.frostbound.test.ChristmasTests",
-			"com.frostbound.test.IceBallTests"
+			"com.frostbound.test.IceBallTests",
+			"com.frostbound.test.IceTests"
 		]
 	},
 	"depends": {

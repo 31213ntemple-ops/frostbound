@@ -1,0 +1,7 @@
+{
+	"fabric:load_conditions": [ { "condition": "fabric:not", "value": { "condition": "fabric:true" } } ],
+	"type": "minecraft:crafting_shapeless",
+	"category": "building",
+	"ingredients": [ { "item": "minecraft:packed_ice" } ],
+	"result": { "id": "minecraft:blue_ice", "count": 1 }
+}
