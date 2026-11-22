@@ -1,0 +1,40 @@
+# Builds the mod and runs the GameTest suite on every push and pull request.
+name: Build & GameTest
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and run GameTests
+        run: |
+          chmod +x gradlew
+          ./gradlew build runGametest --console=plain
+
+      - name: Upload jar
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frostbound-jar
+          path: build/libs/*.jar
+
+      - name: Upload GameTest report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gametest-report
+          path: build/gametest/junit.xml
+          if-no-files-found: ignore

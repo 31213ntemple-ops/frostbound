@@ -127,7 +127,7 @@ The Windows PC already has this set up.
 4. In IntelliJ: *Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JVM* → pick 21 (Temurin). Also set *File → Project Structure → SDK* to 21.
 5. Check it works: `./gradlew runGametest`.
 
-**Switching machines:** `git pull` before you start, then commit and `git push` when you stop.
+**Switching machines:** `git pull` before you start, then commit and `git push` when you stop. Every push to GitHub also runs the build and the GameTests there (the **Actions** tab), so you can see if something broke on the other machine before you pull.
 
 | What | Terminal (Windows) | IntelliJ run config |
 |---|---|---|
