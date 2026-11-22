@@ -3,17 +3,45 @@
 A collection of winter features, built as one mod split into **modules**. Each module can be switched off in `config/frostbound.json` (restart needed):
 
 ```json
-{ "modules": { "environment": true, "frozenMobs": true } }
+{
+  "modules": { "environment": true, "frozenMobs": true },
+  "environment": { "coldBiomesOnly": true }
+}
 ```
 
 | Module | What it does |
 |---|---|
-| `environment` | Every Overworld biome becomes a winter variant with its own temperature, snow, ice and colours |
+| `environment` | Only cold biomes generate, and every Overworld biome becomes a winter variant with its own temperature, snow, ice and colours |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 
 ## Winter Environment
 
 Every Overworld biome keeps its ID and terrain but becomes a cold, snowy version of itself. The Nether, the End and cave biomes are left alone.
+
+### Cold biomes only
+
+New terrain only uses cold biomes: snowy plains, ice spikes, the taigas, groves, peaks and slopes, windswept hills, frozen rivers, cold and frozen oceans, plus Frostbound's own **Sparse Forest**. Every other vanilla biome is swapped for a cold one in the same spot of vanilla's climate grid, so the terrain (vanilla or Tectonic) stays the same; only the biome on it changes. Turn it off with `"coldBiomesOnly": false`.
+
+| Removed | Generates instead |
+|---|---|
+| plains, sunflower plains, flower forest, savanna, savanna plateau, meadow | Sparse Forest |
+| forest, birch forest, sparse jungle | taiga |
+| old growth birch forest | old growth pine taiga |
+| dark forest, jungle, bamboo jungle | old growth spruce taiga |
+| swamp, mangrove swamp, wooded badlands | snowy taiga |
+| desert, badlands, mushroom fields | snowy plains |
+| eroded badlands | ice spikes |
+| windswept savanna / cherry grove | windswept hills / grove |
+| beach, river | snowy beach, frozen river |
+| ocean, lukewarm, warm (and deep) | cold ocean / deep cold ocean |
+
+**Sparse Forest** (`frostbound:sparse_forest`, −12 °C): open snowy land with occasional small oaks, flowers, pumpkins and grass. Horses, donkeys and rabbits spawn here along with the usual farm animals. It gets mineshafts, pillager outposts, ruined portals, trial chambers and strongholds like plains did; no villages for now.
+
+Roughly what a new world looks like (sampled over 40 km, vanilla terrain): taiga 19%, Sparse Forest 18%, old growth taigas 8%, snowy plains 5%, snowy taiga 3%, ice spikes and mountains about 2%. Most of the rest is ocean and frozen rivers.
+
+- Only **newly generated chunks** change. In an existing world, explored chunks keep their biomes, so there's a visible seam at the old border.
+- Mods that bring their own Overworld biome list (e.g. Terralith) aren't affected. Tectonic only reshapes terrain, so it works.
+- Structures that only spawn in removed biomes are gone from new terrain: plains/desert/savanna villages, desert pyramids, jungle temples, witch huts, woodland mansions, warm ocean ruins. Taiga and snowy villages still spawn. The same goes for anything only found in those biomes, such as bamboo, cocoa, melons, cactus, pandas, parrots and camels.
 
 | Band | Biomes | Winter °C | Water |
 |---|---|---|---|
@@ -24,8 +52,8 @@ Every Overworld biome keeps its ID and terrain but becomes a cold, snowy version
 | Dry | desert, badlands, warm ocean | −1 to −2 | frozen solid (warm ocean: stays open) |
 
 - **Snow everywhere:** it snows instead of raining, snow builds up, and grass turns snowy. Each band has its own colour palette (grass, foliage, water, sky, fog).
-- **Snow on plants:** snow settles *into* short grass, ferns, flowers, dead bushes, saplings, mushrooms, sweet berry bushes, pink petals and the bottom of tall plants, instead of leaving holes around them. These plants have a `snowy` block state, and the snowy version draws a thin snow layer around the plant. Breaking it gives the plant as normal. Modded plants that extend these vanilla plant types get it too.
-- **Water:** "ice floes" uses vanilla's frozen-ocean pattern, so about half is open water (it rains over the open patches). The warm ocean never freezes, though snow still falls on it.
+- **Snow on plants:** snow settles *into* short grass, ferns, flowers, dead bushes, saplings, mushrooms, sweet berry bushes, pink petals and the bottom of tall plants, instead of leaving holes around them. These plants have a `snowy` block state, and the snowy version draws a thin snow layer around the plant. Breaking it gives the plant as normal. Modded plants that extend these vanilla plant types get it too. **With Snow! Real Magic installed this turns itself off** and Snow! Real Magic handles snow in plants instead (plants then get no `snowy` state from Frostbound).
+- **Water:** "ice floes" uses vanilla's frozen-ocean pattern, so about half is open water (it rains over the open patches). The warm ocean never freezes, though snow still falls on it (only relevant in old chunks or with `coldBiomesOnly` off).
 - **Wildlife:** snow foxes, white rabbits and cold frogs everywhere. Strays join skeletons outside the arctic. Mushroom fields stay free of monsters.
 - **Modded biomes** get a winter version automatically, based on how warm they originally were.
 - **Existing worlds:** snowfall, freezing and colours apply straight away. Snow builds up on old chunks during snowfall.
@@ -62,11 +90,12 @@ org.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-21.0.13.10002-hotspot
 
 The Windows PC already has this set up.
 
-**Setting up on the Mac (once):**
-1. Install Temurin 21: `brew install --cask temurin@21` (or the .pkg from adoptium.net).
-2. `git clone <repo url>` and open the folder in IntelliJ. It imports the Gradle project and makes the run configs.
-3. In IntelliJ: *Settings → Build Tools → Gradle → Gradle JVM* → pick 21.
-4. Check it works: `./gradlew runGametest`.
+**Setting up on the Mac (once):** *(done on the MacBook: repo at `~/Developer/Frostbound`)*
+1. Install Temurin 21. Without Homebrew, extract the macOS aarch64 `.tar.gz` from adoptium.net into `~/Library/Java/JavaVirtualMachines/` (no admin password needed). With Homebrew: `brew install --cask temurin@21`.
+2. Pin it: put `org.gradle.java.home=<output of /usr/libexec/java_home -v 21>` in `~/.gradle/gradle.properties`, and `export JAVA_HOME="$(/usr/libexec/java_home -v 21)"` in `~/.zshrc`.
+3. `git clone <repo url> ~/Developer/Frostbound` and open the folder in IntelliJ IDEA (the free edition is enough). It imports the Gradle project and makes the run configs.
+4. In IntelliJ: *Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JVM* → pick 21 (Temurin). Also set *File → Project Structure → SDK* to 21.
+5. Check it works: `./gradlew runGametest`.
 
 **Switching machines:** `git pull` before you start, then commit and `git push` when you stop.
 
@@ -83,7 +112,7 @@ The jar ends up at `build/libs/frostbound-1.0.0.jar` (ignore the `-sources` jar)
 
 **Typical loop:** change code → `runGametest` → if green, `runClient` and look at it in-game.
 
-**Faster iteration in IntelliJ:** start **Minecraft Client** with *Debug* (the bug icon) instead of Run. When you edit the inside of a method, press **Ctrl+Shift+F9** (Recompile) to hot-swap it into the running game. Adding methods/fields or changing a mixin's annotations still needs a restart. For data files (tags, loot tables, functions), use *Build → Build Project* and then `/reload` in-game. Biome changes (temperature, colours) need a restart.
+**Faster iteration in IntelliJ:** start **Minecraft Client** with *Debug* (the bug icon) instead of Run. When you edit the inside of a method, press **Ctrl+Shift+F9** (Mac: **⌘⇧F9**, Recompile) to hot-swap it into the running game. Adding methods/fields or changing a mixin's annotations still needs a restart. For data files (tags, loot tables, functions), use *Build → Build Project* and then `/reload` in-game. Biome changes (temperature, colours) need a restart.
 
 If you edit `build.gradle`, click the Gradle **Reload** (elephant) icon in IntelliJ.
 
@@ -91,10 +120,11 @@ If you edit `build.gradle`, click the Gradle **Reload** (elephant) icon in Intel
 
 They live in `src/gametest/java/com/frostbound/test/`:
 - `WinterEnvironmentTests`: every vanilla biome has a winter profile; temperatures and snowfall match the table; water freezes except in open-water biomes; the Nether and caves are untouched; the temperature-mod tags are filled; colours and strays are applied.
+- `WinterEnvironmentTests` also checks cold biomes only: removed biomes never generate (it samples real Overworld noise and logs the biome share), every replacement is a cold biome, and Sparse Forest has its oaks, horses and donkeys.
 - `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
 
-A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
+A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
 
 ## Testing commands
 
@@ -138,6 +168,7 @@ Test natural spawning:
 
 ## Tweaking
 
+- **Which biomes generate:** `REPLACEMENTS` in `environment/WinterBiomePool.java` (removed biome → what generates instead). **Sparse Forest:** `data/frostbound/worldgen/biome/sparse_forest.json` (spawns, features) and `worldgen/placed_feature/sparse_forest_trees.json` (how many oaks).
 - **Biome temperatures, water, bands:** one line per biome in `environment/WinterClimate.java` (`TABLE`). Colour palettes are on the `Zone` enum in the same file.
 - **Open water biomes:** the tag `frostbound:open_water` (keep it in step with `WaterMode.OPEN` in the table; a test checks this).
 - **Frozen mob spawn chances:** use the game rules above. They're saved per world.
@@ -153,6 +184,7 @@ com.frostbound
 ├── config/FrostboundConfig config/frostbound.json
 ├── environment/            winter environment module
 │   ├── WinterClimate             the climate table (single source of truth)
+│   ├── WinterBiomePool           which biomes new terrain uses (cold only + Sparse Forest)
 │   ├── WinterBiomeModifications  applies it with Fabric's biome modification API
 │   ├── WinterEnvironment         module entry; registers the built-in data pack
 │   ├── SnowyPlants               which plants can hold snow, and the snowy property
@@ -163,10 +195,12 @@ com.frostbound
     ├── environment/              BiomeMixin (open water, snow into plants), BlockMixin (adds
     │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
     │                             snowy plants instead of snow), SnowyBlockMixin (snowy grass)
+    │                             MultiNoiseBiomeSourceParameterList (cold biomes only)
     └── mobs/                     frozen flag, combat, loot, visuals
 ```
 
 - The `snowy` plant property is always added (even with the environment module off), so client and server always agree on block states. With the module off, snow simply stops settling into plants.
 
 - The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
+- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.

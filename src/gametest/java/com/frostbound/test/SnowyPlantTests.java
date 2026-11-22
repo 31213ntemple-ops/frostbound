@@ -39,6 +39,7 @@ public class SnowyPlantTests implements FabricGameTest {
 
 	@GameTest(templateName = EMPTY_STRUCTURE)
 	public void plantsHaveSnowyStateDefaultingToFalse(TestContext ctx) {
+		if (skipWithSnowRealMagic(ctx)) return;
 		for (Block block : List.of(Blocks.SHORT_GRASS, Blocks.FERN, Blocks.POPPY, Blocks.DANDELION, Blocks.WITHER_ROSE,
 				Blocks.DEAD_BUSH, Blocks.OAK_SAPLING, Blocks.BROWN_MUSHROOM, Blocks.SWEET_BERRY_BUSH, Blocks.PINK_PETALS,
 				Blocks.TALL_GRASS, Blocks.SUNFLOWER, Blocks.LARGE_FERN)) {
@@ -57,6 +58,7 @@ public class SnowyPlantTests implements FabricGameTest {
 
 	@GameTest(templateName = EMPTY_STRUCTURE)
 	public void snowCanSettleIntoPlants(TestContext ctx) {
+		if (skipWithSnowRealMagic(ctx)) return;
 		ctx.setBlockState(GROUND, Blocks.GRASS_BLOCK);
 		ctx.setBlockState(PLANT, Blocks.POPPY);
 		Biome plains = ctx.getWorld().getRegistryManager().get(RegistryKeys.BIOME).entryOf(BiomeKeys.PLAINS).value();
@@ -70,6 +72,7 @@ public class SnowyPlantTests implements FabricGameTest {
 
 	@GameTest(templateName = EMPTY_STRUCTURE, batchId = "snowfall")
 	public void snowfallMakesPlantsSnowy(TestContext ctx) {
+		if (skipWithSnowRealMagic(ctx)) return;
 		ServerWorld world = ctx.getWorld();
 		BlockPos ground = skyGround(ctx, GROUND);
 		world.setBlockState(ground, Blocks.GRASS_BLOCK.getDefaultState());
@@ -106,6 +109,7 @@ public class SnowyPlantTests implements FabricGameTest {
 
 	@GameTest(templateName = EMPTY_STRUCTURE, batchId = "snow_worldgen")
 	public void worldgenSnowLayerMakesPlantsSnowy(TestContext ctx) {
+		if (skipWithSnowRealMagic(ctx)) return;
 		ServerWorld world = ctx.getWorld();
 		BlockPos ground = skyGround(ctx, GROUND);
 		world.setBlockState(ground, Blocks.GRASS_BLOCK.getDefaultState());
@@ -136,5 +140,14 @@ public class SnowyPlantTests implements FabricGameTest {
 		if (!condition) {
 			throw new GameTestException(message);
 		}
+	}
+
+	/** Snow! Real Magic handles snow in plants when it's installed, and this feature turns itself off. */
+	private static boolean skipWithSnowRealMagic(TestContext ctx) {
+		if (SnowyPlants.ENABLED) {
+			return false;
+		}
+		ctx.complete();
+		return true;
 	}
 }

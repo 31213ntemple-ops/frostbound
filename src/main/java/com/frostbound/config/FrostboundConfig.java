@@ -30,6 +30,14 @@ public final class FrostboundConfig {
 		public boolean frozenMobs = true;
 	}
 
+	/** Options for the environment module. */
+	public Environment environment = new Environment();
+
+	public static final class Environment {
+		/** New terrain only uses cold biomes (plus Sparse Forest); other biomes are swapped out. */
+		public boolean coldBiomesOnly = true;
+	}
+
 	public static synchronized FrostboundConfig get() {
 		if (instance == null) {
 			instance = load(FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
@@ -47,6 +55,9 @@ public final class FrostboundConfig {
 				}
 				if (config.modules == null) {
 					config.modules = new Modules();
+				}
+				if (config.environment == null) {
+					config.environment = new Environment();
 				}
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);

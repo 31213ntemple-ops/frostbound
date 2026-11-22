@@ -1,6 +1,8 @@
 package com.frostbound.test;
 
+import com.frostbound.Frostbound;
 import com.frostbound.environment.FrostboundClimate;
+import com.frostbound.environment.WinterBiomePool;
 import com.frostbound.environment.WinterClimate;
 import com.frostbound.environment.WinterClimate.WaterMode;
 import com.frostbound.environment.WinterClimate.WinterProfile;
@@ -22,10 +24,18 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
+import net.minecraft.world.biome.source.MultiNoiseBiomeSourceParameterLists;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
+import net.minecraft.world.gen.feature.PlacedFeature;
+import net.minecraft.world.gen.noise.NoiseConfig;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Checks for the winter environment module. Run with: gradlew runGametest
@@ -142,6 +152,102 @@ public class WinterEnvironmentTests implements FabricGameTest {
 		check(hasStrays(ctx, BiomeKeys.PLAINS), "strays should spawn in plains");
 		check(hasStrays(ctx, BiomeKeys.DESERT), "strays should spawn in desert");
 		check(!hasStrays(ctx, BiomeKeys.MUSHROOM_FIELDS), "mushroom fields must stay monster-free");
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void onlyColdBiomesGenerateInTheOverworld(TestContext ctx) {
+		Set<RegistryKey<Biome>> generated = new HashSet<>();
+		ctx.getWorld().getRegistryManager().get(RegistryKeys.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+				.getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD).getEntries().getEntries()
+				.forEach(pair -> generated.add(pair.getSecond().getKey().orElseThrow()));
+
+		List<String> removedButGenerated = new ArrayList<>();
+		for (RegistryKey<Biome> key : generated) {
+			if (WinterBiomePool.REPLACEMENTS.containsKey(key)) {
+				removedButGenerated.add(key.getValue().getPath());
+			}
+		}
+		check(removedButGenerated.isEmpty(), "removed biomes still generate: " + removedButGenerated);
+		check(generated.contains(WinterBiomePool.SPARSE_FOREST), "sparse forest should generate");
+		check(generated.contains(BiomeKeys.SNOWY_PLAINS) && generated.contains(BiomeKeys.TAIGA),
+				"snowy plains and taiga should generate");
+		check(generated.contains(BiomeKeys.LUSH_CAVES) && generated.contains(BiomeKeys.DEEP_DARK),
+				"cave biomes should be left alone");
+		ctx.complete();
+	}
+
+	/** Samples real Overworld noise (vanilla settings, fixed seed) over a 40 km square at sea level. */
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void overworldNoisePicksOnlyColdBiomes(TestContext ctx) {
+		var registries = ctx.getWorld().getRegistryManager();
+		MultiNoiseBiomeSource source = MultiNoiseBiomeSource.create(registries
+				.get(RegistryKeys.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).entryOf(MultiNoiseBiomeSourceParameterLists.OVERWORLD));
+		NoiseConfig noise = NoiseConfig.create(
+				registries.get(RegistryKeys.CHUNK_GENERATOR_SETTINGS).getOrThrow(ChunkGeneratorSettings.OVERWORLD),
+				registries.getWrapperOrThrow(RegistryKeys.NOISE_PARAMETERS), 12345L);
+
+		Map<String, Integer> counts = new TreeMap<>();
+		int samples = 0;
+		for (int x = -40; x < 40; x++) {
+			for (int z = -40; z < 40; z++) {
+				RegistryEntry<Biome> biome = source.getBiome((x * 512) >> 2, 64 >> 2, (z * 512) >> 2, noise.getMultiNoiseSampler());
+				counts.merge(biome.getKey().orElseThrow().getValue().toString(), 1, Integer::sum);
+				samples++;
+			}
+		}
+		StringBuilder share = new StringBuilder();
+		int total = samples;
+		counts.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+				.forEach(e -> share.append(String.format("%n  %-36s %5.1f%%", e.getKey(), 100.0 * e.getValue() / total)));
+		Frostbound.LOGGER.info("Overworld biome share ({} samples):{}", samples, share);
+
+		List<String> removed = counts.keySet().stream()
+				.filter(id -> WinterBiomePool.REPLACEMENTS.containsKey(RegistryKey.of(RegistryKeys.BIOME, Identifier.of(id))))
+				.toList();
+		check(removed.isEmpty(), "removed biomes generated: " + removed);
+		int sparse = counts.getOrDefault(WinterBiomePool.SPARSE_FOREST.getValue().toString(), 0);
+		check(sparse > samples / 50, "sparse forest should cover more than 2% of land and sea, got " + sparse + "/" + samples);
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void everyReplacementIsAColdBiomeThatStays(TestContext ctx) {
+		List<String> problems = new ArrayList<>();
+		WinterBiomePool.REPLACEMENTS.forEach((removed, replacement) -> {
+			String name = removed.getValue().getPath() + " -> " + replacement.getValue().getPath();
+			if (WinterBiomePool.REPLACEMENTS.containsKey(replacement)) {
+				problems.add(name + " (replacement is itself removed)");
+			}
+			if (!WinterClimate.TABLE.containsKey(replacement)) {
+				problems.add(name + " (replacement has no winter profile)");
+			} else if (WinterClimate.TABLE.get(replacement).celsius() > -12f) {
+				problems.add(name + " (replacement is warmer than -12 °C)");
+			}
+			if (biomes(ctx).getEntry(replacement).isEmpty()) {
+				problems.add(name + " (replacement isn't registered)");
+			}
+		});
+		check(problems.isEmpty(), "bad replacements: " + problems);
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void sparseForestHasOaksHorsesAndDonkeys(TestContext ctx) {
+		RegistryEntry<Biome> entry = biomes(ctx).entryOf(WinterBiomePool.SPARSE_FOREST);
+		Biome biome = entry.value();
+		List<EntityType<?>> creatures = biome.getSpawnSettings().getSpawnEntries(SpawnGroup.CREATURE).getEntries()
+				.stream().<EntityType<?>>map(e -> e.type).toList();
+		check(creatures.contains(EntityType.HORSE), "sparse forest should spawn horses");
+		check(creatures.contains(EntityType.DONKEY), "sparse forest should spawn donkeys");
+
+		PlacedFeature trees = ctx.getWorld().getRegistryManager().get(RegistryKeys.PLACED_FEATURE)
+				.get(Identifier.of("frostbound", "sparse_forest_trees"));
+		check(trees != null && biome.getGenerationSettings().isFeatureAllowed(trees), "sparse forest should grow oaks");
+
+		check(entry.isIn(BiomeTags.IS_OVERWORLD), "sparse forest should be tagged as Overworld");
+		check(entry.isIn(TAN_COLD), "sparse forest should be in toughasnails:cold_biomes");
+		check(hasStrays(ctx, WinterBiomePool.SPARSE_FOREST), "strays should spawn in sparse forest");
 		ctx.complete();
 	}
 

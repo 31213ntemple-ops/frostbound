@@ -1,5 +1,6 @@
 package com.frostbound.environment;
 
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -30,10 +31,16 @@ import net.minecraft.state.property.Properties;
  *  - The client draws a thin snow layer around snowy plants (client.SnowyPlantModel).
  *
  * Modded plants that extend these vanilla classes get it automatically.
+ *
+ * Off when Snow! Real Magic is installed: it handles snow in plants (and much more), so
+ * mixin.FrostboundMixinPlugin leaves all of this out and plants get no snowy property.
  */
 public final class SnowyPlants {
 	/** Separate from grass blocks' Properties.SNOWY so code that checks that one isn't confused. */
 	public static final BooleanProperty SNOWY = BooleanProperty.of("snowy");
+
+	/** False when Snow! Real Magic handles snow in plants instead. */
+	public static final boolean ENABLED = !FabricLoader.getInstance().isModLoaded("snowrealmagic");
 
 	private SnowyPlants() {}
 

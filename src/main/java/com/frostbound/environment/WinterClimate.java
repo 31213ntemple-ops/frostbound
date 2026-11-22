@@ -125,6 +125,9 @@ public final class WinterClimate {
 		put(BiomeKeys.OCEAN, -7, WaterMode.FLOES);
 		put(BiomeKeys.DEEP_OCEAN, -7, WaterMode.FLOES);
 
+		// Frostbound's own biomes.
+		put(WinterBiomePool.SPARSE_FOREST, -12, WaterMode.FROZEN);
+
 		// Mild: jungles and savannas, the gentlest winter.
 		put(BiomeKeys.JUNGLE, -3, WaterMode.FROZEN);
 		put(BiomeKeys.SPARSE_JUNGLE, -3, WaterMode.FROZEN);

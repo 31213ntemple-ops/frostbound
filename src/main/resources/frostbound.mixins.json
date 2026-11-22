@@ -2,11 +2,13 @@
 	"required": true,
 	"minVersion": "0.8",
 	"package": "com.frostbound.mixin",
+	"plugin": "com.frostbound.mixin.FrostboundMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"environment.BiomeMixin",
 		"environment.BlockMixin",
 		"environment.FreezeTopLayerFeatureMixin",
+		"environment.MultiNoiseBiomeSourceParameterListMixin",
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",
 		"mobs.LivingEntityMixin",

@@ -1,4 +1,5 @@
 {
 	"gamerule.frostboundSpawnChance": "Frostbound: chance (%) for eligible mobs to spawn Frozen",
-	"gamerule.frostboundColdBiomeChance": "Frostbound: chance (%) in cold biomes"
+	"gamerule.frostboundColdBiomeChance": "Frostbound: chance (%) in cold biomes",
+	"biome.frostbound.sparse_forest": "Sparse Forest"
 }
