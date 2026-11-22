@@ -1,5 +1,6 @@
 package com.frostbound;
 
+import com.frostbound.christmas.Christmas;
 import com.frostbound.config.FrostboundConfig;
 import com.frostbound.environment.WinterEnvironment;
 import com.frostbound.mobs.FrozenMobs;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
  *
  *  - environment (com.frostbound.environment): the winter Overworld
  *  - frozenMobs  (com.frostbound.mobs):        Frozen mob variants
+ *  - christmas   (com.frostbound.christmas):   festive structures (with DecorationX: Christmas)
  */
 public class Frostbound implements ModInitializer {
 	public static final String MOD_ID = "frostbound";
@@ -33,7 +35,10 @@ public class Frostbound implements ModInitializer {
 		if (modules.frozenMobs) {
 			FrozenMobs.init();
 		}
-		LOGGER.info("Frostbound loaded (environment: {}, frozen mobs: {}). Stay warm.",
-				modules.environment, modules.frozenMobs);
+		if (modules.christmas) {
+			Christmas.init();
+		}
+		LOGGER.info("Frostbound loaded (environment: {}, frozen mobs: {}, christmas: {}). Stay warm.",
+				modules.environment, modules.frozenMobs, modules.christmas);
 	}
 }

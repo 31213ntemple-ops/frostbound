@@ -1,0 +1,14 @@
+{
+	"structures": [
+		{
+			"structure": "frostbound:christmas_tree",
+			"weight": 1
+		}
+	],
+	"placement": {
+		"type": "minecraft:random_spread",
+		"spacing": 36,
+		"separation": 12,
+		"salt": 1225202512
+	}
+}

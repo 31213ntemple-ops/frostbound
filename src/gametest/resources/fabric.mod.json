@@ -9,7 +9,9 @@
 		"fabric-gametest": [
 			"com.frostbound.test.FrozenMobTests",
 			"com.frostbound.test.WinterEnvironmentTests",
-			"com.frostbound.test.SnowyPlantTests"
+			"com.frostbound.test.SnowyPlantTests",
+			"com.frostbound.test.ChristmasStructureBuilder",
+			"com.frostbound.test.ChristmasTests"
 		]
 	},
 	"depends": {

@@ -4,8 +4,9 @@ A collection of winter features, built as one mod split into **modules**. Each m
 
 ```json
 {
-  "modules": { "environment": true, "frozenMobs": true },
-  "environment": { "coldBiomesOnly": true }
+  "modules": { "environment": true, "frozenMobs": true, "christmas": true },
+  "environment": { "coldBiomesOnly": true },
+  "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } }
 }
 ```
 
@@ -13,6 +14,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 |---|---|
 | `environment` | Only cold biomes generate, and every Overworld biome becomes a winter variant with its own temperature, snow, ice and colours |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
+| `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 
 ## Winter Environment
 
@@ -64,6 +66,34 @@ Roughly what a new world looks like (sampled over 40 km, vanilla terrain): taiga
 - Every biome's vanilla temperature is `0.15 + °C / 40`, so mods that read vanilla temperature get the same winter values.
 - For code: `FrostboundClimate.getCelsius(biome)` and `FrostboundClimate.isArctic(biome)`.
 - In Tough As Nails, being *cold* does no harm; only *icy* freezes you. Night, snowfall, being wet and high altitude each push you one step colder. Caves (below Y=50) always count as neutral.
+
+## Christmas
+
+Built from other mods' blocks, so it only loads when they're installed (all data is in the built-in pack `resourcepacks/christmas`):
+
+| Needs | For |
+|---|---|
+| **DecorationX: Christmas** | the module at all (without it nothing is added) |
+| **Supplementaries** | the presents you can open (without it the trees come without them) |
+
+**Christmas tree clearings** (`frostbound:christmas_tree`): a DecorationX Grand Christmas Tree (classic, multicolour, silver & blue or white frost, picked at random) on a round patch of snow, with five Supplementaries presents "from Santa" around it, three DecorationX present piles, two Christmas lanterns and a snowman. They're rare: at most one per 36×36 chunks (about 580 blocks), and only in Sparse Forest, taigas, snowy plains and groves. Snow never settles on the tree, the presents or the lanterns (they're in `minecraft:snow_layer_cannot_survive_on`), only on the floor around them.
+
+**Presents:** right-click one of the tree's Supplementaries presents once and one of these happens:
+
+| Outcome | Chance | What happens |
+|---|---|---|
+| Frozen mobs | 30% | the present bursts and 1–3 Frozen mobs (zombie, skeleton, spider or stray) climb out |
+| Gift | 35% | one decent item pops out (see below) |
+| Coal | 20% | one lump of coal |
+| Explosion | 15% | it starts hissing and smoking, then explodes 2 seconds later (strength 2, a bit weaker than a creeper) |
+
+A message above the hotbar says which it was. Presents players wrap themselves open normally.
+
+All of it is set in `config/frostbound.json` under `christmas.presents` (restart to apply): `frozenMobsWeight`, `giftWeight`, `coalWeight`, `explodeWeight` (relative chances; 0 turns one off), `minMobs`/`maxMobs`, `frozenMobs` (list of mob IDs), `fuseTicks` (20 = 1 second) and `explosionPower` (creeper 3, TNT 4).
+
+**Gifts** come from `data/frostbound/loot_table/chests/christmas_present.json` (override it with a data pack to change them): iron, gold, emeralds, diamonds, lapis, golden apples, ender pearls, experience bottles, an enchanted book, pickaxe or bow, a saddle, name tag or diamond horse armour, fireworks, and things a cold-only world lacks (sugar cane, melon seeds, cocoa beans). Rarely a snow globe, music box or music disc.
+
+Try it: `/locate structure frostbound:christmas_tree`, or `/place structure frostbound:christmas_tree` where you stand.
 
 ## Frozen Mobs
 
@@ -122,6 +152,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `WinterEnvironmentTests`: every vanilla biome has a winter profile; temperatures and snowfall match the table; water freezes except in open-water biomes; the Nether and caves are untouched; the temperature-mod tags are filled; colours and strays are applied.
 - `WinterEnvironmentTests` also checks cold biomes only: removed biomes never generate (it samples real Overworld noise and logs the biome share), every replacement is a cold biome, and Sparse Forest has its oaks, horses and donkeys.
 - `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
+- `ChristmasTests`: the structure only loads with DecorationX; every tree style has the tree, the snow floor and five gift presents; the templates place (directly and through `/place structure`, landing on the surface); gifts are one decent stack (never coal); snow can't settle on the tree, presents or lanterns but still lands on the floor; each present outcome works (gift, one coal, 1–3 Frozen mobs, explosion after the fuse) and the chances match the config. A chest with the present loot table stands in for the Supplementaries present, which can't run in dev.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -168,6 +199,8 @@ Test natural spawning:
 
 ## Tweaking
 
+- **Christmas tree layout:** edit `ChristmasStructureBuilder` in `src/gametest` and run `./gradlew runGametest -PbuildStructures`. It rebuilds the four `.nbt` templates in `resourcepacks/christmas/data/frostbound/structure/christmas_tree/` (run the tests again afterwards so they see the new files). Or design one by hand in the dev client with a structure block, and save it over one of those files. **How rare:** `spacing`/`separation` in `worldgen/structure_set/christmas_trees.json`. **Where:** the tag `frostbound:has_structure/christmas_tree`. **Gifts:** `loot_table/chests/christmas_present.json`. **Present outcomes:** `christmas.presents` in the config, code in `christmas/ChristmasPresents.java`.
+
 - **Which biomes generate:** `REPLACEMENTS` in `environment/WinterBiomePool.java` (removed biome → what generates instead). **Sparse Forest:** `data/frostbound/worldgen/biome/sparse_forest.json` (spawns, features) and `worldgen/placed_feature/sparse_forest_trees.json` (how many oaks).
 - **Biome temperatures, water, bands:** one line per biome in `environment/WinterClimate.java` (`TABLE`). Colour palettes are on the `Zone` enum in the same file.
 - **Open water biomes:** the tag `frostbound:open_water` (keep it in step with `WaterMode.OPEN` in the table; a test checks this).
@@ -191,6 +224,8 @@ com.frostbound
 │   └── FrostboundClimate         public API (°C per biome)
 ├── client/                 client entrypoint; SnowyPlantModel draws snow on snowy plants
 ├── mobs/                   frozen mobs module (FrozenMobs, FrozenMob, FrostStats)
+├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
+│                           installed), ChristmasPresents (what opening a tree present does)
 └── mixin/
     ├── environment/              BiomeMixin (open water, snow into plants), BlockMixin (adds
     │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
@@ -204,3 +239,4 @@ com.frostbound
 - The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
 - `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.
+- **Other mods in dev:** DecorationX: Christmas runs in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.

@@ -37,7 +37,35 @@ loom {
 			vmArg "-Dfabric-api.gametest"
 			vmArg "-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.get().asFile}/gametest/junit.xml"
 			runDir "build/gametest"
+			// gradlew runGametest -PbuildStructures: also (re)build the structure templates (ChristmasStructureBuilder).
+			if (project.hasProperty("buildStructures")) {
+				vmArg "-Dfrostbound.buildStructures=true"
+			}
 		}
+		configureEach {
+			// Lets dev-only tools (e.g. the structure builder) write into src/main/resources.
+			vmArg "-Dfrostbound.projectDir=${project.projectDir}"
+		}
+	}
+}
+
+repositories {
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		filter {
+			includeGroup "maven.modrinth"
+		}
+	}
+}
+
+configurations {
+	devMods {
+		transitive = false
 	}
 }
 
@@ -46,6 +74,29 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// DecorationX: Christmas, for building and testing the Christmas structures in dev. See devMods below.
+	devMods "maven.modrinth:decorationx-christmas:${project.decorationx_christmas_version}"
+}
+
+// Other mods to play-test with in dev. They were built with a newer Loom than this project
+// uses, so instead of Loom's mod* configurations they're copied as-is into each run's mods
+// folder, and Fabric Loader remaps them when the game starts. Never part of the built jar.
+def syncDevMods = tasks.register("syncDevMods") {
+	inputs.files(configurations.devMods)
+	outputs.dirs("run/mods", "build/gametest/mods")
+	doLast {
+		["run/mods", "build/gametest/mods"].each { dir ->
+			project.sync {
+				from configurations.devMods
+				into dir
+			}
+		}
+	}
+}
+
+tasks.matching { it.name in ["runClient", "runServer", "runGametest"] }.configureEach {
+	dependsOn syncDevMods
 }
 
 processResources {

@@ -1,0 +1,90 @@
+{
+	"replace": false,
+	"values": [
+		"decorationx_christmas:grand_tree",
+		"decorationx_christmas:grand_tree_multicolour",
+		"decorationx_christmas:grand_tree_silver_blue",
+		"decorationx_christmas:grand_tree_white_frost",
+		"decorationx_christmas:presents",
+		"decorationx_christmas:presents_blue",
+		"decorationx_christmas:presents_gold",
+		"decorationx_christmas:presents_green",
+		"decorationx_christmas:presents_purple",
+		"decorationx_christmas:presents_white",
+		"decorationx_christmas:present_pile",
+		"decorationx_christmas:present_family_2_a",
+		"decorationx_christmas:present_family_2_b",
+		"decorationx_christmas:christmas_lantern",
+		"decorationx_christmas:christmas_lantern_red",
+		"decorationx_christmas:christmas_lantern_green",
+		"decorationx_christmas:christmas_lantern_ivory",
+		{
+			"id": "supplementaries:present_white",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_orange",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_magenta",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_light_blue",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_yellow",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_lime",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_pink",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_gray",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_light_gray",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_cyan",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_purple",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_blue",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_brown",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_green",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_red",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present_black",
+			"required": false
+		},
+		{
+			"id": "supplementaries:present",
+			"required": false
+		}
+	]
+}

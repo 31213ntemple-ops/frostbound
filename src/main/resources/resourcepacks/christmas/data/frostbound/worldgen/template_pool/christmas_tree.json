@@ -1,0 +1,41 @@
+{
+	"fallback": "minecraft:empty",
+	"elements": [
+		{
+			"weight": 1,
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "frostbound:christmas_tree/classic",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			}
+		},
+		{
+			"weight": 1,
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "frostbound:christmas_tree/multicolour",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			}
+		},
+		{
+			"weight": 1,
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "frostbound:christmas_tree/silver_blue",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			}
+		},
+		{
+			"weight": 1,
+			"element": {
+				"element_type": "minecraft:single_pool_element",
+				"location": "frostbound:christmas_tree/white_frost",
+				"processors": "minecraft:empty",
+				"projection": "rigid"
+			}
+		}
+	]
+}

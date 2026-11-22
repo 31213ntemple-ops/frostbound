@@ -28,6 +28,8 @@ public final class FrostboundConfig {
 		public boolean environment = true;
 		/** Some hostile mobs spawn Frozen (tougher, slower, icy). */
 		public boolean frozenMobs = true;
+		/** Christmas structures (needs DecorationX: Christmas; presents need Supplementaries). */
+		public boolean christmas = true;
 	}
 
 	/** Options for the environment module. */
@@ -36,6 +38,30 @@ public final class FrostboundConfig {
 	public static final class Environment {
 		/** New terrain only uses cold biomes (plus Sparse Forest); other biomes are swapped out. */
 		public boolean coldBiomesOnly = true;
+	}
+
+	/** Options for the christmas module. */
+	public ChristmasOptions christmas = new ChristmasOptions();
+
+	public static final class ChristmasOptions {
+		/** What happens when you open a present under a Christmas tree. */
+		public Presents presents = new Presents();
+	}
+
+	public static final class Presents {
+		/** Chance weights of the outcomes (relative to each other; 0 turns one off). */
+		public int frozenMobsWeight = 30;
+		public int giftWeight = 35;
+		public int coalWeight = 20;
+		public int explodeWeight = 15;
+		/** Frozen mobs: how many, and which kinds (picked at random for each). */
+		public int minMobs = 1;
+		public int maxMobs = 3;
+		public java.util.List<String> frozenMobs = new java.util.ArrayList<>(java.util.List.of(
+				"minecraft:zombie", "minecraft:skeleton", "minecraft:spider", "minecraft:stray"));
+		/** Explosion: fuse in ticks (20 = 1 second) and strength (creeper 3, TNT 4). */
+		public int fuseTicks = 40;
+		public float explosionPower = 2.0f;
 	}
 
 	public static synchronized FrostboundConfig get() {
@@ -58,6 +84,12 @@ public final class FrostboundConfig {
 				}
 				if (config.environment == null) {
 					config.environment = new Environment();
+				}
+				if (config.christmas == null) {
+					config.christmas = new ChristmasOptions();
+				}
+				if (config.christmas.presents == null) {
+					config.christmas.presents = new Presents();
 				}
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);
