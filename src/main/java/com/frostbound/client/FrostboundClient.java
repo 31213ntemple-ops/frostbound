@@ -30,6 +30,9 @@ public class FrostboundClient implements ClientModInitializer {
 		// The fire-starting minigame: the bar under the crosshair while you use a fire starter.
 		FireStarterMinigame.init();
 
+		// Item passives (e.g. copper's Conductivity) at the top of tooltips.
+		PassiveTooltips.init();
+
 		// Snowy plants: wrap the model of every "snowy=true" plant state so it also draws a
 		// thin snow layer. Vanilla's blockstate files already match the snowy states (they
 		// don't mention the property), so no new model or blockstate files are needed.

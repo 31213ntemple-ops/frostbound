@@ -15,7 +15,8 @@
 			"com.frostbound.test.IceBallTests",
 			"com.frostbound.test.IceTests",
 			"com.frostbound.test.VesselTests",
-			"com.frostbound.test.CampfireTests"
+			"com.frostbound.test.CampfireTests",
+			"com.frostbound.test.CopperTests"
 		]
 	},
 	"depends": {

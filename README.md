@@ -7,18 +7,19 @@ A collection of winter features, built as one mod split into **modules**. Each m
   "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true },
   "environment": { "coldBiomesOnly": true },
   "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
-  "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 }
+  "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 },
+  "conductivity": { "chance": 0.05, "damageMultiplier": 1.5, "radius": 1.5 }
 }
 ```
 
 | Module | What it does |
 |---|---|
 | `environment` | Only cold biomes generate, and every Overworld biome becomes a winter variant with its own temperature, snow, ice and colours |
-| `ice` | Ice drops when mined with a pickaxe better than stone (iron or up; tag `frostbound:ice_mining_tools`, copper pickaxe included if it exists), no Silk Touch needed, and it no longer melts to water, packed and blue ice can't be crafted, blue ice doesn't generate, new ice textures |
+| `ice` | Ice drops when mined with a pickaxe better than stone (iron or up, plus the copper pickaxe; tag `frostbound:ice_mining_tools`), no Silk Touch needed, and it no longer melts to water, packed and blue ice can't be crafted, blue ice doesn't generate, new ice textures |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 
-Items like the **Ice Ball** aren't a module: they're always there (so saved items never disappear), and `iceBalls` in the config only sets their balance.
+Items like the **Ice Ball** and **copper gear** aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` in the config only set their balance.
 
 ## Hearts and vessels
 
@@ -168,6 +169,36 @@ The client draws the bar and judges each click; the server keeps the streak, tak
 
 Try it: `/give @s frostbound:fire_starter` and `/give @s frostbound:campfire_base`.
 
+## Copper Gear
+
+Copper tools and armour from Minecraft 1.21.9 ("The Copper Age"), brought back to 1.21.1 with the same stats, recipes and textures (the textures and the armour equip sound come straight from the 1.21.10 game files). They're `frostbound:` items, so `/give @s frostbound:copper_sword`.
+
+| Item | Stats | Recipe |
+|---|---|---|
+| Copper Sword | 5 damage, 1.6 speed, 190 durability | like any sword, with copper ingots |
+| Copper Axe | 9 damage, 0.8 speed | like any axe |
+| Copper Pickaxe, Shovel, Hoe | mine like stone (iron ore yes, diamond/gold/redstone no), dig speed 5 | like any tool |
+| Copper Helmet / Chestplate / Leggings / Boots | 2 / 4 / 3 / 1 armour, durability 121 / 176 / 165 / 143 | like any armour |
+| Copper Horse Armor | 4 armour | not craftable: found in dungeons, desert and jungle temples, nether fortresses, strongholds, end cities and village weaponsmiths (as often as iron horse armour) |
+| Copper Nugget | | 1 ingot ↔ 9 nuggets; smelting or blasting copper gear gives a nugget |
+
+Copper sits between stone and iron: it mines what stone mines but lasts longer (190 vs 131) and digs faster. Tools are repaired with copper ingots (tag `frostbound:copper_tool_materials`), armour can be enchanted and trimmed, and the copper pickaxe also mines ice when the ice module is on.
+
+### Conductivity
+
+Every copper tool has the **Conductivity** passive, shown at the top of its tooltip:
+
+> **CONDUCTIVITY**
+> 5% chance to deal 150% damage to any mobs within 1.5 blocks of the targeted mob. Can chain endlessly.
+
+When you hit a mob in melee with a copper tool there's a 5% chance the hit arcs: every other mob within 1.5 blocks of the one you hit takes 150% of your hit's damage, with a crackle and a line of sparks. **It chains:** every mob it shocks rolls the same 5% to arc on from itself, to the mobs within 1.5 blocks of *it*, and so on with no limit, so a packed swarm can light up end to end. Each mob is shocked at most once per chain, and every link deals 150% of your original hit (it doesn't grow along the chain). The mob you hit takes its normal damage. One roll per swing (a sword's sweep doesn't roll again). It never hits you, your pets, your teammates, armour stands or other players (a mob holding a copper weapon can shock players). Deaths read "was electrocuted by".
+
+- **Balance:** `conductivity` in `config/frostbound.json` (restart): `chance` (0.05 = 5%, 0 turns it off), `damageMultiplier` (1.5 = 150%), `radius` (blocks). The tooltip numbers follow the config.
+- **Which weapons conduct:** the item tag `frostbound:conductive` (the five copper tools); a data pack can add any item.
+- **Passives** are a small framework (`com.frostbound.passives`): each is a name, a colour, an item tag and a description, and the tooltip layout is shared. See `CLAUDE.md` for how to add one.
+
+Try it: `/give @s frostbound:copper_sword`, then `/summon pig` a few times close together and hit one (or set `chance` to 1 in the config to see it every hit).
+
 ## Development workflow
 
 You need **JDK 21** (Temurin 21 from adoptium.net). If Gradle picks up the wrong Java on a machine, point it at JDK 21 in that machine's **own** `~/.gradle/gradle.properties` (not the project's, which is shared through git):
@@ -212,6 +243,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
 - `ChristmasTests`: the structure only loads with DecorationX; every tree style has the tree, the snow floor and five gift presents; the templates place (directly and through `/place structure`, landing on the surface); gifts are one decent stack (never coal); snow can't settle on the tree, presents or lanterns but still lands on the floor; each present outcome works (gift, one coal, 1–3 Frozen mobs, explosion after the fuse) and the chances match the config. A chest with the present loot table stands in for the Supplementaries present, which can't run in dev.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
+- `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -286,6 +318,10 @@ com.frostbound
 ├── mobs/                   frozen mobs module (FrozenMobs, FrozenMob, FrostStats)
 ├── items/                  always-on items: FrostboundItems (registers items, entities, dispenser and
 │                           creative tab), IceBallItem (throwing), IceBallEntity (what a hit does)
+├── copper/                 copper gear backported from 1.21.9: CopperGear (materials, items, creative tabs),
+│                           Conductivity (the copper passive)
+├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
+│                           client/PassiveTooltips draws them at the top of tooltips
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
 │                           installed), ChristmasPresents (what opening a tree present does)
 └── mixin/

@@ -83,6 +83,18 @@ public final class FrostboundConfig {
 		public int cooldownTicks = 10;
 	}
 
+	/** Conductivity, the copper tools' passive (always on; these are balance numbers). */
+	public ConductivityOptions conductivity = new ConductivityOptions();
+
+	public static final class ConductivityOptions {
+		/** Chance per melee hit that it arcs (0.05 = 5%; 0 turns it off). */
+		public float chance = 0.05f;
+		/** Arc damage as a multiple of the hit's damage (1.5 = 150%). */
+		public float damageMultiplier = 1.5f;
+		/** How far from the struck mob the arc reaches, in blocks. */
+		public double radius = 1.5;
+	}
+
 	public static synchronized FrostboundConfig get() {
 		if (instance == null) {
 			instance = load(FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
@@ -112,6 +124,9 @@ public final class FrostboundConfig {
 				}
 				if (config.iceBalls == null) {
 					config.iceBalls = new IceBalls();
+				}
+				if (config.conductivity == null) {
+					config.conductivity = new ConductivityOptions();
 				}
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);

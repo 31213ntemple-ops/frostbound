@@ -1,0 +1,41 @@
+{
+	"type": "minecraft:smelting",
+	"category": "misc",
+	"cookingtime": 200,
+	"experience": 0.1,
+	"ingredient": [
+		{
+			"item": "frostbound:copper_pickaxe"
+		},
+		{
+			"item": "frostbound:copper_shovel"
+		},
+		{
+			"item": "frostbound:copper_axe"
+		},
+		{
+			"item": "frostbound:copper_hoe"
+		},
+		{
+			"item": "frostbound:copper_sword"
+		},
+		{
+			"item": "frostbound:copper_helmet"
+		},
+		{
+			"item": "frostbound:copper_chestplate"
+		},
+		{
+			"item": "frostbound:copper_leggings"
+		},
+		{
+			"item": "frostbound:copper_boots"
+		},
+		{
+			"item": "frostbound:copper_horse_armor"
+		}
+	],
+	"result": {
+		"id": "frostbound:copper_nugget"
+	}
+}

@@ -41,5 +41,22 @@
 	"item.frostbound.fire_starter": "Fire Starter",
 	"item.frostbound.fire_starter.hint": "Hold right-click on a campfire base",
 	"block.frostbound.campfire_base": "Campfire Base",
-	"frostbound.fire_starter.minigame": "Left-click in the green"
+	"frostbound.fire_starter.minigame": "Left-click in the green",
+	"item.frostbound.copper_nugget": "Copper Nugget",
+	"item.frostbound.copper_sword": "Copper Sword",
+	"item.frostbound.copper_shovel": "Copper Shovel",
+	"item.frostbound.copper_pickaxe": "Copper Pickaxe",
+	"item.frostbound.copper_axe": "Copper Axe",
+	"item.frostbound.copper_hoe": "Copper Hoe",
+	"item.frostbound.copper_helmet": "Copper Helmet",
+	"item.frostbound.copper_chestplate": "Copper Chestplate",
+	"item.frostbound.copper_leggings": "Copper Leggings",
+	"item.frostbound.copper_boots": "Copper Boots",
+	"item.frostbound.copper_horse_armor": "Copper Horse Armor",
+	"subtitles.item.armor.equip_copper": "Copper armor clanks",
+	"passive.frostbound.conductivity": "CONDUCTIVITY",
+	"passive.frostbound.conductivity.desc": "%s%% chance to deal %s%% damage to any mobs within %s blocks of the targeted mob. Can chain endlessly.",
+	"death.attack.frostbound.conductivity": "%1$s was electrocuted by %2$s",
+	"death.attack.frostbound.conductivity.item": "%1$s was electrocuted by %2$s using %3$s",
+	"death.attack.frostbound.conductivity.player": "%1$s was electrocuted whilst fighting %2$s"
 }

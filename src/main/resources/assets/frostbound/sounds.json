@@ -1,0 +1,13 @@
+{
+	"item.armor.equip_copper": {
+		"sounds": [
+			"frostbound:item/armor/equip_copper1",
+			"frostbound:item/armor/equip_copper2",
+			"frostbound:item/armor/equip_copper3",
+			"frostbound:item/armor/equip_copper4",
+			"frostbound:item/armor/equip_copper5",
+			"frostbound:item/armor/equip_copper6"
+		],
+		"subtitle": "subtitles.item.armor.equip_copper"
+	}
+}

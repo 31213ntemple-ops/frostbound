@@ -3,6 +3,7 @@ package com.frostbound;
 import com.frostbound.campfire.Campfires;
 import com.frostbound.christmas.Christmas;
 import com.frostbound.config.FrostboundConfig;
+import com.frostbound.copper.CopperGear;
 import com.frostbound.environment.WinterEnvironment;
 import com.frostbound.ice.IceChanges;
 import com.frostbound.items.FrostboundItems;
@@ -23,7 +24,8 @@ import org.slf4j.LoggerFactory;
  *  - christmas   (com.frostbound.christmas):   festive structures (with DecorationX: Christmas)
  *
  * Items (com.frostbound.items, e.g. ice balls; com.frostbound.vessels, the heart vessels;
- * com.frostbound.campfire, the fire starter and campfire base) are always registered.
+ * com.frostbound.campfire, the fire starter and campfire base; com.frostbound.copper, copper gear
+ * backported from 1.21.9 with the Conductivity passive) are always registered.
  */
 public class Frostbound implements ModInitializer {
 	public static final String MOD_ID = "frostbound";
@@ -40,6 +42,7 @@ public class Frostbound implements ModInitializer {
 		FrostboundItems.init();
 		Vessels.init();
 		Campfires.init();
+		CopperGear.init();
 
 		if (modules.environment) {
 			WinterEnvironment.init();

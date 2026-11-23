@@ -1,0 +1,10 @@
+{
+	"replace": false,
+	"values": [
+		"frostbound:copper_sword",
+		"frostbound:copper_shovel",
+		"frostbound:copper_pickaxe",
+		"frostbound:copper_axe",
+		"frostbound:copper_hoe"
+	]
+}
