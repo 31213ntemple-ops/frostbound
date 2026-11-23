@@ -1,0 +1,21 @@
+{
+	"replace": false,
+	"values": [
+		{
+			"id": "frostbound:alpha_hide_helmet",
+			"required": false
+		},
+		{
+			"id": "frostbound:alpha_hide_chestplate",
+			"required": false
+		},
+		{
+			"id": "frostbound:alpha_hide_leggings",
+			"required": false
+		},
+		{
+			"id": "frostbound:alpha_hide_boots",
+			"required": false
+		}
+	]
+}

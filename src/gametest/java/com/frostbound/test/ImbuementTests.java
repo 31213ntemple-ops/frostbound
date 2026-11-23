@@ -32,6 +32,7 @@ import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.GameTestException;
@@ -145,7 +146,7 @@ public class ImbuementTests implements FabricGameTest {
 	public void tableMenuUpgradesAndConsumes(TestContext ctx) {
 		BlockPos pos = ctx.getAbsolutePos(new BlockPos(1, 2, 1));
 		ctx.setBlockState(1, 2, 1, Imbuement.TABLE);
-		PlayerEntity player = ctx.createMockCreativeServerPlayerInWorld(); // a server player, so closing hands items back
+		PlayerEntity player = serverPlayer(ctx); // a server player, so closing hands items back
 		ImbuementScreenHandler menu = new ImbuementScreenHandler(0, player.getInventory(), ScreenHandlerContext.create(ctx.getWorld(), pos));
 
 		Slot center = menu.getSlot(ImbuementScreenHandler.CENTER_SLOT);
@@ -398,6 +399,22 @@ public class ImbuementTests implements FabricGameTest {
 
 	private static void close(double actual, double expected, String what) {
 		check(Math.abs(actual - expected) < 0.01, what + ": expected " + expected + ", got " + actual);
+	}
+
+	/**
+	 * A server player with a (fake) connection, like TestContext.createMockCreativeServerPlayerInWorld but
+	 * without joining the player list: when it joins, Cardinal Components (from Trinkets) syncs to it over the
+	 * fake connection, which gets it kicked, and a kicked player's items are dropped instead of handed back.
+	 */
+	static ServerPlayerEntity serverPlayer(TestContext ctx) {
+		com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "test-mock-player");
+		ServerPlayerEntity player = new ServerPlayerEntity(ctx.getWorld().getServer(), ctx.getWorld(), profile,
+				net.minecraft.network.packet.c2s.common.SyncedClientOptions.createDefault());
+		net.minecraft.network.ClientConnection connection = new net.minecraft.network.ClientConnection(net.minecraft.network.NetworkSide.SERVERBOUND);
+		new io.netty.channel.embedded.EmbeddedChannel(connection);
+		new net.minecraft.server.network.ServerPlayNetworkHandler(ctx.getWorld().getServer(), connection, player,
+				net.minecraft.server.network.ConnectedClientData.createDefault(profile, false));
+		return player;
 	}
 
 	private static void check(boolean condition, String message) {

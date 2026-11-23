@@ -1,6 +1,7 @@
 {
 	"replace": false,
 	"values": [
-		"frostbound:copper_boots"
+		"frostbound:copper_boots",
+		"frostbound:alpha_hide_boots"
 	]
 }

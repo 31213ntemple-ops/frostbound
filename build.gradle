@@ -50,6 +50,29 @@ loom {
 }
 
 repositories {
+	// Trinkets (accessory slots: the Mark of the Pack is a necklace) and the Cardinal Components it builds on.
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "TerraformersMC"
+				url = "https://maven.terraformersmc.com/releases"
+			}
+		}
+		filter {
+			includeGroup "dev.emi"
+		}
+	}
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Ladysnake"
+				url = "https://maven.ladysnake.org/releases"
+			}
+		}
+		filter {
+			includeGroupAndSubgroups "org.ladysnake"
+		}
+	}
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -74,6 +97,9 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Trinkets: required. The Mark of the Pack (Alpha Wolf drop) is worn in its necklace slot.
+	modImplementation "dev.emi:trinkets:${project.trinkets_version}"
 
 	// DecorationX: Christmas, for building and testing the Christmas structures in dev. See devMods below.
 	devMods "maven.modrinth:decorationx-christmas:${project.decorationx_christmas_version}"

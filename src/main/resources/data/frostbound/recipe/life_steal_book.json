@@ -1,0 +1,28 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"key": {
+		"T": {
+			"item": "frostbound:wolf_tooth"
+		},
+		"B": {
+			"item": "minecraft:book"
+		}
+	},
+	"pattern": [
+		" T ",
+		"TBT",
+		" T "
+	],
+	"result": {
+		"count": 1,
+		"id": "minecraft:enchanted_book",
+		"components": {
+			"minecraft:stored_enchantments": {
+				"levels": {
+					"frostbound:life_steal": 1
+				}
+			}
+		}
+	}
+}

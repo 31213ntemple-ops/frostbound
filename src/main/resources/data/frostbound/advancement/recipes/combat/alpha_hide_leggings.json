@@ -1,0 +1,32 @@
+{
+	"parent": "minecraft:recipes/root",
+	"criteria": {
+		"has_alpha_hide": {
+			"conditions": {
+				"items": [
+					{
+						"items": "frostbound:alpha_hide"
+					}
+				]
+			},
+			"trigger": "minecraft:inventory_changed"
+		},
+		"has_the_recipe": {
+			"conditions": {
+				"recipe": "frostbound:alpha_hide_leggings"
+			},
+			"trigger": "minecraft:recipe_unlocked"
+		}
+	},
+	"requirements": [
+		[
+			"has_the_recipe",
+			"has_alpha_hide"
+		]
+	],
+	"rewards": {
+		"recipes": [
+			"frostbound:alpha_hide_leggings"
+		]
+	}
+}

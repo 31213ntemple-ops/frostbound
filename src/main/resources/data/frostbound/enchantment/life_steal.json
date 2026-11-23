@@ -1,0 +1,20 @@
+{
+	"description": {
+		"translate": "enchantment.frostbound.life_steal"
+	},
+	"supported_items": "#frostbound:enchantable/life_steal",
+	"weight": 2,
+	"max_level": 2,
+	"min_cost": {
+		"base": 15,
+		"per_level_above_first": 9
+	},
+	"max_cost": {
+		"base": 65,
+		"per_level_above_first": 9
+	},
+	"anvil_cost": 4,
+	"slots": [
+		"mainhand"
+	]
+}

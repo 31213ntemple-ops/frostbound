@@ -1,5 +1,6 @@
 package com.frostbound;
 
+import com.frostbound.alpha.AlphaWolves;
 import com.frostbound.campfire.Campfires;
 import com.frostbound.christmas.Christmas;
 import com.frostbound.config.FrostboundConfig;
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * Items (com.frostbound.items, e.g. ice balls; com.frostbound.vessels, the heart vessels;
  * com.frostbound.campfire, the fire starter and campfire base; com.frostbound.copper, copper gear
  * backported from 1.21.9 with the Conductivity passive; com.frostbound.imbuement, the imbuement table and
- * Cold/Icy/Frozen armour) are always registered.
+ * Cold/Icy/Frozen armour; com.frostbound.alpha, the Alpha Wolf boss, its pack and its rewards) are always registered.
  */
 public class Frostbound implements ModInitializer {
 	public static final String MOD_ID = "frostbound";
@@ -46,6 +47,7 @@ public class Frostbound implements ModInitializer {
 		Campfires.init();
 		CopperGear.init();
 		Imbuement.init();
+		AlphaWolves.init();
 
 		if (modules.environment) {
 			WinterEnvironment.init();

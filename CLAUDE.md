@@ -1,6 +1,6 @@
 # Frostbound: notes for Claude
 
-Fabric 1.21.1 mod (yarn mappings). `README.md` is the full player- and developer-facing doc; keep it up to date with every feature. Run `./gradlew runGametest` after changes; every feature gets GameTests in `src/gametest/java/com/frostbound/test/` (register new classes in `src/gametest/resources/fabric.mod.json`).
+Fabric 1.21.1 mod (yarn mappings). Requires Trinkets (accessory slots; the necklace slot is used). `README.md` is the full player- and developer-facing doc; keep it up to date with every feature. Run `./gradlew runGametest` after changes; every feature gets GameTests in `src/gametest/java/com/frostbound/test/` (register new classes in `src/gametest/resources/fabric.mod.json`).
 
 ## Item passives (tooltip framework)
 
@@ -32,3 +32,7 @@ How to add one:
 ## Backported vanilla content
 
 Content from later Minecraft versions (e.g. copper gear from 1.21.9) is registered under the `frostbound` namespace with the later version's stats, recipes and loot weights. Textures and sounds are taken from the official Mojang client jar / asset index of that version, not redrawn. Vanilla files that get a new entry (chest loot tables) are copies of the **1.21.1** files with the entry added.
+
+## Trinkets accessories
+
+Accessories (necklaces, rings, ...) are Trinkets items: a `TrinketItem`, the slot's item tag (`data/trinkets/tags/item/<group>/<slot>.json`, e.g. `chest/necklace`) and the slot assigned to players in `data/trinkets/entities/frostbound.json`. Abilities on a key go through a C2S payload and are checked on the server, with the cooldown saved in a player attachment (see `alpha/MarkOfThePack`). In GameTests don't use `createMockCreativeServerPlayerInWorld` (Cardinal Components gets it kicked); use `ImbuementTests.serverPlayer`.

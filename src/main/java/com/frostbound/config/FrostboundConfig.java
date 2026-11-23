@@ -148,6 +148,104 @@ public final class FrostboundConfig {
 		}
 	}
 
+	/** The Alpha Wolf boss and its pack (always registered; these are balance numbers). */
+	public AlphaWolfOptions alphaWolf = new AlphaWolfOptions();
+
+	public static final class AlphaWolfOptions {
+		/** The Alpha's health (80 = 40 hearts), bite damage (2 = one heart, before armour) and size. */
+		public double health = 80.0;
+		public double damage = 5.0;
+		public double scale = 1.5;
+		/** Each pack wolf's health and bite damage. */
+		public double packWolfHealth = 12.0;
+		public double packWolfDamage = 3.0;
+		/** Wolves in a new pack, counting the Alpha, and the most the Alpha can ever lead at once. */
+		public int initialPackSize = 7;
+		public int maxPackSize = 9;
+		/** How many pack wolves may lunge at once; the rest circle and wait their turn (the Alpha lunges on its own). */
+		public int simultaneousAttackers = 2;
+		/** Ticks (20 = 1 s) a wolf stands and growls before it lunges, so the bite can be seen coming. */
+		public int lungeWindupTicks = 10;
+		public CallOfThePack callOfThePack = new CallOfThePack();
+		public DrainingBite drainingBite = new DrainingBite();
+		public Enrage enrage = new Enrage();
+		public Spawning spawning = new Spawning();
+	}
+
+	public static final class CallOfThePack {
+		/** Seconds into a fight before the first howl, and between howls. */
+		public double firstCallSeconds = 12.0;
+		public double intervalSeconds = 30.0;
+		/** Seconds the Alpha sits and howls before the pack answers. */
+		public double windupSeconds = 2.0;
+		/** Damage the Alpha has to take during the howl to cut it off (no wolves, no healing), and the wait before it tries again. */
+		public double interruptDamage = 8.0;
+		public double interruptedRetrySeconds = 10.0;
+		/** Wolves each howl summons (never past maxPackSize), and the most it can summon in one fight. */
+		public int wolvesPerCall = 2;
+		public int maxReinforcements = 12;
+		/** Health each living wolf heals for each wolf alive (0.5 = a quarter heart; 3 alive heal 1.5 each). */
+		public double healPerWolf = 0.5;
+	}
+
+	public static final class DrainingBite {
+		/** Max health a bite takes away (in hearts) and for how long. A bite never stacks or extends it. */
+		public double hearts = 2.0;
+		public double seconds = 10.0;
+	}
+
+	public static final class Enrage {
+		/** When a pack wolf dies, the rest get Strength (1 = Strength I) for this long. Refreshed, never stacked. */
+		public double seconds = 1.0;
+		public int strengthLevel = 1;
+	}
+
+	public static final class Spawning {
+		/** Packs roam cold biomes at night. Off: only spawn eggs and /summon frostbound:alpha_wolf. */
+		public boolean enabled = true;
+		/** How often (seconds) each player outdoors at night rolls for a pack, and the chance per roll. */
+		public double checkSeconds = 30.0;
+		public double chance = 0.015;
+		/** No packs before this day (1 = the first night). */
+		public int firstDay = 3;
+		/** How far from the player a pack appears, and how far apart two Alphas must be. */
+		public int minDistance = 28;
+		public int maxDistance = 44;
+		public int minSpacing = 256;
+	}
+
+	/** Alpha Hide armour's Pack Instinct set bonus. */
+	public PackInstinctOptions packInstinct = new PackInstinctOptions();
+
+	public static final class PackInstinctOptions {
+		/** Triggers when health drops below this (8 = 4 hearts) with 2 or more pieces worn. */
+		public double belowHealth = 8.0;
+		/** 2 pieces: Regeneration (2 = Regeneration II) for this long. 4 pieces: Strength as well. */
+		public int regenerationLevel = 2;
+		public double regenerationSeconds = 5.0;
+		public int strengthLevel = 1;
+		public double strengthSeconds = 5.0;
+		/** Seconds before it can trigger again, however often health crosses the line. */
+		public double cooldownSeconds = 60.0;
+	}
+
+	/** The Life Steal enchantment (crafted from wolf teeth). */
+	public LifeStealOptions lifeSteal = new LifeStealOptions();
+
+	public static final class LifeStealOptions {
+		/** Share of the health a hit takes from its target that the attacker heals, per level (0.1 = 10%). */
+		public double healPerLevel = 0.10;
+	}
+
+	/** The Mark of the Pack necklace. */
+	public MarkOfThePackOptions markOfThePack = new MarkOfThePackOptions();
+
+	public static final class MarkOfThePackOptions {
+		public int wolves = 2;
+		public double lifetimeSeconds = 30.0;
+		public double cooldownSeconds = 60.0;
+	}
+
 	/** A number with one value for Icy armour and a stronger one for Frozen. */
 	public static final class Tiered {
 		public double icy;
@@ -201,6 +299,30 @@ public final class FrostboundConfig {
 					config.frostBonuses = new FrostBonusOptions();
 				}
 				config.frostBonuses.fillMissing();
+				if (config.alphaWolf == null) {
+					config.alphaWolf = new AlphaWolfOptions();
+				}
+				if (config.alphaWolf.callOfThePack == null) {
+					config.alphaWolf.callOfThePack = new CallOfThePack();
+				}
+				if (config.alphaWolf.drainingBite == null) {
+					config.alphaWolf.drainingBite = new DrainingBite();
+				}
+				if (config.alphaWolf.enrage == null) {
+					config.alphaWolf.enrage = new Enrage();
+				}
+				if (config.alphaWolf.spawning == null) {
+					config.alphaWolf.spawning = new Spawning();
+				}
+				if (config.packInstinct == null) {
+					config.packInstinct = new PackInstinctOptions();
+				}
+				if (config.lifeSteal == null) {
+					config.lifeSteal = new LifeStealOptions();
+				}
+				if (config.markOfThePack == null) {
+					config.markOfThePack = new MarkOfThePackOptions();
+				}
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);
 				return config;

@@ -1,6 +1,7 @@
 {
 	"replace": false,
 	"values": [
-		"frostbound:copper_chestplate"
+		"frostbound:copper_chestplate",
+		"frostbound:alpha_hide_chestplate"
 	]
 }

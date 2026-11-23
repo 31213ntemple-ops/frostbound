@@ -10,7 +10,11 @@ A collection of winter features, built as one mod split into **modules**. Each m
   "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 },
   "conductivity": { "chance": 0.05, "damageMultiplier": 1.5, "radius": 1.5 },
   "frostTiers": { "coldArmor": 0.5, "frozenArmor": 0.5, "frozenToughness": 0.5, "coldDurability": 0.25, "icyDurability": 0.15 },
-  "frostBonuses": { "snowstride": { "icy": 0.04, "frozen": 0.08 }, "...": "see Imbuement Table" }
+  "frostBonuses": { "snowstride": { "icy": 0.04, "frozen": 0.08 }, "...": "see Imbuement Table" },
+  "alphaWolf": { "health": 80.0, "initialPackSize": 7, "maxPackSize": 9, "...": "see Alpha Wolf" },
+  "packInstinct": { "belowHealth": 8.0, "cooldownSeconds": 60.0, "...": "see Alpha Wolf" },
+  "lifeSteal": { "healPerLevel": 0.1 },
+  "markOfThePack": { "wolves": 2, "lifetimeSeconds": 30.0, "cooldownSeconds": 60.0 }
 }
 ```
 
@@ -21,7 +25,9 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 
-Items like the **Ice Ball**, **copper gear** and the **Imbuement Table** aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` in the config only set their balance.
+Items like the **Ice Ball**, **copper gear**, the **Imbuement Table** and the **Alpha Wolf** and its drops aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` in the config only set their balance.
+
+**Required mods:** Fabric API and **Trinkets** (3.10+, which brings Cardinal Components API with it). Trinkets gives players the necklace slot the Mark of the Pack is worn in.
 
 ## Hearts and vessels
 
@@ -248,6 +254,94 @@ Each armour material gets one bonus, shown as a passive at the top of the toolti
 
 Try it: `/give @s frostbound:imbuement_table`, `/give @s minecraft:iron_chestplate`, `/give @s minecraft:ice 8`, `/give @s minecraft:packed_ice 32`, `/give @s minecraft:blue_ice 8`. Or straight to a tier: `/give @s minecraft:leather_boots[frostbound:frost_tier=3]`.
 
+## Alpha Wolf
+
+An early-game Overworld boss: a big black wolf with burning red eyes, leading a pack. It's built for a player with about 7 hearts in iron (maybe Cold or Icy) armour, and it's about reading the pack and choosing what to hit, not a huge health bar.
+
+**Finding one:** at night, a player outdoors (open sky) in a snowy biome has a 1.5% chance every 30 s for a pack to turn up 28–44 blocks away, announced by a long, low howl heard from 64 blocks. Not before day 3, never within 256 blocks of another Alpha, never in Peaceful. An Alpha despawns (with its pack) when no player is within 128 blocks; name-tag it to keep it. Or: `/summon frostbound:alpha_wolf` or the **Alpha Wolf Spawn Egg** (both bring the pack).
+
+| | Alpha Wolf | Pack Wolf |
+|---|---|---|
+| Health | 80 (40 hearts) | 12 (6 hearts) |
+| Bite | 5 (about 1¼ hearts through iron) | 3 (under 1 heart through iron) |
+| Other | 1.5× size, armour 4, 60% knockback resistance, boss bar | |
+| Pack | starts at 7 wolves counting the Alpha, never more than 9 alive | |
+
+Hostile and untameable: bones, food, sitting, breeding, collars, leads and wolf armour do nothing. Pack wolves are the local wolf's coat (never black) and always look angry.
+
+### How the pack fights
+
+- **Together:** when any wolf picks a fight, the Alpha takes it up and every wolf joins in.
+- **In turns (hit and run):** only **2** pack wolves may lunge at once (the Alpha lunges on its own). The rest **circle** you 4–7 blocks out, facing you. A wolf with a turn runs in, then **stops, cocks its head and growls, kicking up snow** for half a second (the tell), lunges for one bite, then falls back and hands its turn on. A shield or a sidestep beats the bite.
+- **The boss bar** reads "Alpha Wolf · pack of 7", so you can see the pack shrink (or grow).
+
+### Call of the Pack
+
+12 s into a fight, and every 30 s after, the Alpha **sits back and howls** for 2 s, snout up, with a ring of frost spreading out from it. Then:
+
+- every living wolf heals **0.25 hearts for each wolf alive** (counted before reinforcements arrive: 3 alive → 0.75 hearts each);
+- **2 wolves** arrive from 6–12 blocks out, in a puff of snow with a howl, never past 9 alive, and no more than **12** in a whole fight (after that, howls only heal).
+
+**Cut it off:** deal 8 damage to the Alpha while it howls (two iron sword hits) and the howl breaks off with a yelp ("The Alpha's howl breaks off!"): no healing, no wolves, and it tries again 10 s later. Rushing the howl or thinning the pack is the main decision of the fight.
+
+### Draining Bite
+
+A pack wolf's bite that lands on a player (not blocked by a shield) applies **Drained**: **−2 max hearts for 10 s**. The lost hearts show as hollow, dark, slowly pulsing hearts at the end of the health bar, with a heartbeat and a crimson mist on the bite, and a dark red status effect with its own icon. When it ends (or milk cures it, or you die) the max health comes back; health you lost stays lost.
+
+It can't pile up: a bite while Drained neither stacks nor extends it, so you're never down more than 2 hearts, and never for more than 10 s after the bite that started it. It works with vessel hearts (it's a modifier on top of them) and leaves the Frozen Heart alone.
+
+### Enrage
+
+When a pack wolf dies, every living wolf (reinforcements included) gets **Strength I for 1 s** and may lunge again at once, with angry sparks and a growl. Deaths close together refresh it, never stack or lengthen it. The Alpha's own death isn't an Enrage.
+
+### When the Alpha dies
+
+The pack breaks: every wolf stops fighting, whines and **runs from the nearest player**, and vanishes in a puff of snow once no player is within 24 blocks (or after 10 s at most). They can't be drawn back into the fight, even if hit. A pack that loses its Alpha some other way (despawned, or not found for 10 s) scatters the same way.
+
+### Drops
+
+| Drop | From | Chance |
+|---|---|---|
+| **Alpha Hide** | the Alpha | 5–7, always |
+| **Mark of the Pack** | the Alpha (killed by a player) | 10% (+2% per Looting level) |
+| **Wolf Tooth** | every pack wolf, the Alpha too (killed by a player) | 10%, one tooth |
+
+25 XP from the Alpha, 3 from a pack wolf.
+
+### Alpha Hide armour
+
+| Piece | Armour | Durability | Recipe |
+|---|---|---|---|
+| Alpha Hide Cap | 2 | 165 | like any helmet, with Alpha Hide |
+| Alpha Hide Tunic | 5 | 240 | like any chestplate |
+| Alpha Hide Pants | 4 | 225 | like any leggings |
+| Alpha Hide Boots | 2 | 195 | like any boots |
+
+Beside iron, not above it: **13 armour for a set against iron's 15**, iron's durability, leather's enchantability (15), repaired with Alpha Hide. It can be imbued (Cold/Icy/Frozen stats) but has no material bonus. What it has instead:
+
+- **Insulated** (any piece): you can't freeze (powder snow; a Frozen mob's Frostbite still slows you but can't frost you over), and Tough As Nails counts it as warm clothing (`toughasnails:heating_armor`).
+- **Pack Instinct** (set bonus): when your health drops **below 4 hearts**, **2 pieces** give Regeneration II for 5 s, **4 pieces** also Strength I for 5 s. Then it **rests 60 s**, however often your health crosses the line, so it can't be farmed by bobbing around the threshold. The rest is saved on the player (survives relogging and death) and shows as a cooldown sweep on the armour icons; a message above the hotbar says when it fires.
+
+### Life Steal
+
+An enchantment (I–II) you can only craft, from Wolf Teeth:
+
+- **Life Steal I:** a book in the centre, a Wolf Tooth above, below and to each side (corners empty).
+- **Life Steal II:** a Life Steal I book in the centre, surrounded by 8 Wolf Teeth.
+
+Goes on swords, axes, bows, crossbows and tridents (anvil, like any book). **The rule, the same for melee and ranged:** a hit heals you **10% per level of the health the target actually lost** (after armour, and capped at what it had left, so overkill heals nothing extra). The level comes from the weapon the hit came from: the sword or axe in your hand (sweeps too), the bow or crossbow that shot the arrow, or the thrown trident. Conductivity arcs, thorns, Diamond Dust and explosions never heal; armour stands don't count.
+
+### Mark of the Pack
+
+A fang on a cord, worn in Trinkets' **necklace** slot. Press **J** (rebind under Controls → Frostbound) to call **2 wolves** that fight for you (like tame wolves) for **30 s**, then vanish in a puff of snow; it recharges for **60 s** (shown on the item; "The pack is resting (Ns)" if you press it early). The recharge is saved on the player. Called wolves can't be fed, sat, bred, leashed or armoured, and drop nothing.
+
+- **Balance:** `alphaWolf` (stats, pack sizes, `simultaneousAttackers`, `lungeWindupTicks`, and `callOfThePack`, `drainingBite`, `enrage`, `spawning`), `packInstinct`, `lifeSteal`, `markOfThePack` in `config/frostbound.json` (restart). Tooltips follow the config.
+- **Data:** loot tables `entities/alpha_wolf.json` and `entities/pack_wolf.json`; `enchantment/life_steal.json`; tags `frostbound:pack_instinct`, `insulated`, `mark_of_the_pack`, `enchantable/life_steal`; Trinkets slot data in `data/trinkets/`.
+- **Code:** `com.frostbound.alpha` (`AlphaWolfEntity`, `PackWolfEntity`, `PackGoals` the AI, `DrainingBite`, `AlphaWolfSpawner`, `AlphaHide`, `LifeSteal`, `MarkOfThePack`, `SummonedWolfEntity`); `client/alpha` (renderer, drained hearts, the J key).
+- **Textures:** the armour, Alpha Hide and drained heart are recoloured from vanilla 1.21.1 leather and heart textures; the tooth, necklace, effect icon and eyes are drawn for the mod. The wolves use vanilla's wolf textures.
+
+Try it: `/give @s frostbound:alpha_wolf_spawn_egg`, `/give @s frostbound:mark_of_the_pack`, `/give @s frostbound:wolf_tooth 12`, `/give @s frostbound:alpha_hide 24`.
+
 ## Development workflow
 
 You need **JDK 21** (Temurin 21 from adoptium.net). If Gradle picks up the wrong Java on a machine, point it at JDK 21 in that machine's **own** `~/.gradle/gradle.properties` (not the project's, which is shared through git):
@@ -294,6 +388,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
 - `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
 - `ImbuementTests`: the table's recipe (smithing table, ice on the sides, iron in the corners) and block; each upgrade step needs its exact ring (8 ice, then 8 × 4 packed ice, then 8 blue ice) and only works on armour of the tier before; Cold/Icy/Frozen armour, toughness and durability (worn and after smithing into netherite); the menu's centre slot only takes armour, taking the result uses up 4 packed ice per slot and closing hands the rest back; the title ("Frozen Leather Tunic ★★★", the tier name in its star's colour), the stars (soft blues, each darker) and the bonus tooltips (none below Icy, Frozen numbers when Frozen, one bonus per material, each coloured after what it does); Cold Iron, Frostmail, Quenched, Diamond Dust, Superconductor, Snowstride, Hearthgold and Tidefrost each do what they say.
+- `AlphaWolfTests`: the Alpha's stats and size, untameable wolves; a new Alpha brings 7 (black Alpha, no black wolves); Call of the Pack heals 0.25 hearts per wolf alive and brings 2, never past 9 or the reinforcement budget; a big enough hit cuts the howl off; never more than 2 wolves lunging at once in a real fight; Enrage is Strength I for 1 s, refreshed not stacked; the Alpha's death scatters the pack and they vanish; Draining Bite takes 2 max hearts for 10 s, doesn't stack or extend, comes back when it ends, and only from a landed pack bite; drops (5–7 hides, ~10% Mark, ~10% tooth); Alpha Hide stats, insulation tags and recipes; Pack Instinct (2 vs 4 pieces, rests after triggering); the Life Steal recipes (cardinals only, I → II) and healing (melee and ranged the same, overkill capped, no heal from arcs or plain weapons); the Mark of the Pack in the necklace slot calls 2 wolves, recharges, and the wolves vanish; the tooltips.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -373,6 +468,10 @@ com.frostbound
 ├── imbuement/              the imbuement table: Imbuement (registers it), ImbuementScreenHandler (the grid),
 │                           FrostTiers (Cold/Icy/Frozen, recipes, stats), FrostBonuses (the material bonuses);
 │                           client/imbuement has the screen, stars, frost overlay and snowflakes
+├── alpha/                  the Alpha Wolf boss: AlphaWolfEntity, PackWolfEntity, PackGoals (the pack AI),
+│                           DrainingBite, AlphaWolfSpawner, and its rewards: AlphaHide (armour, Pack Instinct),
+│                           LifeSteal, MarkOfThePack (Trinkets necklace) with SummonedWolfEntity;
+│                           client/alpha has the renderer, drained hearts and the J key
 ├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
 │                           client/PassiveTooltips draws them at the top of tooltips
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
@@ -392,4 +491,5 @@ com.frostbound
 - The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
 - `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.
+- **Trinkets** is a normal (required) dependency from the TerraformersMC maven; Cardinal Components comes with it from the Ladysnake maven. In GameTests, the vanilla mock server player gets kicked when Cardinal Components syncs to its fake connection, so tests that need a server player build an unlisted one (`ImbuementTests.serverPlayer`).
 - **Other mods in dev:** DecorationX: Christmas runs in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.
