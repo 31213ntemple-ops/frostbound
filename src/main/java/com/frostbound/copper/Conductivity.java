@@ -2,6 +2,7 @@ package com.frostbound.copper;
 
 import com.frostbound.Frostbound;
 import com.frostbound.config.FrostboundConfig;
+import com.frostbound.imbuement.FrostBonuses;
 import com.frostbound.passives.Passive;
 import com.frostbound.passives.Passives;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -58,16 +59,27 @@ public final class Conductivity {
 
 	static void init() {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((target, source, baseDamage, damageTaken, blocked) -> {
-			if (!blocked && baseDamage > 0.0f && source.getAttacker() instanceof LivingEntity attacker && isMelee(source)
-					&& attacker.getMainHandStack().isIn(CONDUCTIVE) && firstHitThisTick(attacker)
-					&& attacker.getRandom().nextFloat() < FrostboundConfig.get().conductivity.chance) {
-				arc(attacker, target, baseDamage);
+			if (!blocked && baseDamage > 0.0f && source.getAttacker() instanceof LivingEntity attacker && isMelee(source)) {
+				float chance = chanceFor(attacker);
+				if (chance > 0.0f && firstHitThisTick(attacker) && attacker.getRandom().nextFloat() < chance) {
+					arc(attacker, target, baseDamage);
+				}
 			}
 		});
 	}
 
+	/**
+	 * Chance that a melee hit by {@code attacker} arcs, and that each link of the chain arcs on: the
+	 * Conductivity chance if it holds a conductive weapon, plus Superconductor from Icy or Frozen copper
+	 * armour (which works with any weapon).
+	 */
+	public static float chanceFor(LivingEntity attacker) {
+		float chance = attacker.getMainHandStack().isIn(CONDUCTIVE) ? FrostboundConfig.get().conductivity.chance : 0.0f;
+		return chance + (float) FrostBonuses.SUPERCONDUCTOR.total(attacker);
+	}
+
 	/** A direct swing: not an arrow, trident or thorns, and not another arc. */
-	private static boolean isMelee(DamageSource source) {
+	public static boolean isMelee(DamageSource source) {
 		return source.isDirect() && (source.isOf(DamageTypes.PLAYER_ATTACK) || source.isOf(DamageTypes.MOB_ATTACK)
 				|| source.isOf(DamageTypes.MOB_ATTACK_NO_AGGRO));
 	}
@@ -90,7 +102,7 @@ public final class Conductivity {
 
 	/**
 	 * Shocks every mob within the configured radius of {@code target} for {@code damage} × the multiplier.
-	 * Each mob it shocks then rolls the same chance to arc again from itself, with no limit on how far the
+	 * Each mob it shocks then rolls the same chance ({@link #chanceFor}) to arc again from itself, with no limit on how far the
 	 * chain runs; a mob is shocked at most once per chain, so it always ends. Every link deals 150% of the
 	 * original hit (it doesn't compound). Returns every mob the chain hit, in order.
 	 */
@@ -99,6 +111,7 @@ public final class Conductivity {
 			return List.of();
 		}
 		FrostboundConfig.ConductivityOptions config = FrostboundConfig.get().conductivity;
+		float chance = chanceFor(attacker);
 		DamageSource shock = world.getDamageSources().create(DAMAGE_TYPE, attacker);
 		Set<LivingEntity> touched = new HashSet<>(List.of(attacker, target));
 		List<LivingEntity> hit = new ArrayList<>();
@@ -107,7 +120,7 @@ public final class Conductivity {
 		while (!sources.isEmpty()) {
 			LivingEntity from = sources.poll();
 			// The struck mob already passed its roll; every shocked mob rolls for itself.
-			if (!first && random.nextFloat() >= config.chance) {
+			if (!first && random.nextFloat() >= chance) {
 				continue;
 			}
 			first = false;

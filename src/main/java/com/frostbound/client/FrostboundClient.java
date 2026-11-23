@@ -1,6 +1,11 @@
 package com.frostbound.client;
 
 import com.frostbound.client.campfire.FireStarterMinigame;
+import com.frostbound.client.imbuement.FrostParticles;
+import com.frostbound.client.imbuement.FrostRenderLayers;
+import com.frostbound.client.imbuement.FrostStars;
+import com.frostbound.client.imbuement.ImbuementScreen;
+import com.frostbound.imbuement.Imbuement;
 import com.frostbound.client.vessels.VesselClient;
 import com.frostbound.environment.SnowyPlants;
 import com.frostbound.items.FrostboundItems;
@@ -8,6 +13,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.ModelRotation;
@@ -32,6 +38,12 @@ public class FrostboundClient implements ClientModInitializer {
 
 		// Item passives (e.g. copper's Conductivity) at the top of tooltips.
 		PassiveTooltips.init();
+
+		// The imbuement table's screen; Cold/Icy/Frozen armour's stars, frost (mixin.imbuement.client) and snowflakes.
+		HandledScreens.register(Imbuement.SCREEN_HANDLER, ImbuementScreen::new);
+		FrostStars.init();
+		FrostParticles.init();
+		FrostRenderLayers.init();
 
 		// Snowy plants: wrap the model of every "snowy=true" plant state so it also draws a
 		// thin snow layer. Vanilla's blockstate files already match the snowy states (they

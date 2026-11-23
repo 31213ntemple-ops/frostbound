@@ -95,6 +95,72 @@ public final class FrostboundConfig {
 		public double radius = 1.5;
 	}
 
+	/** Cold, Icy and Frozen armour from the imbuement table: the stat boosts of each tier. */
+	public FrostTierOptions frostTiers = new FrostTierOptions();
+
+	public static final class FrostTierOptions {
+		/** Extra armour points per piece once Cold (kept at Icy and Frozen). */
+		public double coldArmor = 0.5;
+		/** Further armour points per piece, and armour toughness, once Frozen. */
+		public double frozenArmor = 0.5;
+		public double frozenToughness = 0.5;
+		/** Extra durability as a share of the piece's normal durability: Cold adds this (0.25 = +25%), Icy adds icyDurability on top. */
+		public double coldDurability = 0.25;
+		public double icyDurability = 0.15;
+	}
+
+	/**
+	 * The material bonuses of Icy and Frozen armour. Each is per piece worn and adds up: a full Icy set
+	 * of leather gives 4 × the Icy number. Each pair is {icy, frozen}.
+	 */
+	public FrostBonusOptions frostBonuses = new FrostBonusOptions();
+
+	public static final class FrostBonusOptions {
+		/** Leather, Snowstride: movement speed on snow and ice (0.04 = +4%). */
+		public Tiered snowstride = new Tiered(0.04, 0.08);
+		/** Copper, Superconductor: chance for any melee hit to arc like Conductivity (0.015 = 1.5%). */
+		public Tiered superconductor = new Tiered(0.015, 0.03);
+		/** Chainmail, Frostmail: less damage from projectiles (0.05 = 5%). */
+		public Tiered frostmail = new Tiered(0.05, 0.10);
+		/** Iron, Cold Iron: more melee damage to undead (0.04 = 4%). */
+		public Tiered coldIron = new Tiered(0.04, 0.08);
+		/** Gold, Hearthgold: seconds to heal half a heart (one piece; two pieces heal twice as fast). */
+		public Tiered hearthgold = new Tiered(20, 10);
+		/** Diamond, Diamond Dust: share of melee damage taken that the attacker takes back (0.05 = 5%). */
+		public Tiered diamondDust = new Tiered(0.05, 0.10);
+		/** Netherite, Quenched: less fire and lava damage (0.06 = 6%). */
+		public Tiered quenched = new Tiered(0.06, 0.12);
+		/** Turtle shell, Tidefrost: extra seconds of the helmet's Water Breathing. */
+		public Tiered tidefrost = new Tiered(10, 20);
+
+		/** Puts back the default of any pair missing from the file. */
+		void fillMissing() {
+			FrostBonusOptions defaults = new FrostBonusOptions();
+			for (java.lang.reflect.Field field : FrostBonusOptions.class.getFields()) {
+				try {
+					if (field.get(this) == null) {
+						field.set(this, field.get(defaults));
+					}
+				} catch (IllegalAccessException e) {
+					throw new IllegalStateException(e);
+				}
+			}
+		}
+	}
+
+	/** A number with one value for Icy armour and a stronger one for Frozen. */
+	public static final class Tiered {
+		public double icy;
+		public double frozen;
+
+		public Tiered() {}
+
+		public Tiered(double icy, double frozen) {
+			this.icy = icy;
+			this.frozen = frozen;
+		}
+	}
+
 	public static synchronized FrostboundConfig get() {
 		if (instance == null) {
 			instance = load(FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
@@ -128,6 +194,13 @@ public final class FrostboundConfig {
 				if (config.conductivity == null) {
 					config.conductivity = new ConductivityOptions();
 				}
+				if (config.frostTiers == null) {
+					config.frostTiers = new FrostTierOptions();
+				}
+				if (config.frostBonuses == null) {
+					config.frostBonuses = new FrostBonusOptions();
+				}
+				config.frostBonuses.fillMissing();
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);
 				return config;

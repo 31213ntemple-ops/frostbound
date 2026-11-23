@@ -1,0 +1,12 @@
+{
+	"parent": "minecraft:block/cube",
+	"textures": {
+		"particle": "frostbound:block/imbuement_table_front",
+		"down": "frostbound:block/imbuement_table_bottom",
+		"up": "frostbound:block/imbuement_table_top",
+		"north": "frostbound:block/imbuement_table_front",
+		"south": "frostbound:block/imbuement_table_front",
+		"east": "frostbound:block/imbuement_table_side",
+		"west": "frostbound:block/imbuement_table_side"
+	}
+}

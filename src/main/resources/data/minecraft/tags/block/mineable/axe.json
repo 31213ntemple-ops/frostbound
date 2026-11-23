@@ -1,4 +1,7 @@
 {
 	"replace": false,
-	"values": ["frostbound:campfire_base"]
+	"values": [
+		"frostbound:campfire_base",
+		"frostbound:imbuement_table"
+	]
 }

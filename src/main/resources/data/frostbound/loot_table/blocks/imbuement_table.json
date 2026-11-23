@@ -1,0 +1,20 @@
+{
+	"type": "minecraft:block",
+	"pools": [
+		{
+			"rolls": 1,
+			"entries": [
+				{
+					"type": "minecraft:item",
+					"name": "frostbound:imbuement_table"
+				}
+			],
+			"conditions": [
+				{
+					"condition": "minecraft:survives_explosion"
+				}
+			]
+		}
+	],
+	"random_sequence": "frostbound:blocks/imbuement_table"
+}

@@ -32,7 +32,7 @@ public final class PassiveTooltips {
 			for (Passive passive : passives) {
 				added.add(Text.empty()); // a blank line above each passive, to set it apart
 				added.add(passive.title());
-				added.addAll(wrap(passive.description()));
+				added.addAll(wrap(passive.description(stack)));
 			}
 			int insertAt = 1;
 			// Keep one blank line between the passives and the vanilla lines (whose attribute block often starts with one).

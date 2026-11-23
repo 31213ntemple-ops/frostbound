@@ -8,7 +8,9 @@ A collection of winter features, built as one mod split into **modules**. Each m
   "environment": { "coldBiomesOnly": true },
   "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
   "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 },
-  "conductivity": { "chance": 0.05, "damageMultiplier": 1.5, "radius": 1.5 }
+  "conductivity": { "chance": 0.05, "damageMultiplier": 1.5, "radius": 1.5 },
+  "frostTiers": { "coldArmor": 0.5, "frozenArmor": 0.5, "frozenToughness": 0.5, "coldDurability": 0.25, "icyDurability": 0.15 },
+  "frostBonuses": { "snowstride": { "icy": 0.04, "frozen": 0.08 }, "...": "see Imbuement Table" }
 }
 ```
 
@@ -19,7 +21,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 
-Items like the **Ice Ball** and **copper gear** aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` in the config only set their balance.
+Items like the **Ice Ball**, **copper gear** and the **Imbuement Table** aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` in the config only set their balance.
 
 ## Hearts and vessels
 
@@ -199,6 +201,53 @@ When you hit a mob in melee with a copper tool there's a 5% chance the hit arcs:
 
 Try it: `/give @s frostbound:copper_sword`, then `/summon pig` a few times close together and hit one (or set `chance` to 1 in the config to see it every hit).
 
+## Imbuement Table
+
+`frostbound:imbuement_table` (Functional Blocks tab, next to the smithing table): a smithing table that's been frozen over, with a snow cap and icicles, its wood turned a frozen navy, its tools turned to ice, and an ice grid set into the top with a darker centre. **Recipe:** a smithing table in the middle, ice on its four sides, iron ingots in the corners; it unlocks once you pick up ice. Mined with an axe.
+
+Right-click it for a 3×3 grid like a crafting table's, with a result slot. The **centre slot only takes armour** (helmets, chestplates, leggings, boots, turtle shells, modded armour; not horse armour or elytra): it's darker and set apart from the eight outer slots by a small gap. Shift-click puts armour in the centre and anything else around it. Whatever's left in the grid comes back to you when you close it. Taking the result uses up the armour and the items around it.
+
+### Cold, Icy and Frozen armour
+
+| Tier | Put around the armour | Gets | Name |
+|---|---|---|---|
+| **Cold** | 1 ice in each of the 8 slots | +0.5 armour, +25% durability | <span style="color:#CDE7F2">Cold</span> Iron Chestplate <span style="color:#CDE7F2">★</span> |
+| **Icy** (from Cold) | 4 packed ice in each slot (32) | +15% more durability (+40% in all) and its material's bonus | <span style="color:#A3C9DE">Icy</span> Iron Chestplate <span style="color:#CDE7F2">★</span><span style="color:#A3C9DE">★</span> |
+| **Frozen** (from Icy) | 1 blue ice in each slot | +0.5 more armour (+1 in all), +0.5 toughness, the stronger bonus | <span style="color:#7FA7C6">Frozen</span> Iron Chestplate <span style="color:#CDE7F2">★</span><span style="color:#A3C9DE">★</span><span style="color:#7FA7C6">★</span> |
+
+**How it looks:** frosty gear shows it, in the inventory, in your hand, on the ground and worn. A still frost pattern is laid over the item and the worn armour (drawn the way the enchantment glint is, so it sits only on the item and works alongside enchantments and trims), and it glistens slowly:
+
+- **Cold:** a light sprinkle of pale rime specks.
+- **Icy:** small frost crystals branching across it; worn, it now and then sheds a snowflake.
+- **Frozen:** dense crystals over a faint icy sheen, a deeper blue; worn, it sheds snowflakes more often, with the odd glint.
+
+(The frost textures are `textures/misc/frost_{cold,icy,frozen}.png`; the colours and glisten are in `client/imbuement/FrostRenderLayers`.)
+
+In the tooltip the tier's name comes before the item's ("Frozen Iron Chestplate") in that tier's colour, and the stars after it, each a soft blue a little deeper than the one before (`FrostTier.starColor`; names in `frostbound.frost_tier.*` in the lang file). Armour and toughness are added to the piece's own line ("+2.5 Armor"). The tier is stored on the item (`frostbound:frost_tier`, 1–3) and the stats are worked out from the config whenever they're needed, so they follow config changes and carry over when you smith a diamond piece into netherite. Enchanting, trims, repairs and the anvil all keep it.
+
+**Blue ice:** with the `ice` module on, blue ice doesn't generate and can't be crafted, so Frozen needs blue ice from somewhere else (a wandering trader, another mod, or with the module off).
+
+### Material bonuses (Icy and Frozen)
+
+Each armour material gets one bonus, shown as a passive at the top of the tooltip, its name coloured after what it does: white Snowstride (snow), yellow Superconductor (electricity), blue Frostmail (protection), red Cold Iron (damage), pink Hearthgold (healing, like Regeneration), aqua Diamond Dust (frost), orange Quenched (fire, like Fire Resistance), dark aqua Tidefrost (water, like Water Breathing). Every bonus is **per piece worn and adds up**, and a Frozen piece counts the Frozen number, so a mixed set still works. The weaker materials get the more useful bonuses, so every set is worth imbuing:
+
+| Material | Bonus | Icy / Frozen, per piece | Full set Icy / Frozen |
+|---|---|---|---|
+| Leather | **Snowstride**: faster on snow and ice (snow layers, snow blocks, powder snow, snowy grass, any ice) | +4% / +8% speed | +16% / +32% |
+| Copper | **Superconductor**: any melee hit, with any weapon, can arc like Conductivity (the chain rolls the same chance) | 1.5% / 3% chance | 6% / 12%, plus the copper weapon's 5% |
+| Chainmail | **Frostmail**: less damage from arrows, tridents and other projectiles | −5% / −10% | −20% / −40% |
+| Iron | **Cold Iron**: more melee damage to undead (zombies, skeletons, strays, ...) | +4% / +8% | +16% / +32% |
+| Gold | **Hearthgold**: heals half a heart every 20 s / 10 s, each piece on its own | | half a heart every 5 s / 2.5 s (like Regeneration I) |
+| Diamond | **Diamond Dust**: melee attackers take part of the damage back as frost ("was frozen solid trying to hurt") | 5% / 10% | 20% / 40% |
+| Netherite | **Quenched**: less fire and lava damage | −6% / −12% | −24% / −48% |
+| Turtle shell | **Tidefrost**: the helmet's Water Breathing lasts longer | +10 s / +20 s | (helmet only) |
+
+- **Balance:** `frostTiers` (armour, toughness and durability per tier) and `frostBonuses` (each bonus as `{ "icy": ..., "frozen": ... }`; Hearthgold and Tidefrost are in seconds) in `config/frostbound.json`. The tooltips follow the config.
+- **Which items have which bonus:** item tags `frostbound:snowstride`, `superconductor`, `frostmail`, `cold_iron`, `hearthgold`, `diamond_dust`, `quenched`, `tidefrost`. A data pack can give modded armour a bonus; any armour can be imbued for the stats.
+- Code: `com.frostbound.imbuement` (`FrostTiers` the tiers and recipes, `FrostBonuses` the bonuses, `ImbuementScreenHandler` the menu), `mixin/imbuement` (stats and damage), `client/imbuement` (screen, stars, frost layers, snowflakes), `mixin/imbuement/client` (frost on items and worn armour).
+
+Try it: `/give @s frostbound:imbuement_table`, `/give @s minecraft:iron_chestplate`, `/give @s minecraft:ice 8`, `/give @s minecraft:packed_ice 32`, `/give @s minecraft:blue_ice 8`. Or straight to a tier: `/give @s minecraft:leather_boots[frostbound:frost_tier=3]`.
+
 ## Development workflow
 
 You need **JDK 21** (Temurin 21 from adoptium.net). If Gradle picks up the wrong Java on a machine, point it at JDK 21 in that machine's **own** `~/.gradle/gradle.properties` (not the project's, which is shared through git):
@@ -244,6 +293,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `ChristmasTests`: the structure only loads with DecorationX; every tree style has the tree, the snow floor and five gift presents; the templates place (directly and through `/place structure`, landing on the surface); gifts are one decent stack (never coal); snow can't settle on the tree, presents or lanterns but still lands on the floor; each present outcome works (gift, one coal, 1–3 Frozen mobs, explosion after the fuse) and the chances match the config. A chest with the present loot table stands in for the Supplementaries present, which can't run in dev.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
 - `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
+- `ImbuementTests`: the table's recipe (smithing table, ice on the sides, iron in the corners) and block; each upgrade step needs its exact ring (8 ice, then 8 × 4 packed ice, then 8 blue ice) and only works on armour of the tier before; Cold/Icy/Frozen armour, toughness and durability (worn and after smithing into netherite); the menu's centre slot only takes armour, taking the result uses up 4 packed ice per slot and closing hands the rest back; the title ("Frozen Leather Tunic ★★★", the tier name in its star's colour), the stars (soft blues, each darker) and the bonus tooltips (none below Icy, Frozen numbers when Frozen, one bonus per material, each coloured after what it does); Cold Iron, Frostmail, Quenched, Diamond Dust, Superconductor, Snowstride, Hearthgold and Tidefrost each do what they say.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -320,6 +370,9 @@ com.frostbound
 │                           creative tab), IceBallItem (throwing), IceBallEntity (what a hit does)
 ├── copper/                 copper gear backported from 1.21.9: CopperGear (materials, items, creative tabs),
 │                           Conductivity (the copper passive)
+├── imbuement/              the imbuement table: Imbuement (registers it), ImbuementScreenHandler (the grid),
+│                           FrostTiers (Cold/Icy/Frozen, recipes, stats), FrostBonuses (the material bonuses);
+│                           client/imbuement has the screen, stars, frost overlay and snowflakes
 ├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
 │                           client/PassiveTooltips draws them at the top of tooltips
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
@@ -329,6 +382,8 @@ com.frostbound
     │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
     │                             snowy plants instead of snow), SnowyBlockMixin (snowy grass)
     │                             MultiNoiseBiomeSourceParameterList (cold biomes only)
+    ├── imbuement/                ItemStackMixin (tier stats), FrostBonusDamageMixin (Cold Iron, Frostmail, Quenched);
+    │                             client/ItemRendererMixin, ArmorFeatureRendererMixin (the frost overlay)
     └── mobs/                     frozen flag, combat, loot, visuals
 ```
 

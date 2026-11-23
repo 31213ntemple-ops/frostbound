@@ -7,6 +7,8 @@ import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -26,14 +28,22 @@ import java.util.function.Supplier;
  * {@code passive.frostbound.<id>.desc} (the description; {@link #descriptionArgs} fill its %s, so
  * numbers come from the config). The effect itself lives with the feature; this only describes it.
  *
+ * Most passives use the tag constructor; the canonical one is for passives that depend on more than the
+ * item, such as the frost bonuses (only on Icy or Frozen armour, with stronger numbers when Frozen).
+ *
  * @param id              short name, used for the lang keys
  * @param color           colour of the name (pick one that suits the material: copper is gold/orange)
- * @param items           item tag of everything that has this passive (a data pack can add more)
- * @param descriptionArgs values for the description's %s, read each time the tooltip is drawn
+ * @param filter          which stacks have it (usually an item tag, so a data pack can add more)
+ * @param descriptionArgs values for the description's %s for a given stack, read each time the tooltip is drawn
  */
-public record Passive(String id, Formatting color, TagKey<Item> items, Supplier<Object[]> descriptionArgs) {
+public record Passive(String id, Formatting color, Predicate<ItemStack> filter, Function<ItemStack, Object[]> descriptionArgs) {
+	/** A passive every item in the tag {@code items} has, with the same numbers on every stack. */
+	public Passive(String id, Formatting color, TagKey<Item> items, Supplier<Object[]> descriptionArgs) {
+		this(id, color, stack -> stack.isIn(items), stack -> descriptionArgs.get());
+	}
+
 	public boolean appliesTo(ItemStack stack) {
-		return stack.isIn(items);
+		return filter.test(stack);
 	}
 
 	/** "CONDUCTIVITY": the name, bold in its colour. */
@@ -42,8 +52,13 @@ public record Passive(String id, Formatting color, TagKey<Item> items, Supplier<
 	}
 
 	/** The description, unwrapped and unstyled (the tooltip wraps it and colours it light grey). */
+	public Text description(ItemStack stack) {
+		return Text.translatable("passive." + Frostbound.MOD_ID + "." + id + ".desc", descriptionArgs.apply(stack));
+	}
+
+	/** {@link #description(ItemStack)} for passives whose numbers don't depend on the stack. */
 	public Text description() {
-		return Text.translatable("passive." + Frostbound.MOD_ID + "." + id + ".desc", descriptionArgs.get());
+		return description(ItemStack.EMPTY);
 	}
 
 	/** 1.5 → "1.5", 150.0 → "150": for numbers in descriptions. */

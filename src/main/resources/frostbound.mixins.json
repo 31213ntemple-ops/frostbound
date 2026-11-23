@@ -12,11 +12,15 @@
 		"environment.MultiNoiseBiomeSourceParameterListMixin",
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",
+		"imbuement.FrostBonusDamageMixin",
+		"imbuement.ItemStackMixin",
 		"mobs.LivingEntityMixin",
 		"mobs.MobEntityMixin",
 		"vessels.PlayerEntityMixin"
 	],
 	"client": [
+		"imbuement.client.ArmorFeatureRendererMixin",
+		"imbuement.client.ItemRendererMixin",
 		"mobs.client.LivingEntityRendererMixin",
 		"vessels.client.HeldItemRendererMixin",
 		"vessels.client.InGameHudMixin"

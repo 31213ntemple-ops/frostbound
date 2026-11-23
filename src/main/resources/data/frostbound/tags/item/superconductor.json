@@ -1,0 +1,9 @@
+{
+	"replace": false,
+	"values": [
+		"frostbound:copper_helmet",
+		"frostbound:copper_chestplate",
+		"frostbound:copper_leggings",
+		"frostbound:copper_boots"
+	]
+}
