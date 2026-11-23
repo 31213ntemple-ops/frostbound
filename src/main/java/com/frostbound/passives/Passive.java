@@ -18,13 +18,13 @@ import java.util.function.Supplier;
  * <pre>
  * Copper Sword
  *
- * CONDUCTIVITY                          (name, bold in {@link #color})
+ * Conductivity                          (name, in {@link #color}, not bold)
  * 5% chance to deal 150% damage to ...  (description, light grey, wrapped)
  *
  * When in Main Hand: ...                (vanilla)
  * </pre>
  *
- * Lang keys: {@code passive.frostbound.<id>} (the name, written in capitals) and
+ * Lang keys: {@code passive.frostbound.<id>} (the name, in title case) and
  * {@code passive.frostbound.<id>.desc} (the description; {@link #descriptionArgs} fill its %s, so
  * numbers come from the config). The effect itself lives with the feature; this only describes it.
  *
@@ -46,9 +46,9 @@ public record Passive(String id, Formatting color, Predicate<ItemStack> filter, 
 		return filter.test(stack);
 	}
 
-	/** "CONDUCTIVITY": the name, bold in its colour. */
+	/** "Conductivity": the name in its colour (not bold, so it reads as a subtitle under the item name). */
 	public Text title() {
-		return Text.translatable("passive." + Frostbound.MOD_ID + "." + id).formatted(color, Formatting.BOLD);
+		return Text.translatable("passive." + Frostbound.MOD_ID + "." + id).formatted(color);
 	}
 
 	/** The description, unwrapped and unstyled (the tooltip wraps it and colours it light grey). */

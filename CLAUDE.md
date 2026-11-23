@@ -9,7 +9,7 @@ Items can have **passives**: named bonuses such as copper's Conductivity. Every 
 ```
 Copper Sword                                 ← item name (vanilla)
                                              ← one blank line
-CONDUCTIVITY                                 ← name: bold, in the passive's colour
+Conductivity                                 ← name: in the passive's colour, not bold, not all caps
 5% chance to deal 150% damage to any         ← description: light grey (Formatting.GRAY),
 mobs within 1.5 blocks of the targeted mob.     wrapped at ~220px (PassiveTooltips.WRAP_WIDTH)
 Can chain endlessly.
@@ -23,7 +23,7 @@ When in Main Hand: ...                       ← vanilla (enchantments, attribut
 How to add one:
 1. Make an item tag `frostbound:<name>` listing the items that have it (a data pack can add more).
 2. Register it: `Passives.register(new Passive("<name>", Formatting.<COLOUR>, TAG, () -> new Object[] {args...}))`, as a constant on the class that implements the effect (see `copper/Conductivity.PASSIVE`). Use `Passive.number(...)` for the numbers (5, 1.5, not 5.0).
-3. Lang keys in `en_us.json`: `passive.frostbound.<name>` (the name, in capitals) and `passive.frostbound.<name>.desc` (the description, `%s` for the args, `%%` for a percent sign).
+3. Lang keys in `en_us.json`: `passive.frostbound.<name>` (the name, in title case: "Cold Iron") and `passive.frostbound.<name>.desc` (the description, `%s` for the args, `%%` for a percent sign).
 4. Implement the effect itself in the feature's own package; balance numbers go in `FrostboundConfig` (with a null check in `load`).
 5. GameTests: the effect, plus the title/description text (see `CopperTests.conductivityTooltipText`).
 

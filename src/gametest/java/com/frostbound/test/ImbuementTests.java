@@ -219,8 +219,8 @@ public class ImbuementTests implements FabricGameTest {
 		FrostTiers.setTier(icy, FrostTier.ICY);
 		check(Passives.of(icy).equals(List.of(FrostBonuses.SNOWSTRIDE.passive)), "Icy leather has Snowstride");
 		Passive snowstride = FrostBonuses.SNOWSTRIDE.passive;
-		check(snowstride.title().getString().equals("SNOWSTRIDE") && snowstride.title().getStyle().isBold()
-				&& Formatting.WHITE.getColorValue().equals(snowstride.title().getStyle().getColor().getRgb()), "SNOWSTRIDE in bold white");
+		check(snowstride.title().getString().equals("Snowstride") && !snowstride.title().getStyle().isBold()
+				&& Formatting.WHITE.getColorValue().equals(snowstride.title().getStyle().getColor().getRgb()), "Snowstride in white, not bold or all caps");
 		check(FrostBonuses.HEARTHGOLD.passive.color() == Formatting.LIGHT_PURPLE && FrostBonuses.QUENCHED.passive.color() == Formatting.GOLD
 				&& FrostBonuses.SUPERCONDUCTOR.passive.color() == Formatting.YELLOW && FrostBonuses.TIDEFROST.passive.color() == Formatting.DARK_AQUA,
 				"each bonus is coloured after what it does");

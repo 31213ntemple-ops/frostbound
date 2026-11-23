@@ -190,7 +190,7 @@ Copper sits between stone and iron: it mines what stone mines but lasts longer (
 
 Every copper tool has the **Conductivity** passive, shown at the top of its tooltip:
 
-> **CONDUCTIVITY**
+> <span style="color:#FFAA00">Conductivity</span>
 > 5% chance to deal 150% damage to any mobs within 1.5 blocks of the targeted mob. Can chain endlessly.
 
 When you hit a mob in melee with a copper tool there's a 5% chance the hit arcs: every other mob within 1.5 blocks of the one you hit takes 150% of your hit's damage, with a crackle and a line of sparks. **It chains:** every mob it shocks rolls the same 5% to arc on from itself, to the mobs within 1.5 blocks of *it*, and so on with no limit, so a packed swarm can light up end to end. Each mob is shocked at most once per chain, and every link deals 150% of your original hit (it doesn't grow along the chain). The mob you hit takes its normal damage. One roll per swing (a sword's sweep doesn't roll again). It never hits you, your pets, your teammates, armour stands or other players (a mob holding a copper weapon can shock players). Deaths read "was electrocuted by".

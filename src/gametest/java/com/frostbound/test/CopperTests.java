@@ -202,9 +202,9 @@ public class CopperTests implements FabricGameTest {
 	public void conductivityTooltipText(TestContext ctx) {
 		Passive passive = Conductivity.PASSIVE;
 		Text title = passive.title();
-		check(title.getString().equals("CONDUCTIVITY"), "title should read CONDUCTIVITY, got " + title.getString());
-		check(title.getStyle().isBold() && Formatting.GOLD.getColorValue().equals(title.getStyle().getColor().getRgb()),
-				"CONDUCTIVITY should be bold gold");
+		check(title.getString().equals("Conductivity"), "title should read Conductivity, got " + title.getString());
+		check(!title.getStyle().isBold() && Formatting.GOLD.getColorValue().equals(title.getStyle().getColor().getRgb()),
+				"Conductivity should be gold, not bold");
 		FrostboundConfig.ConductivityOptions c = FrostboundConfig.get().conductivity;
 		String expected = Passive.number(c.chance * 100) + "% chance to deal " + Passive.number(c.damageMultiplier * 100)
 				+ "% damage to any mobs within " + Passive.number(c.radius) + " blocks of the targeted mob. Can chain endlessly.";
