@@ -154,6 +154,20 @@ Spawn chance: **8%** normally, **30%** in arctic biomes (≤ −20 °C). Mobs th
 
 Try it: `/give @s frostbound:ice_ball 16`.
 
+## Fire Starting
+
+The first way to get warm, before flint and steel.
+
+- **Fire Starter** (`frostbound:fire_starter`, Tools tab): two sticks, crafted anywhere (even the 2×2 grid). 5 durability.
+- **Campfire Base** (`frostbound:campfire_base`, Functional Blocks tab): any four logs that burn, in any arrangement, so it fits the 2×2 inventory grid. An unlit campfire; breaks with an axe and drops itself.
+- **Wood blocks** (bark on all sides, plain and stripped) now come from the **stonecutter**, 1 log → 1 wood. Vanilla's 2×2 Wood recipe would clash with the campfire base, so it's switched off (`data/minecraft/recipe/*_wood.json`). Nether stems still make hyphae the vanilla way, since they don't burn.
+
+Hold right-click with the fire starter on a campfire base (or any unlit campfire, such as one an ice ball put out) and a bar appears under the crosshair. A marker sweeps back and forth; left-click while it's over the green. Each hit fills a pip, moves the green zone and speeds the marker up a little. **Three hits in a row** light the fire (the base becomes a lit vanilla campfire, facing the same way) and cost 1 durability. **A miss** costs 1 durability and resets the streak. Letting go of right-click or looking away ends the attempt (the streak resets, durability spent stays spent). A perfect run gets 5 fires out of one fire starter.
+
+The client draws the bar and judges each click; the server keeps the streak, takes durability and lights the fire (`com.frostbound.campfire`, `client.campfire.FireStarterMinigame`).
+
+Try it: `/give @s frostbound:fire_starter` and `/give @s frostbound:campfire_base`.
+
 ## Development workflow
 
 You need **JDK 21** (Temurin 21 from adoptium.net). If Gradle picks up the wrong Java on a machine, point it at JDK 21 in that machine's **own** `~/.gradle/gradle.properties` (not the project's, which is shared through git):

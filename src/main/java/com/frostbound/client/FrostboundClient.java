@@ -1,5 +1,6 @@
 package com.frostbound.client;
 
+import com.frostbound.client.campfire.FireStarterMinigame;
 import com.frostbound.client.vessels.VesselClient;
 import com.frostbound.environment.SnowyPlants;
 import com.frostbound.items.FrostboundItems;
@@ -25,6 +26,9 @@ public class FrostboundClient implements ClientModInitializer {
 
 		// Hearts: the frozen heart in the HUD, vessel tooltips, the totem-style pop.
 		VesselClient.init();
+
+		// The fire-starting minigame: the bar under the crosshair while you use a fire starter.
+		FireStarterMinigame.init();
 
 		// Snowy plants: wrap the model of every "snowy=true" plant state so it also draws a
 		// thin snow layer. Vanilla's blockstate files already match the snowy states (they

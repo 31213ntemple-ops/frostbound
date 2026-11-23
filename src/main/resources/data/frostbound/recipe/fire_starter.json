@@ -1,0 +1,9 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "equipment",
+	"ingredients": [
+		{ "item": "minecraft:stick" },
+		{ "item": "minecraft:stick" }
+	],
+	"result": { "id": "frostbound:fire_starter", "count": 1 }
+}

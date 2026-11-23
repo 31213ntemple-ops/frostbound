@@ -14,7 +14,8 @@
 			"com.frostbound.test.ChristmasTests",
 			"com.frostbound.test.IceBallTests",
 			"com.frostbound.test.IceTests",
-			"com.frostbound.test.VesselTests"
+			"com.frostbound.test.VesselTests",
+			"com.frostbound.test.CampfireTests"
 		]
 	},
 	"depends": {

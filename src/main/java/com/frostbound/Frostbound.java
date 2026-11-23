@@ -1,5 +1,6 @@
 package com.frostbound;
 
+import com.frostbound.campfire.Campfires;
 import com.frostbound.christmas.Christmas;
 import com.frostbound.config.FrostboundConfig;
 import com.frostbound.environment.WinterEnvironment;
@@ -21,8 +22,8 @@ import org.slf4j.LoggerFactory;
  *  - frozenMobs  (com.frostbound.mobs):        Frozen mob variants
  *  - christmas   (com.frostbound.christmas):   festive structures (with DecorationX: Christmas)
  *
- * Items (com.frostbound.items, e.g. ice balls; com.frostbound.vessels, the heart vessels) are always
- * registered.
+ * Items (com.frostbound.items, e.g. ice balls; com.frostbound.vessels, the heart vessels;
+ * com.frostbound.campfire, the fire starter and campfire base) are always registered.
  */
 public class Frostbound implements ModInitializer {
 	public static final String MOD_ID = "frostbound";
@@ -38,6 +39,7 @@ public class Frostbound implements ModInitializer {
 
 		FrostboundItems.init();
 		Vessels.init();
+		Campfires.init();
 
 		if (modules.environment) {
 			WinterEnvironment.init();

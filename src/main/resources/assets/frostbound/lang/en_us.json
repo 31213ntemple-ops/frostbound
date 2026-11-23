@@ -37,5 +37,9 @@
 	"item.frostbound.revitalized_vessel_17": "Revitalized Vessel XVII",
 	"item.frostbound.revitalized_vessel_18": "Revitalized Vessel XVIII",
 	"item.frostbound.revitalized_vessel_19": "Revitalized Vessel XIX",
-	"item.frostbound.revitalized_vessel_20": "Revitalized Vessel XX"
+	"item.frostbound.revitalized_vessel_20": "Revitalized Vessel XX",
+	"item.frostbound.fire_starter": "Fire Starter",
+	"item.frostbound.fire_starter.hint": "Hold right-click on a campfire base",
+	"block.frostbound.campfire_base": "Campfire Base",
+	"frostbound.fire_starter.minigame": "Left-click in the green"
 }
