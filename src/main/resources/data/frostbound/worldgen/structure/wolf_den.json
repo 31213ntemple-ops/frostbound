@@ -1,0 +1,7 @@
+{
+	"type": "frostbound:wolf_den",
+	"biomes": "#frostbound:has_structure/wolf_den",
+	"step": "surface_structures",
+	"spawn_overrides": {},
+	"terrain_adaptation": "beard_thin"
+}

@@ -33,6 +33,14 @@ How to add one:
 
 Content from later Minecraft versions (e.g. copper gear from 1.21.9) is registered under the `frostbound` namespace with the later version's stats, recipes and loot weights. Textures and sounds are taken from the official Mojang client jar / asset index of that version, not redrawn. Vanilla files that get a new entry (chest loot tables) are copies of the **1.21.1** files with the entry added.
 
+## Boss fights: choreography
+
+The Alpha Wolf fight follows a rule every new move should keep: **tell → action → recovery**. The tell is long enough to react to (0.7–1.8 s) and has a pose (a `WolfAction`, synced to the client and drawn by `client/alpha/PackWolfModel`), a sound, and for big moves a marker on the ground (dust particles: red ring = where it lands, pale line = where it runs). A move can't be cut off by another goal halfway (`canStop() == false`), the recovery is an opening for the player, and the pack holds back while the Alpha moves (`AlphaWolfEntity.isPerformingMove`). Balance numbers go in `FrostboundConfig.alphaWolf`. Check how it looks with `gradlew runScenes` (screenshots in `build/scenes/screenshots`; add a step in `src/gametest/.../dev/SceneShots.java`).
+
+Textures for the Alpha, its armour and drops come from `tools/AlphaWolfTextures.java` (pixel grids and painted layers in one palette); edit it and re-run it rather than editing the PNGs.
+
+GameTest pitfalls met here: mock players (`createMockPlayer`) aren't in the world, so area attacks can't find them (use a still mob as the target); never schedule `runAtTick` from inside a scheduled step (it crashes the runner); an arena built far from the test needs `setChunkForced`, a few ticks before entities show up in lookups, and `setPersistent()` on mobs that would otherwise despawn.
+
 ## Trinkets accessories
 
 Accessories (necklaces, rings, ...) are Trinkets items: a `TrinketItem`, the slot's item tag (`data/trinkets/tags/item/<group>/<slot>.json`, e.g. `chest/necklace`) and the slot assigned to players in `data/trinkets/entities/frostbound.json`. Abilities on a key go through a C2S payload and are checked on the server, with the cooldown saved in a player attachment (see `alpha/MarkOfThePack`). In GameTests don't use `createMockCreativeServerPlayerInWorld` (Cardinal Components gets it kicked); use `ImbuementTests.serverPlayer`.

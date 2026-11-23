@@ -164,12 +164,21 @@ public final class FrostboundConfig {
 		public int maxPackSize = 9;
 		/** How many pack wolves may lunge at once; the rest circle and wait their turn (the Alpha lunges on its own). */
 		public int simultaneousAttackers = 2;
-		/** Ticks (20 = 1 s) a wolf stands and growls before it lunges, so the bite can be seen coming. */
-		public int lungeWindupTicks = 10;
+		/** Ticks (20 = 1 s) a wolf crouches and growls before it lunges, so the bite can be seen coming. */
+		public int lungeWindupTicks = 14;
+		/** Below this share of its health (0.5 = half) the Alpha is Bloodied: it roars, speeds up and starts to Charge. */
+		public double bloodiedBelow = 0.5;
+		/** Movement speed bonus while Bloodied (0.15 = 15% faster). */
+		public double bloodiedSpeedBonus = 0.15;
+		/** Seconds between the Alpha's big moves (Pounce, Charge), before and after it's Bloodied. */
+		public double moveIntervalSeconds = 4.5;
+		public double bloodiedMoveIntervalSeconds = 3.0;
 		public CallOfThePack callOfThePack = new CallOfThePack();
+		public Pounce pounce = new Pounce();
+		public Charge charge = new Charge();
 		public DrainingBite drainingBite = new DrainingBite();
 		public Enrage enrage = new Enrage();
-		public Spawning spawning = new Spawning();
+		public Den den = new Den();
 	}
 
 	public static final class CallOfThePack {
@@ -188,6 +197,28 @@ public final class FrostboundConfig {
 		public double healPerWolf = 0.5;
 	}
 
+	public static final class Pounce {
+		/** The Alpha crouches for windupTicks with the landing spot marked, leaps, and slams down: damage within radius blocks. */
+		public int windupTicks = 24;
+		public double damage = 6.0;
+		public double radius = 2.5;
+		/** Ticks it stands winded after landing (a window to hit it). */
+		public int recoverTicks = 20;
+	}
+
+	public static final class Charge {
+		/** Only once Bloodied. The Alpha paws the ground for windupTicks (it stops turning for the last lockTicks), then charges. */
+		public int windupTicks = 36;
+		public int lockTicks = 10;
+		/** Blocks per tick, and how far it can go. */
+		public double speed = 0.85;
+		public double maxDistance = 18.0;
+		public double damage = 8.0;
+		/** Running into a wall or pillar stuns it for stunSeconds, taking stunnedDamageMultiplier times damage meanwhile. */
+		public double stunSeconds = 3.0;
+		public double stunnedDamageMultiplier = 1.5;
+	}
+
 	public static final class DrainingBite {
 		/** Max health a bite takes away (in hearts) and for how long. A bite never stacks or extends it. */
 		public double hearts = 2.0;
@@ -200,18 +231,13 @@ public final class FrostboundConfig {
 		public int strengthLevel = 1;
 	}
 
-	public static final class Spawning {
-		/** Packs roam cold biomes at night. Off: only spawn eggs and /summon frostbound:alpha_wolf. */
-		public boolean enabled = true;
-		/** How often (seconds) each player outdoors at night rolls for a pack, and the chance per roll. */
-		public double checkSeconds = 30.0;
-		public double chance = 0.015;
-		/** No packs before this day (1 = the first night). */
-		public int firstDay = 3;
-		/** How far from the player a pack appears, and how far apart two Alphas must be. */
-		public int minDistance = 28;
-		public int maxDistance = 44;
-		public int minSpacing = 256;
+	public static final class Den {
+		/** A den pack gives up on anyone further than this from its den (blocks), and goes home. */
+		public double leashRange = 28.0;
+		/** Seconds without a fight before a den pack walks home and lies back down. */
+		public double giveUpSeconds = 10.0;
+		/** Health a sleeping wolf (the Alpha too) gets back each second. */
+		public double sleepHealPerSecond = 1.0;
 	}
 
 	/** Alpha Hide armour's Pack Instinct set bonus. */
@@ -311,8 +337,14 @@ public final class FrostboundConfig {
 				if (config.alphaWolf.enrage == null) {
 					config.alphaWolf.enrage = new Enrage();
 				}
-				if (config.alphaWolf.spawning == null) {
-					config.alphaWolf.spawning = new Spawning();
+				if (config.alphaWolf.pounce == null) {
+					config.alphaWolf.pounce = new Pounce();
+				}
+				if (config.alphaWolf.charge == null) {
+					config.alphaWolf.charge = new Charge();
+				}
+				if (config.alphaWolf.den == null) {
+					config.alphaWolf.den = new Den();
 				}
 				if (config.packInstinct == null) {
 					config.packInstinct = new PackInstinctOptions();

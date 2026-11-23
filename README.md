@@ -256,33 +256,74 @@ Try it: `/give @s frostbound:imbuement_table`, `/give @s minecraft:iron_chestpla
 
 ## Alpha Wolf
 
-An early-game Overworld boss: a big black wolf with burning red eyes, leading a pack. It's built for a player with about 7 hearts in iron (maybe Cold or Icy) armour, and it's about reading the pack and choosing what to hit, not a huge health bar.
+An early-game Overworld boss: a big black wolf with a frost-tipped ruff, a scarred eye and burning red eyes, leading a pack. It's built for a player with about 7 hearts in iron (maybe Cold or Icy) armour, and it's about reading the pack's tells and using the den, not a huge health bar.
 
-**Finding one:** at night, a player outdoors (open sky) in a snowy biome has a 1.5% chance every 30 s for a pack to turn up 28–44 blocks away, announced by a long, low howl heard from 64 blocks. Not before day 3, never within 256 blocks of another Alpha, never in Peaceful. An Alpha despawns (with its pack) when no player is within 128 blocks; name-tag it to keep it. Or: `/summon frostbound:alpha_wolf` or the **Alpha Wolf Spawn Egg** (both bring the pack).
+**Finding one: the Wolf Den.** An open, roofless ring of old mossy stone brick, about 21 blocks across, in cold forests and plains (taiga, snowy taiga, snowy plains, the old-growth taigas, grove, Sparse Forest). It has:
+
+- a stepped dais in the middle where the Alpha sleeps;
+- six thick pillars: some standing, with vines and a lantern on top, some broken stumps, and sometimes one fallen across the floor;
+- a low broken wall with gaps to walk in through;
+- scattered bones and skulls, and a chest at the foot of a pillar.
+
+The ground is levelled into a clearing around it. Dens are about as common as Christmas tree clearings, a little rarer (`/locate structure frostbound:wolf_den`).
+
+The pack is **asleep** when you find it: the Alpha curled up on the dais, six wolves on patches of moss around it, eyes shut, snoring softly. **Walking through doesn't wake them; hitting any of them does.** The Alpha lifts its head, gets up and howls, and the pack wakes in a ripple out from it (a growl each) and goes for whoever struck first. The boss bar appears and fills as the Alpha rises. The first hit of a sneak attack is free. Den wolves never despawn, and while asleep they slowly heal (0.5 hearts a second).
+
+**Leaving:** a den pack won't chase you further than **28 blocks** from its den. After **10 s** with nothing to fight they walk home, each wolf to its own spot, and lie back down. The Alpha gets its reinforcements back for next time. Come back later to try again.
+
+Or: `/summon frostbound:alpha_wolf` or the **Alpha Wolf Spawn Egg** bring an Alpha with a roaming pack, awake and without a den. It despawns when no player is within 128 blocks, unless name-tagged.
 
 | | Alpha Wolf | Pack Wolf |
 |---|---|---|
 | Health | 80 (40 hearts) | 12 (6 hearts) |
 | Bite | 5 (about 1¼ hearts through iron) | 3 (under 1 heart through iron) |
 | Other | 1.5× size, armour 4, 60% knockback resistance, boss bar | |
-| Pack | starts at 7 wolves counting the Alpha, never more than 9 alive | |
+| Pack | 7 wolves counting the Alpha, never more than 9 alive | |
 
-Hostile and untameable: bones, food, sitting, breeding, collars, leads and wolf armour do nothing. Pack wolves are the local wolf's coat (never black) and always look angry.
+Hostile and untameable: bones, food, sitting, breeding, collars, leads and wolf armour do nothing. Pack wolves are the local wolf's coat (never black) and look angry once awake.
 
-### How the pack fights
+### Reading the fight
+
+Every attack has a **tell** (a pose and a sound, and for the big ones a marker on the ground), then the **action**, then a **recovery** that's your opening. Nothing cuts a move off halfway.
+
+- **Bite** (any wolf, up close)
+  - *Tell (0.7 s):* it stops and **drops into a crouch** (front down, rear up, quivering), growls and kicks up the ground.
+  - *Action:* one lunge and bite, then it **bounds back out**.
+  - *Answer:* shield, sidestep, or hit it while it crouches.
+- **Pounce** (the Alpha, 4.5–13 blocks away)
+  - *Tell (1.2 s):* it crouches low with its rear swaying. A **red ring** (2.5 blocks) on the ground under you **follows you**, then **stops** with a snarl for the last 0.5 s.
+  - *Action:* it leaps in an arc and slams down inside the ring: **6 damage** and knockback to everyone there.
+  - *Answer:* step out of the ring once it stops, then hit the Alpha while it stands **winded** for 1 s after landing.
+- **Call of the Pack** (the Alpha)
+  - *Tell:* it sits back with its snout to the sky, and **the whole pack sits and howls with it**. Nobody bites meanwhile.
+  - *Action:* 2 s later every wolf heals and 2 more wolves arrive.
+  - *Answer:* deal **8 damage** to the Alpha during the howl to cut it off.
+- **Bloodied** (the Alpha, once, below half health)
+  - *Tell:* it **rears up on its hind legs**.
+  - *Action:* it roars, and a ring of snow throws everyone within 5 blocks back. The pack growls, the boss bar turns **red**, embers drift from the Alpha's eyes, and it's **15% faster** from then on.
+  - *Answer:* back off and get ready for the Charge.
+- **Charge** (the Alpha once Bloodied, 6–16 blocks away, in a clear line)
+  - *Tell (1.8 s):* it lowers its head like a bull and **paws the ground three times**. A **pale line** on the ground shows its path and where it would hit something. For the last 0.5 s it stops turning, with a snort.
+  - *Action:* it runs the line at full tilt: **8 damage** and a big knockback if it hits you.
+  - *Answer:* sidestep once it's locked on. Better still, **stand in front of a pillar or wall**: it runs into it and is **stunned for 3 s** (stars, head lolling), taking **1.5× damage** meanwhile.
+
+The pack fights as one:
 
 - **Together:** when any wolf picks a fight, the Alpha takes it up and every wolf joins in.
-- **In turns (hit and run):** only **2** pack wolves may lunge at once (the Alpha lunges on its own). The rest **circle** you 4–7 blocks out, facing you. A wolf with a turn runs in, then **stops, cocks its head and growls, kicking up snow** for half a second (the tell), lunges for one bite, then falls back and hands its turn on. A shield or a sidestep beats the bite.
-- **The boss bar** reads "Alpha Wolf · pack of 7", so you can see the pack shrink (or grow).
+- **In turns (hit and run):** only **2** pack wolves may bite at once; the rest **circle** you 4–7 blocks out, facing you.
+- **It gives the Alpha room:** while the Alpha is winding up a big move, carrying it out, winded after it, or stunned, no pack wolf starts a bite, and any wolf still running in peels off. During its big moves, watch the Alpha rather than your back.
+- **The boss bar** reads "Alpha Wolf · pack of 7". It's white, and turns red once the Alpha is Bloodied.
+
+The Alpha makes a big move every **4.5 s** of fighting, or every **3 s** once Bloodied (then 60% of them are Charges). Up close it bites instead.
 
 ### Call of the Pack
 
-12 s into a fight, and every 30 s after, the Alpha **sits back and howls** for 2 s, snout up, with a ring of frost spreading out from it. Then:
+12 s into a fight, and every 30 s after, the Alpha **sits back and howls** for 2 s, snout up, with a ring of frost spreading out from it, and the pack sits and howls along (one after another). Then:
 
 - every living wolf heals **0.25 hearts for each wolf alive** (counted before reinforcements arrive: 3 alive → 0.75 hearts each);
 - **2 wolves** arrive from 6–12 blocks out, in a puff of snow with a howl, never past 9 alive, and no more than **12** in a whole fight (after that, howls only heal).
 
-**Cut it off:** deal 8 damage to the Alpha while it howls (two iron sword hits) and the howl breaks off with a yelp ("The Alpha's howl breaks off!"): no healing, no wolves, and it tries again 10 s later. Rushing the howl or thinning the pack is the main decision of the fight.
+**Cut it off:** deal 8 damage to the Alpha while it howls (two iron sword hits) and the howl breaks off with a yelp ("The Alpha's howl breaks off!"): no healing, no wolves, and it tries again 10 s later. In the first half of the fight, the main decision is whether to rush the howl or thin out the pack. In the second half, it's using the pillars against the Charge.
 
 ### Draining Bite
 
@@ -306,16 +347,18 @@ The pack breaks: every wolf stops fighting, whines and **runs from the nearest p
 | **Mark of the Pack** | the Alpha (killed by a player) | 10% (+2% per Looting level) |
 | **Wolf Tooth** | every pack wolf, the Alpha too (killed by a player) | 10%, one tooth |
 
-25 XP from the Alpha, 3 from a pack wolf.
+25 XP from the Alpha, 3 from a pack wolf. The den's chest (`loot_table/chests/wolf_den.json`) holds what the pack dragged home: bones, leather and rabbit hide, iron nuggets and the odd ingot, arrows, berries, sometimes a Wolf Tooth, a name tag or a worn iron sword.
 
 ### Alpha Hide armour
 
 | Piece | Armour | Durability | Recipe |
 |---|---|---|---|
-| Alpha Hide Cap | 2 | 165 | like any helmet, with Alpha Hide |
+| Alpha Hide Hood | 2 | 165 | like any helmet, with Alpha Hide |
 | Alpha Hide Tunic | 5 | 240 | like any chestplate |
 | Alpha Hide Pants | 4 | 225 | like any leggings |
 | Alpha Hide Boots | 2 | 195 | like any boots |
+
+It looks the part: black wolf fur with frost-silver tips over dark tanned leather and bone. The **Hood** is the Alpha's head worn as a hood, with upright ears and the upper jaw jutting over your brow, teeth and all; the **Tunic** has a fur mantle that hangs into a short cape at the back, a strap with bone toggles across the chest, fur pauldrons and cuffs; the **Pants** a fur-trimmed belt with a bone buckle and wrapped shins; the **Boots** frost-tipped fur cuffs, laces and claws at the toes.
 
 Beside iron, not above it: **13 armour for a set against iron's 15**, iron's durability, leather's enchantability (15), repaired with Alpha Hide. It can be imbued (Cold/Icy/Frozen stats) but has no material bonus. What it has instead:
 
@@ -333,14 +376,15 @@ Goes on swords, axes, bows, crossbows and tridents (anvil, like any book). **The
 
 ### Mark of the Pack
 
-A fang on a cord, worn in Trinkets' **necklace** slot. Press **J** (rebind under Controls → Frostbound) to call **2 wolves** that fight for you (like tame wolves) for **30 s**, then vanish in a puff of snow; it recharges for **60 s** (shown on the item; "The pack is resting (Ns)" if you press it early). The recharge is saved on the player. Called wolves can't be fed, sat, bred, leashed or armoured, and drop nothing.
+The Alpha's fang in a silver cap, on a braided cord with two red beads, worn in Trinkets' **necklace** slot, where it hangs on your chest over any armour. Press **J** (rebind under Controls → Frostbound) to call **2 wolves** that fight for you (like tame wolves) for **30 s**, then vanish in a puff of snow; it recharges for **60 s** (shown on the item; "The pack is resting (Ns)" if you press it early). The recharge is saved on the player. Called wolves can't be fed, sat, bred, leashed or armoured, and drop nothing.
 
-- **Balance:** `alphaWolf` (stats, pack sizes, `simultaneousAttackers`, `lungeWindupTicks`, and `callOfThePack`, `drainingBite`, `enrage`, `spawning`), `packInstinct`, `lifeSteal`, `markOfThePack` in `config/frostbound.json` (restart). Tooltips follow the config.
+- **Balance:** `alphaWolf` in `config/frostbound.json` (restart): stats, pack sizes, `simultaneousAttackers`, `lungeWindupTicks` (14), `bloodiedBelow` (0.5), `bloodiedSpeedBonus`, `moveIntervalSeconds` / `bloodiedMoveIntervalSeconds`, and `callOfThePack`, `pounce` (`windupTicks`, `damage`, `radius`, `recoverTicks`), `charge` (`windupTicks`, `lockTicks`, `speed`, `maxDistance`, `damage`, `stunSeconds`, `stunnedDamageMultiplier`), `drainingBite`, `enrage`, `den` (`leashRange`, `giveUpSeconds`, `sleepHealPerSecond`). Also `packInstinct`, `lifeSteal`, `markOfThePack`. Tooltips follow the config. A config file written by an older version keeps its old values and drops the old `spawning` block (delete the `alphaWolf` block to get every new default, such as the 14-tick bite tell).
+- **The den:** how rare in `worldgen/structure_set/wolf_dens.json` (`spacing`/`separation`); where in the biome tag `frostbound:has_structure/wolf_den`; the layout in code, `alpha/den/WolfDenLayout.java` (seeded, so every den differs a little); the chest in `loot_table/chests/wolf_den.json`.
 - **Data:** loot tables `entities/alpha_wolf.json` and `entities/pack_wolf.json`; `enchantment/life_steal.json`; tags `frostbound:pack_instinct`, `insulated`, `mark_of_the_pack`, `enchantable/life_steal`; Trinkets slot data in `data/trinkets/`.
-- **Code:** `com.frostbound.alpha` (`AlphaWolfEntity`, `PackWolfEntity`, `PackGoals` the AI, `DrainingBite`, `AlphaWolfSpawner`, `AlphaHide`, `LifeSteal`, `MarkOfThePack`, `SummonedWolfEntity`); `client/alpha` (renderer, drained hearts, the J key).
-- **Textures:** the armour, Alpha Hide and drained heart are recoloured from vanilla 1.21.1 leather and heart textures; the tooth, necklace, effect icon and eyes are drawn for the mod. The wolves use vanilla's wolf textures.
+- **Code:** `com.frostbound.alpha` (`AlphaWolfEntity`, `PackWolfEntity`, `WolfAction` what each wolf is doing (synced, for the poses), `PackGoals` the pack's AI, `AlphaGoals` the Alpha's Pounce, Charge, roar and going home, `DrainingBite`, `AlphaHide`, `LifeSteal`, `MarkOfThePack`, `SummonedWolfEntity`); `alpha/den` (the structure); `client/alpha` (`PackWolfModel` the poses, the renderer, the Hood's ears and jaw, the necklace on the chest, drained hearts, the J key).
+- **Textures:** generated by `tools/AlphaWolfTextures.java` (see Tweaking): the Alpha's coat and the closed-eye sleeping coats are vanilla 1.21.1 wolf textures, edited; the armour, its icons, the Hood's ears and jaw, the Alpha Hide, the tooth and the necklace are drawn pixel by pixel in one palette. The eyes, drained heart and effect icon are drawn for the mod.
 
-Try it: `/give @s frostbound:alpha_wolf_spawn_egg`, `/give @s frostbound:mark_of_the_pack`, `/give @s frostbound:wolf_tooth 12`, `/give @s frostbound:alpha_hide 24`.
+Try it: `/locate structure frostbound:wolf_den` (or `/place structure frostbound:wolf_den` where you stand), `/give @s frostbound:alpha_wolf_spawn_egg`, `/give @s frostbound:mark_of_the_pack`, `/give @s frostbound:wolf_tooth 12`, `/give @s frostbound:alpha_hide 24`.
 
 ## Development workflow
 
@@ -367,6 +411,7 @@ The Windows PC already has this set up.
 | Play-test in a dev client | `.\gradlew.bat runClient` | **Minecraft Client** |
 | Dev server | `.\gradlew.bat runServer` | **Minecraft Server** |
 | Build the shippable jar | `.\gradlew.bat build` | Gradle tool window → build |
+| Screenshot the Alpha Wolf content (opens a client for about a minute, then quits) | `.\gradlew.bat runScenes` | **Scenes** |
 
 On the Mac, use `./gradlew` instead of `.\gradlew.bat`.
 
@@ -389,6 +434,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
 - `ImbuementTests`: the table's recipe (smithing table, ice on the sides, iron in the corners) and block; each upgrade step needs its exact ring (8 ice, then 8 × 4 packed ice, then 8 blue ice) and only works on armour of the tier before; Cold/Icy/Frozen armour, toughness and durability (worn and after smithing into netherite); the menu's centre slot only takes armour, taking the result uses up 4 packed ice per slot and closing hands the rest back; the title ("Frozen Leather Tunic ★★★", the tier name in its star's colour), the stars (soft blues, each darker) and the bonus tooltips (none below Icy, Frozen numbers when Frozen, one bonus per material, each coloured after what it does); Cold Iron, Frostmail, Quenched, Diamond Dust, Superconductor, Snowstride, Hearthgold and Tidefrost each do what they say.
 - `AlphaWolfTests`: the Alpha's stats and size, untameable wolves; a new Alpha brings 7 (black Alpha, no black wolves); Call of the Pack heals 0.25 hearts per wolf alive and brings 2, never past 9 or the reinforcement budget; a big enough hit cuts the howl off; never more than 2 wolves lunging at once in a real fight; Enrage is Strength I for 1 s, refreshed not stacked; the Alpha's death scatters the pack and they vanish; Draining Bite takes 2 max hearts for 10 s, doesn't stack or extend, comes back when it ends, and only from a landed pack bite; drops (5–7 hides, ~10% Mark, ~10% tooth); Alpha Hide stats, insulation tags and recipes; Pack Instinct (2 vs 4 pieces, rests after triggering); the Life Steal recipes (cardinals only, I → II) and healing (melee and ranged the same, overkill capped, no heal from arcs or plain weapons); the Mark of the Pack in the necklace slot calls 2 wolves, recharges, and the wolves vanish; the tooltips.
+- `WolfDenTests`: den layouts (24 seeds) are fair arenas (a spot for every wolf with floor under it, the Alpha on the dais with nothing over it, at least 3 tall pillars, a wall with gaps, lanterns, a chest); a built den holds a sleeping Alpha and 6 wolves that know their den and never despawn; walking through wakes nobody, one hit wakes the Alpha first and then the whole pack, which goes for the attacker; with the attacker gone they walk home and lie back down; the Pounce hits a target who stays in the ring and misses one who steps out once it stops; a Bloodied Alpha roars before its first Charge, runs into a wall and is stunned, taking 1.5x damage; the pack doesn't bite during the Alpha's Pounce and howls with it.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -435,6 +481,8 @@ Test natural spawning:
 
 ## Tweaking
 
+- **Alpha Wolf art:** edit `tools/AlphaWolfTextures.java` (the icons are pixel grids, one character per pixel; the armour layers are painted in code) and run `java tools/AlphaWolfTextures.java ~/.gradle/caches/fabric-loom/1.21.1/minecraft-client.jar` from the project root. Then `.\gradlew.bat runScenes` and look in `build/scenes/screenshots/` (the den by day and night, every pose, the Alpha, the armour and the necklace).
+
 - **Christmas tree layout:** edit `ChristmasStructureBuilder` in `src/gametest` and run `./gradlew runGametest -PbuildStructures`. It rebuilds the four `.nbt` templates in `resourcepacks/christmas/data/frostbound/structure/christmas_tree/` (run the tests again afterwards so they see the new files). Or design one by hand in the dev client with a structure block, and save it over one of those files. **How rare:** `spacing`/`separation` in `worldgen/structure_set/christmas_trees.json`. **Where:** the tag `frostbound:has_structure/christmas_tree`. **Gifts:** `loot_table/chests/christmas_present.json`. **Present outcomes:** `christmas.presents` in the config, code in `christmas/ChristmasPresents.java`.
 
 - **Which biomes generate:** `REPLACEMENTS` in `environment/WinterBiomePool.java` (removed biome → what generates instead). **Sparse Forest:** `data/frostbound/worldgen/biome/sparse_forest.json` (spawns, features) and `worldgen/placed_feature/sparse_forest_trees.json` (how many oaks).
@@ -468,10 +516,13 @@ com.frostbound
 ├── imbuement/              the imbuement table: Imbuement (registers it), ImbuementScreenHandler (the grid),
 │                           FrostTiers (Cold/Icy/Frozen, recipes, stats), FrostBonuses (the material bonuses);
 │                           client/imbuement has the screen, stars, frost overlay and snowflakes
-├── alpha/                  the Alpha Wolf boss: AlphaWolfEntity, PackWolfEntity, PackGoals (the pack AI),
-│                           DrainingBite, AlphaWolfSpawner, and its rewards: AlphaHide (armour, Pack Instinct),
-│                           LifeSteal, MarkOfThePack (Trinkets necklace) with SummonedWolfEntity;
-│                           client/alpha has the renderer, drained hearts and the J key
+├── alpha/                  the Alpha Wolf boss: AlphaWolfEntity, PackWolfEntity, WolfAction (synced, for poses),
+│                           PackGoals (the pack AI), AlphaGoals (Pounce, Charge, roar, going home), DrainingBite,
+│                           and its rewards: AlphaHide (armour, Pack Instinct), LifeSteal, MarkOfThePack
+│                           (Trinkets necklace) with SummonedWolfEntity; den/ has the Wolf Den structure
+│                           (WolfDens, WolfDenStructure, WolfDenPiece, WolfDenLayout); client/alpha has
+│                           PackWolfModel (the poses), the renderer, the Hood's ears and jaw, the necklace on
+│                           the chest, drained hearts and the J key
 ├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
 │                           client/PassiveTooltips draws them at the top of tooltips
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is

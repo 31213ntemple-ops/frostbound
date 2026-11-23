@@ -18,8 +18,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
  * The Alpha Wolf boss and everything it brings: the Alpha and its pack ({@link AlphaWolfEntity},
- * {@link PackWolfEntity}), Draining Bite ({@link DrainingBite}), natural spawning ({@link AlphaWolfSpawner}),
- * and its rewards: Alpha Hide armour ({@link AlphaHide}), Wolf Teeth for Life Steal books ({@link LifeSteal})
+ * {@link PackWolfEntity}), Draining Bite ({@link DrainingBite}), its den (den.WolfDens), and its rewards: Alpha Hide armour ({@link AlphaHide}), Wolf Teeth for Life Steal books ({@link LifeSteal})
  * and the Mark of the Pack necklace ({@link MarkOfThePack}, with the wolves it calls, {@link SummonedWolfEntity}).
  *
  * Always registered (not a module), like the other items, so saved worlds never lose them. Balance is in
@@ -70,7 +69,7 @@ public final class AlphaWolves {
 		DrainingBite.init();
 		LifeSteal.init();
 		MarkOfThePack.init();
-		AlphaWolfSpawner.init();
+		com.frostbound.alpha.den.WolfDens.init();
 		ServerTickEvents.END_WORLD_TICK.register(world -> {
 			for (ServerPlayerEntity player : world.getPlayers()) {
 				AlphaHide.tick(player);

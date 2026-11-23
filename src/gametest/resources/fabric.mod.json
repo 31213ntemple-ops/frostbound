@@ -6,6 +6,9 @@
 	"description": "Dev-only automated tests for Frostbound. Never shipped.",
 	"environment": "*",
 	"entrypoints": {
+		"client": [
+			"com.frostbound.test.dev.SceneShots"
+		],
 		"fabric-gametest": [
 			"com.frostbound.test.FrozenMobTests",
 			"com.frostbound.test.WinterEnvironmentTests",
@@ -18,7 +21,8 @@
 			"com.frostbound.test.CampfireTests",
 			"com.frostbound.test.CopperTests",
 			"com.frostbound.test.ImbuementTests",
-			"com.frostbound.test.AlphaWolfTests"
+			"com.frostbound.test.AlphaWolfTests",
+			"com.frostbound.test.WolfDenTests"
 		]
 	},
 	"depends": {

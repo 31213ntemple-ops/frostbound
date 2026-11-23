@@ -42,6 +42,15 @@ loom {
 				vmArg "-Dfrostbound.buildStructures=true"
 			}
 		}
+		// Dev tool: gradlew runScenes opens a client that stages the Alpha Wolf content, screenshots it
+		// into build/scenes/screenshots, and quits (SceneShots in src/gametest).
+		scenes {
+			client()
+			name "Scenes"
+			source sourceSets.gametest
+			vmArg "-Dfrostbound.scenes=true"
+			runDir "build/scenes"
+		}
 		configureEach {
 			// Lets dev-only tools (e.g. the structure builder) write into src/main/resources.
 			vmArg "-Dfrostbound.projectDir=${project.projectDir}"

@@ -1,22 +1,26 @@
 package com.frostbound.alpha;
 
+import com.frostbound.Frostbound;
 import com.frostbound.config.FrostboundConfig;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.NoPenaltyTargeting;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
 import net.minecraft.entity.ai.goal.LookAroundGoal;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
-import net.minecraft.entity.ai.goal.RevengeGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributeInstance;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.passive.PassiveEntity;
@@ -30,8 +34,11 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
@@ -45,26 +52,40 @@ import java.util.Set;
 
 /**
  * The Alpha Wolf: a big black wolf with burning eyes that leads a pack (see {@link PackWolfEntity}).
- * Spawning one (naturally, from its egg, or with /summon) brings its pack with it.
+ * It lives in a den (see den.WolfDenStructure) where the pack sleeps until one of them is attacked.
+ * Spawned from its egg or with /summon it brings a roaming pack instead.
  *
- *  - <b>Call of the Pack</b>: every so often in a fight it sits back and howls. If it isn't cut off
- *    (enough damage during the howl interrupts it), every living wolf heals a little for each wolf
- *    alive and reinforcements arrive, never past the pack's size limit or the fight's reinforcement budget.
+ * Every move reads as tell → action → recovery (see {@link WolfAction} and {@link AlphaGoals}):
+ *
+ *  - <b>Bite</b> ({@link PackGoals.LungeGoal}): up close, a crouch and a growl, then a lunge.
+ *  - <b>Pounce</b>: crouches with its rear up while a red ring marks where it will land (the ring
+ *    follows you, then stops); leaps and slams down there, then stands winded.
+ *  - <b>Call of the Pack</b>: sits back and howls with the whole pack joining in; hit it hard enough
+ *    to cut it off, or the pack heals and reinforcements arrive.
+ *  - <b>Bloodied</b> (below half health): it roars, throwing back anyone close, its eyes flare, it
+ *    gets faster, and it starts to <b>Charge</b>: paws the ground while a pale line shows its path,
+ *    then runs it. If the line ends at a wall or pillar, it runs into it and is stunned (and takes
+ *    extra damage), so the den's pillars are cover worth using.
  *  - <b>Draining Bite</b> (any pack wolf; see {@link DrainingBite}) and <b>Enrage</b> ({@link #enrage}).
- *  - It coordinates the pack: it hands out the few lunge "turns" ({@link #tryClaimLunge}).
+ *  - While it makes a big move the pack gives it room ({@link #canClaimLunge}).
  *  - When it dies, the pack breaks: the rest scatter and vanish ({@link #breakUp}).
  *
- * A boss bar shows its health and how many wolves it leads, to players within {@link #BAR_RANGE} blocks.
+ * A boss bar (white, red once Bloodied) shows its health and how many wolves it leads, to players
+ * within {@link #BAR_RANGE} blocks while it's awake. It fills up as the Alpha wakes.
  */
 public class AlphaWolfEntity extends PackWolfEntity {
 	/** How far the pack ranges from its Alpha, for counting it. */
 	public static final double PACK_RANGE = 48.0;
 	public static final double BAR_RANGE = 40.0;
-	/** Distance at which an Alpha nobody is near despawns (like any monster), taking its pack with it. */
+	/** Distance at which a roaming Alpha nobody is near despawns (like any monster), taking its pack with it. */
 	public static final double DESPAWN_RANGE = 128.0;
+	/** Ticks the Alpha takes to get up: it lifts its head, stands and howls the pack awake. */
+	public static final int WAKE_TICKS = 30;
+	private static final Identifier BLOODIED_SPEED = Frostbound.id("alpha_bloodied_speed");
+	private static final TrackedData<Boolean> BLOODIED = DataTracker.registerData(AlphaWolfEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
 	private final ServerBossBar bossBar = new ServerBossBar(Text.translatable("entity.frostbound.alpha_wolf"),
-			BossBar.Color.RED, BossBar.Style.NOTCHED_10);
+			BossBar.Color.WHITE, BossBar.Style.NOTCHED_10);
 	private final Set<PackWolfEntity> attackers = new HashSet<>();
 	@Nullable
 	private List<PackWolfEntity> packCache;
@@ -77,12 +98,23 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	boolean calling;
 	boolean callInterrupted;
 	private float callDamage;
+	/** Ticks of fighting before the next big move (Pounce or Charge). */
+	int moveCooldown;
+	/** Whether its next big move is a Charge (only once Bloodied) rather than a Pounce. */
+	boolean nextMoveIsCharge;
+	/** It has just become Bloodied and will roar as soon as it's free to. */
+	boolean pendingRoar;
+	/** Walking back to its den to sleep. */
+	boolean goingHome;
+	/** The boss bar's shown fill (0–1); it fills up as the Alpha wakes rather than appearing full. */
+	private float barFill = 1.0f;
 
 	public AlphaWolfEntity(EntityType<? extends AlphaWolfEntity> type, World world) {
 		super(type, world);
 		FrostboundConfig.CallOfThePack call = FrostboundConfig.get().alphaWolf.callOfThePack;
 		this.callCooldown = ticks(call.firstCallSeconds);
 		this.reinforcementsLeft = call.maxReinforcements;
+		this.moveCooldown = 40;
 		// The scale attribute's default doesn't resize the hitbox by itself.
 		this.calculateDimensions();
 	}
@@ -100,16 +132,26 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	}
 
 	@Override
+	protected void initDataTracker(DataTracker.Builder builder) {
+		super.initDataTracker(builder);
+		builder.add(BLOODIED, false);
+	}
+
+	@Override
 	protected void initGoals() {
 		this.goalSelector.add(0, new SwimGoal(this));
+		this.goalSelector.add(1, new PackGoals.RestGoal(this));
+		this.goalSelector.add(2, new AlphaGoals.RoarGoal(this));
 		this.goalSelector.add(2, new PackGoals.CallOfThePackGoal(this));
-		this.goalSelector.add(3, new PackGoals.LungeGoal(this));
-		this.goalSelector.add(4, new PackGoals.CircleGoal(this));
+		this.goalSelector.add(3, new AlphaGoals.ChargeGoal(this));
+		this.goalSelector.add(3, new AlphaGoals.PounceGoal(this));
+		this.goalSelector.add(4, new PackGoals.LungeGoal(this));
+		this.goalSelector.add(5, new PackGoals.CircleGoal(this));
+		this.goalSelector.add(6, new AlphaGoals.ReturnHomeGoal(this));
 		this.goalSelector.add(8, new WanderAroundFarGoal(this, 0.7));
 		this.goalSelector.add(10, new LookAtEntityGoal(this, PlayerEntity.class, 12.0f));
 		this.goalSelector.add(10, new LookAroundGoal(this));
-		this.targetSelector.add(1, new RevengeGoal(this));
-		this.targetSelector.add(2, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
+		this.addTargetGoals();
 	}
 
 	static int ticks(double seconds) {
@@ -120,8 +162,53 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason reason, @Nullable EntityData data) {
 		EntityData result = super.initialize(world, difficulty, reason, new PassiveEntity.PassiveData(false));
 		this.setVariant(variant(world, WolfVariants.BLACK));
-		this.spawnPack(FrostboundConfig.get().alphaWolf.initialPackSize - 1);
+		// A den brings its own pack (populateDen); anything else brings a roaming one.
+		if (reason != SpawnReason.STRUCTURE) {
+			this.spawnPack(FrostboundConfig.get().alphaWolf.initialPackSize - 1);
+		}
 		return result;
+	}
+
+	/**
+	 * Fills a den: the Alpha asleep at {@code alphaBed} and a pack wolf asleep at each of {@code beds}
+	 * (up to the starting pack size), all remembering the den. Works during world generation
+	 * ({@code world} may be a chunk region). Returns the Alpha.
+	 */
+	@Nullable
+	public static AlphaWolfEntity populateDen(ServerWorldAccess world, BlockPos den, BlockPos alphaBed, List<BlockPos> beds, Random random) {
+		AlphaWolfEntity alpha = AlphaWolves.ALPHA_WOLF.create(world.toServerWorld());
+		if (alpha == null) {
+			return null;
+		}
+		float facing = random.nextFloat() * 360.0f;
+		alpha.refreshPositionAndAngles(alphaBed.getX() + 0.5, alphaBed.getY(), alphaBed.getZ() + 0.5, facing, 0.0f);
+		alpha.setHeadYaw(facing);
+		alpha.setBodyYaw(facing);
+		alpha.initialize(world, world.getLocalDifficulty(alphaBed), SpawnReason.STRUCTURE, null);
+		alpha.setDen(den, alphaBed);
+		alpha.fallAsleep();
+		world.spawnEntityAndPassengers(alpha);
+
+		int wolves = Math.min(beds.size(), FrostboundConfig.get().alphaWolf.initialPackSize - 1);
+		for (int i = 0; i < wolves; i++) {
+			BlockPos bed = beds.get(i);
+			PackWolfEntity wolf = AlphaWolves.PACK_WOLF.create(world.toServerWorld());
+			if (wolf == null) {
+				continue;
+			}
+			// Curled up facing the Alpha, give or take.
+			float yaw = (float) (MathHelper.atan2(den.getZ() - bed.getZ(), den.getX() - bed.getX()) * MathHelper.DEGREES_PER_RADIAN) - 90.0f
+					+ (random.nextFloat() - 0.5f) * 70.0f;
+			wolf.refreshPositionAndAngles(bed.getX() + 0.5, bed.getY(), bed.getZ() + 0.5, yaw, 0.0f);
+			wolf.setHeadYaw(yaw);
+			wolf.setBodyYaw(yaw);
+			wolf.setAlpha(alpha);
+			wolf.setVariant(memberVariant(world, bed));
+			wolf.setDen(den, bed);
+			wolf.fallAsleep();
+			world.spawnEntityAndPassengers(wolf);
+		}
+		return alpha;
 	}
 
 	// --- The pack ---
@@ -177,6 +264,9 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		wolf.refreshPositionAndAngles(pos.x, pos.y, pos.z, this.random.nextFloat() * 360.0f, 0.0f);
 		wolf.setAlpha(this);
 		wolf.setVariant(memberVariant(world, wolf.getBlockPos()));
+		if (this.getDen() != null) {
+			wolf.setDen(this.getDen(), null);
+		}
 		if (this.getTarget() != null) {
 			wolf.setTarget(this.getTarget());
 		}
@@ -190,13 +280,19 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		return wolf;
 	}
 
-	/** Whether {@code wolf} could take a turn to lunge now (the Alpha always can). */
+	/**
+	 * Whether {@code wolf} could take a turn to lunge now. The Alpha always can; pack wolves only while
+	 * a turn is free and the Alpha isn't in the middle of a big move (they give it room).
+	 */
 	public boolean canClaimLunge(PackWolfEntity wolf) {
 		if (wolf == this) {
 			return true;
 		}
 		this.attackers.removeIf(w -> !w.isAlive() || w.isRemoved() || !w.lunging);
-		return this.attackers.contains(wolf) || this.attackers.size() < FrostboundConfig.get().alphaWolf.simultaneousAttackers;
+		if (this.attackers.contains(wolf)) {
+			return true;
+		}
+		return !this.isPerformingMove() && this.attackers.size() < FrostboundConfig.get().alphaWolf.simultaneousAttackers;
 	}
 
 	/** Takes a lunge turn for {@code wolf}; false if the pack's turns are all taken. Release it with {@link #releaseLunge}. */
@@ -218,6 +314,15 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	public int lungingCount() {
 		this.attackers.removeIf(w -> !w.isAlive() || w.isRemoved() || !w.lunging);
 		return this.attackers.size();
+	}
+
+	/** In the middle of something big (a howl, Pounce, Charge, the roar, a stun, waking): the pack keeps back. */
+	public boolean isPerformingMove() {
+		return switch (this.getAction()) {
+			case POUNCE_WINDUP, CHARGE_WINDUP, CHARGING, STUNNED, ROARING, HOWLING, WAKING, RECOVERING -> true;
+			case LEAPING -> !this.lunging; // the Pounce's leap, not a bite
+			default -> this.calling;
+		};
 	}
 
 	/**
@@ -246,6 +351,112 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WOLF_GROWL, SoundCategory.HOSTILE, 2.0f, 0.6f);
 	}
 
+	// --- The den: waking and going back to sleep ---
+
+	/**
+	 * Something attacked the pack: the Alpha gets up (lifting its head, standing, howling), and the
+	 * rest wake in a ripple out from it. Everyone goes for {@code attacker} once up.
+	 */
+	public void wake(@Nullable LivingEntity attacker) {
+		if (!this.getAction().isResting()) {
+			if (attacker != null && this.getTarget() == null) {
+				this.setTarget(attacker);
+			}
+			return;
+		}
+		this.wakeLater(0, attacker);
+		int delay = 6;
+		for (PackWolfEntity wolf : this.getPack()) {
+			if (wolf != this) {
+				wolf.wakeLater(delay, attacker);
+				delay += 2 + this.random.nextInt(3);
+			}
+		}
+	}
+
+	@Override
+	protected int wakeTicks() {
+		return WAKE_TICKS;
+	}
+
+	@Override
+	protected void startWaking() {
+		super.startWaking();
+		this.goingHome = false;
+		this.barFill = 0.0f;
+		if (this.getWorld() instanceof ServerWorld world) {
+			world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WOLF_GROWL, SoundCategory.HOSTILE, 2.5f, 0.45f);
+			world.spawnParticles(ParticleTypes.SNOWFLAKE, this.getX(), this.getBodyY(0.4), this.getZ(), 30, 0.9, 0.3, 0.9, 0.04);
+		}
+	}
+
+	/** The waking animation's beat: halfway up (see {@link #WAKE_TICKS}), it throws its head back and howls the pack awake. */
+	private void mobTickWaking() {
+		// Halfway up, it throws its head back and howls the pack awake.
+		if (this.actionTicks == WAKE_TICKS / 2 && this.getWorld() instanceof ServerWorld world) {
+			world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WOLF_HOWL, SoundCategory.HOSTILE, 3.0f, 0.55f);
+		}
+	}
+
+	@Override
+	protected void finishWaking() {
+		super.finishWaking();
+		// Slept it off: a fresh fight starts unbloodied.
+		if (this.isBloodied() && this.getHealth() > this.getMaxHealth() * FrostboundConfig.get().alphaWolf.bloodiedBelow) {
+			this.setBloodied(false);
+		}
+		this.moveCooldown = 30;
+		this.callCooldown = ticks(FrostboundConfig.get().alphaWolf.callOfThePack.firstCallSeconds);
+	}
+
+	public boolean isGoingHome() {
+		return this.goingHome;
+	}
+
+	/** Back in the den after a fight: lies down, and the pack gets its reinforcement budget back for next time. */
+	public void goToSleep() {
+		this.goingHome = false;
+		this.fallAsleep();
+		FrostboundConfig.AlphaWolfOptions config = FrostboundConfig.get().alphaWolf;
+		this.reinforcementsLeft = config.callOfThePack.maxReinforcements;
+		this.callCooldown = ticks(config.callOfThePack.firstCallSeconds);
+		this.calling = false;
+		this.pendingRoar = false;
+		this.bossBar.clearPlayers();
+	}
+
+	@Override
+	public void fallAsleep() {
+		super.fallAsleep();
+		this.calling = false;
+	}
+
+	// --- Bloodied ---
+
+	public boolean isBloodied() {
+		return this.dataTracker.get(BLOODIED);
+	}
+
+	void setBloodied(boolean bloodied) {
+		this.dataTracker.set(BLOODIED, bloodied);
+		EntityAttributeInstance speed = this.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+		if (speed != null) {
+			speed.removeModifier(BLOODIED_SPEED);
+			if (bloodied) {
+				speed.addTemporaryModifier(new EntityAttributeModifier(BLOODIED_SPEED,
+						FrostboundConfig.get().alphaWolf.bloodiedSpeedBonus, EntityAttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+			}
+		}
+		this.bossBar.setColor(bloodied ? BossBar.Color.RED : BossBar.Color.WHITE);
+	}
+
+	/** Ticks until the next big move, and picks it: once Bloodied, a Charge 60% of the time. */
+	int moveInterval() {
+		FrostboundConfig.AlphaWolfOptions c = FrostboundConfig.get().alphaWolf;
+		this.nextMoveIsCharge = this.isBloodied() && this.random.nextFloat() < 0.6f;
+		return ticks(this.isBloodied() ? c.bloodiedMoveIntervalSeconds : c.moveIntervalSeconds) + this.random.nextInt(20);
+	}
+
 	// --- Call of the Pack ---
 
 	void beginCall() {
@@ -254,6 +465,7 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		this.callDamage = 0.0f;
 		this.getNavigation().stop();
 		this.setInSittingPose(true);
+		this.setAction(WolfAction.HOWLING);
 		// Loud enough to carry across the fight (16 blocks per unit of volume).
 		this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_WOLF_HOWL, SoundCategory.HOSTILE, 3.0f, 0.7f);
 	}
@@ -261,6 +473,9 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	void endCall(boolean answered) {
 		this.calling = false;
 		this.setInSittingPose(false);
+		if (this.getAction() == WolfAction.HOWLING) {
+			this.setAction(WolfAction.NONE);
+		}
 		FrostboundConfig.CallOfThePack config = FrostboundConfig.get().alphaWolf.callOfThePack;
 		this.callCooldown = ticks(answered ? config.intervalSeconds : config.interruptedRetrySeconds);
 		if (!answered && this.callInterrupted && this.getWorld() instanceof ServerWorld world) {
@@ -322,13 +537,38 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		this.callCooldown = ticks;
 	}
 
+	/** Ticks of fighting left before the next Pounce or Charge. */
+	public int moveCooldown() {
+		return this.moveCooldown;
+	}
+
+	public void setMoveCooldown(int ticks) {
+		this.moveCooldown = ticks;
+	}
+
+	/** Makes its next big move come now: a Charge if {@code charge} (once Bloodied), else a Pounce. */
+	public void forceNextMove(boolean charge) {
+		this.nextMoveIsCharge = charge;
+		this.moveCooldown = 0;
+	}
+
 	@Override
 	public boolean damage(DamageSource source, float amount) {
+		if (this.getAction() == WolfAction.STUNNED && !this.getWorld().isClient) {
+			amount *= (float) FrostboundConfig.get().alphaWolf.charge.stunnedDamageMultiplier;
+		}
 		boolean hurt = super.damage(source, amount);
-		if (hurt && this.calling && !this.getWorld().isClient) {
-			this.callDamage += amount;
-			if (this.callDamage >= FrostboundConfig.get().alphaWolf.callOfThePack.interruptDamage) {
-				this.callInterrupted = true;
+		if (hurt && !this.getWorld().isClient) {
+			if (this.calling) {
+				this.callDamage += amount;
+				if (this.callDamage >= FrostboundConfig.get().alphaWolf.callOfThePack.interruptDamage) {
+					this.callInterrupted = true;
+				}
+			}
+			if (this.isAlive() && !this.isBloodied()
+					&& this.getHealth() <= this.getMaxHealth() * FrostboundConfig.get().alphaWolf.bloodiedBelow) {
+				this.setBloodied(true);
+				this.pendingRoar = true;
 			}
 		}
 		return hurt;
@@ -337,26 +577,61 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	// --- Ticking, boss bar, death and despawning ---
 
 	@Override
+	public void tickMovement() {
+		super.tickMovement();
+		// Bloodied: embers drift up from its burning eyes.
+		if (this.getWorld().isClient && this.isBloodied() && !this.getAction().isResting() && this.random.nextFloat() < 0.45f) {
+			float yaw = this.headYaw * MathHelper.RADIANS_PER_DEGREE;
+			double forward = 0.42 * this.getScale();
+			double side = (this.random.nextBoolean() ? 1 : -1) * 0.12 * this.getScale();
+			double x = this.getX() - MathHelper.sin(yaw) * forward + MathHelper.cos(yaw) * side;
+			double z = this.getZ() + MathHelper.cos(yaw) * forward + MathHelper.sin(yaw) * side;
+			this.getWorld().addParticle(ParticleTypes.SMALL_FLAME, x, this.getEyeY() + 0.05, z, 0.0, 0.015, 0.0);
+		}
+	}
+
+	@Override
 	protected void mobTick() {
 		super.mobTick();
+		WolfAction action = this.getAction();
+		if (action == WolfAction.WAKING) {
+			this.mobTickWaking();
+		}
 		LivingEntity target = this.getTarget();
-		if (target == null) {
-			// Take up any fight a pack wolf has started.
-			for (PackWolfEntity wolf : this.getPack()) {
-				LivingEntity theirs = wolf.getTarget();
-				if (wolf != this && theirs != null && PackGoals.isValidTarget(this, theirs)) {
-					this.setTarget(theirs);
-					break;
+		if (!action.isResting()) {
+			if (target == null) {
+				// Take up any fight a pack wolf has started.
+				for (PackWolfEntity wolf : this.getPack()) {
+					LivingEntity theirs = wolf.getTarget();
+					if (wolf != this && theirs != null && PackGoals.isValidTarget(this, theirs)) {
+						this.setTarget(theirs);
+						break;
+					}
+				}
+			} else {
+				if (!this.calling && this.callCooldown > 0) {
+					this.callCooldown--;
+				}
+				if (this.moveCooldown > 0 && !this.isPerformingMove()) {
+					this.moveCooldown--;
 				}
 			}
-		} else if (!this.calling && this.callCooldown > 0) {
-			this.callCooldown--;
 		}
+		this.tickBossBar(action);
+	}
 
-		this.bossBar.setPercent(this.getHealth() / this.getMaxHealth());
+	private void tickBossBar(WolfAction action) {
+		float health = this.getHealth() / this.getMaxHealth();
+		// Fill up as it wakes, then follow its health.
+		this.barFill = this.barFill < health ? Math.min(health, this.barFill + 0.05f) : health;
+		this.bossBar.setPercent(this.barFill);
 		if (this.age % 10 == 0) {
 			this.bossBar.setName(Text.translatable("entity.frostbound.alpha_wolf.bar", this.getDisplayName(), this.packSize()));
-			this.updateBarPlayers();
+			if (action == WolfAction.SLEEPING) {
+				this.bossBar.clearPlayers();
+			} else {
+				this.updateBarPlayers();
+			}
 		}
 	}
 
@@ -377,6 +652,15 @@ public class AlphaWolfEntity extends PackWolfEntity {
 				this.bossBar.removePlayer(player);
 			}
 		}
+	}
+
+	/** Players shown the boss bar (for tests). */
+	public boolean isBarShownTo(ServerPlayerEntity player) {
+		return this.bossBar.getPlayers().contains(player);
+	}
+
+	public BossBar.Color barColor() {
+		return this.bossBar.getColor();
 	}
 
 	@Override
@@ -418,8 +702,9 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	}
 
 	/**
-	 * Despawns like a monster when no player is within {@link #DESPAWN_RANGE} blocks (never at random
-	 * just for being out of sight, so a pack waits for you), and its pack goes with it. Named Alphas stay.
+	 * A den Alpha never despawns. A roaming one despawns like a monster when no player is within
+	 * {@link #DESPAWN_RANGE} blocks (never at random just for being out of sight, so a pack waits for
+	 * you), and its pack goes with it. Named Alphas stay.
 	 */
 	@Override
 	public void checkDespawn() {
@@ -428,11 +713,12 @@ public class AlphaWolfEntity extends PackWolfEntity {
 			this.discard();
 			return;
 		}
-		if (this.isPersistent() || this.cannotDespawn()) {
+		if (this.getDen() != null || this.isPersistent() || this.cannotDespawn()) {
 			return;
 		}
+		// Like any mob: with no (non-spectator) player around at all, it stays put.
 		PlayerEntity player = this.getWorld().getClosestPlayer(this, -1.0);
-		if (player == null || player.squaredDistanceTo(this) > DESPAWN_RANGE * DESPAWN_RANGE) {
+		if (player != null && player.squaredDistanceTo(this) > DESPAWN_RANGE * DESPAWN_RANGE) {
 			this.breakUp(true);
 			this.discard();
 		}
@@ -446,7 +732,7 @@ public class AlphaWolfEntity extends PackWolfEntity {
 
 	@Override
 	protected float getSoundVolume() {
-		return 1.4f;
+		return this.isSleeping() ? 0.8f : 1.4f;
 	}
 
 	@Override
@@ -459,6 +745,7 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		super.writeCustomDataToNbt(nbt);
 		nbt.putInt("FrostboundCallCooldown", this.callCooldown);
 		nbt.putInt("FrostboundReinforcements", this.reinforcementsLeft);
+		nbt.putBoolean("FrostboundBloodied", this.isBloodied());
 	}
 
 	@Override
@@ -470,6 +757,12 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		if (nbt.contains("FrostboundReinforcements")) {
 			this.reinforcementsLeft = MathHelper.clamp(nbt.getInt("FrostboundReinforcements"), 0,
 					FrostboundConfig.get().alphaWolf.callOfThePack.maxReinforcements);
+		}
+		if (nbt.getBoolean("FrostboundBloodied")) {
+			this.setBloodied(true);
+		}
+		if (this.isSleeping()) {
+			this.barFill = 0.0f;
 		}
 	}
 }
