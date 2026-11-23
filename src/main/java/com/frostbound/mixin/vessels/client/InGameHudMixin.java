@@ -1,0 +1,73 @@
+package com.frostbound.mixin.vessels.client;
+
+import com.frostbound.client.vessels.FrozenHeartHud;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.random.Random;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/**
+ * Draws the frozen heart in its own slot just after the last heart (after golden hearts too).
+ *
+ * Vanilla works out how many rows of hearts there are (and so where the armour bar goes) from
+ * health plus absorption, so the frozen heart is counted there as one more absorption heart. The
+ * real absorption is then handed to renderHealthBar, so golden hearts draw exactly as usual, and
+ * the frozen heart is drawn afterwards in the slot that was kept for it.
+ */
+@Mixin(InGameHud.class)
+public abstract class InGameHudMixin {
+	@Shadow
+	@Final
+	private Random random;
+
+	@Shadow
+	private int ticks;
+
+	@Unique
+	private int frostbound$realAbsorption;
+
+	@ModifyExpressionValue(method = "renderStatusBars", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/entity/player/PlayerEntity;getAbsorptionAmount()F"))
+	private float frostbound$keepFrozenHeartSlot(float absorption) {
+		this.frostbound$realAbsorption = MathHelper.ceil(absorption);
+		if (!FrozenHeartHud.isShown(this.ticks)) {
+			return absorption;
+		}
+		// Golden hearts rounded up to whole hearts, then one more for the frozen heart.
+		return MathHelper.ceil(absorption / 2.0f) * 2.0f + 2.0f;
+	}
+
+	@ModifyArg(method = "renderStatusBars", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/gui/hud/InGameHud;renderHealthBar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/entity/player/PlayerEntity;IIIIFIIIZ)V"),
+			index = 9)
+	private int frostbound$realAbsorption(int absorption) {
+		return this.frostbound$realAbsorption;
+	}
+
+	@Inject(method = "renderHealthBar", at = @At("TAIL"))
+	private void frostbound$drawFrozenHeart(DrawContext context, PlayerEntity player, int x, int y, int lines,
+			int regeneratingHeartIndex, float maxHealth, int lastHealth, int health, int absorption, boolean blinking,
+			CallbackInfo ci) {
+		if (!FrozenHeartHud.isShown(this.ticks)) {
+			return;
+		}
+		int slot = MathHelper.ceil(maxHealth / 2.0f) + MathHelper.ceil(absorption / 2.0f);
+		int heartX = x + (slot % 10) * 8;
+		int heartY = y - (slot / 10) * lines;
+		// Shake with the rest of the row when health is low.
+		if (lastHealth + absorption <= 4) {
+			heartY += this.random.nextInt(2);
+		}
+		FrozenHeartHud.draw(context, this.ticks, heartX, heartY, player.getWorld().getLevelProperties().isHardcore());
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"CFC",
+		"FFF",
+		"CFC"
+	],
+	"key": {
+		"F": {
+			"item": "frostbound:frozen_flesh"
+		},
+		"C": {
+			"item": "minecraft:copper_ingot"
+		}
+	},
+	"result": {
+		"id": "frostbound:frozen_vessel",
+		"count": 1
+	}
+}

@@ -20,6 +20,27 @@ A collection of winter features, built as one mod split into **modules**. Each m
 
 Items like the **Ice Ball** aren't a module: they're always there (so saved items never disappear), and `iceBalls` in the config only sets their balance.
 
+## Hearts and vessels
+
+You start with **5 hearts** and can grow to **20**. Vessels are always available (they aren't a module). Hold right click to use one; letting go early cancels without using it up.
+
+- **Frozen Flesh**: ice in the centre, rotten flesh above, below and to each side (makes 2). Frozen zombies, husks and drowned also drop it (35%, more with Looting) when the Frozen Mobs module is on.
+- **Frozen Vessel**: 5 frozen flesh in a plus, 4 copper ingots in the corners. Thaws into you as a **Frozen Heart**: an ice heart drawn after your other hearts (golden hearts too). It takes damage before anything else, never heals, cracks when half gone and shatters when it breaks. It's lost on death. A cracked one can be mended with another vessel; a whole one can't be stacked. Golden apples still work as usual and stay gold. Void damage and `/kill` go straight past it.
+- **Revitalized Vessel VI–XX**: a Frozen Vessel in the centre, surrounded by a material. Each gives one permanent heart, in order: VI gives your 6th heart, up to XX for your 20th. While you hold it, it beats faster and faster, then pops up on screen like a totem. The tooltip says whether it's ready, already used, or which vessel you need first. The materials get harder, so they work as a quest book:
+
+| Vessel | Surround the Frozen Vessel with | Vessel | Surround the Frozen Vessel with |
+|---|---|---|---|
+| VI | 8 copper ingots | XIV | 8 blaze rods |
+| VII | 8 iron ingots | XV | 8 ender pearls |
+| VIII | 8 packed ice | XVI | 8 netherite scrap |
+| IX | 8 gold ingots | XVII | 8 shulker shells |
+| X | 8 amethyst shards | XVIII | 4 totems of undying (plus shape) |
+| XI | 8 diamonds | XIX | 4 netherite ingots (plus shape) |
+| XII | 8 emeralds | XX | 4 nether stars (plus shape) |
+| XIII | 8 nether quartz | | |
+
+Permanent hearts are saved on the player and kept through death. Blue ice isn't used because the ice module stops it generating.
+
 ## Winter Environment
 
 Every Overworld biome keeps its ID and terrain but becomes a cold, snowy version of itself. The Nether, the End and cave biomes are left alone.

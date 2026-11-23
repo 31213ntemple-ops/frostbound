@@ -13,10 +13,13 @@
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",
 		"mobs.LivingEntityMixin",
-		"mobs.MobEntityMixin"
+		"mobs.MobEntityMixin",
+		"vessels.PlayerEntityMixin"
 	],
 	"client": [
-		"mobs.client.LivingEntityRendererMixin"
+		"mobs.client.LivingEntityRendererMixin",
+		"vessels.client.HeldItemRendererMixin",
+		"vessels.client.InGameHudMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

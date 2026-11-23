@@ -1,0 +1,21 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"XXX",
+		"XVX",
+		"XXX"
+	],
+	"key": {
+		"X": {
+			"item": "minecraft:diamond"
+		},
+		"V": {
+			"item": "frostbound:frozen_vessel"
+		}
+	},
+	"result": {
+		"id": "frostbound:revitalized_vessel_11",
+		"count": 1
+	}
+}

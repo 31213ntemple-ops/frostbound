@@ -1,0 +1,21 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		" X ",
+		"XVX",
+		" X "
+	],
+	"key": {
+		"X": {
+			"item": "minecraft:nether_star"
+		},
+		"V": {
+			"item": "frostbound:frozen_vessel"
+		}
+	},
+	"result": {
+		"id": "frostbound:revitalized_vessel_20",
+		"count": 1
+	}
+}

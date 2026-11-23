@@ -1,5 +1,6 @@
 package com.frostbound.client;
 
+import com.frostbound.client.vessels.VesselClient;
 import com.frostbound.environment.SnowyPlants;
 import com.frostbound.items.FrostboundItems;
 import net.fabricmc.api.ClientModInitializer;
@@ -21,6 +22,9 @@ public class FrostboundClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		// Thrown ice balls draw as their item, like snowballs.
 		EntityRendererRegistry.register(FrostboundItems.ICE_BALL_ENTITY, FlyingItemEntityRenderer::new);
+
+		// Hearts: the frozen heart in the HUD, vessel tooltips, the totem-style pop.
+		VesselClient.init();
 
 		// Snowy plants: wrap the model of every "snowy=true" plant state so it also draws a
 		// thin snow layer. Vanilla's blockstate files already match the snowy states (they

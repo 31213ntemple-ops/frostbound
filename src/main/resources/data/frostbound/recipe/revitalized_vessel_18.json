@@ -1,0 +1,21 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		" X ",
+		"XVX",
+		" X "
+	],
+	"key": {
+		"X": {
+			"item": "minecraft:totem_of_undying"
+		},
+		"V": {
+			"item": "frostbound:frozen_vessel"
+		}
+	},
+	"result": {
+		"id": "frostbound:revitalized_vessel_18",
+		"count": 1
+	}
+}

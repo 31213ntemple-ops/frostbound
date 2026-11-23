@@ -1,0 +1,21 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"XXX",
+		"XVX",
+		"XXX"
+	],
+	"key": {
+		"X": {
+			"item": "minecraft:quartz"
+		},
+		"V": {
+			"item": "frostbound:frozen_vessel"
+		}
+	},
+	"result": {
+		"id": "frostbound:revitalized_vessel_13",
+		"count": 1
+	}
+}

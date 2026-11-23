@@ -6,6 +6,7 @@ import com.frostbound.environment.WinterEnvironment;
 import com.frostbound.ice.IceChanges;
 import com.frostbound.items.FrostboundItems;
 import com.frostbound.mobs.FrozenMobs;
+import com.frostbound.vessels.Vessels;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -20,7 +21,8 @@ import org.slf4j.LoggerFactory;
  *  - frozenMobs  (com.frostbound.mobs):        Frozen mob variants
  *  - christmas   (com.frostbound.christmas):   festive structures (with DecorationX: Christmas)
  *
- * Items (com.frostbound.items, e.g. ice balls) are always registered.
+ * Items (com.frostbound.items, e.g. ice balls; com.frostbound.vessels, the heart vessels) are always
+ * registered.
  */
 public class Frostbound implements ModInitializer {
 	public static final String MOD_ID = "frostbound";
@@ -35,6 +37,7 @@ public class Frostbound implements ModInitializer {
 		FrostboundConfig.Modules modules = FrostboundConfig.get().modules;
 
 		FrostboundItems.init();
+		Vessels.init();
 
 		if (modules.environment) {
 			WinterEnvironment.init();

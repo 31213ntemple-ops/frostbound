@@ -1,0 +1,21 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		" R ",
+		"RIR",
+		" R "
+	],
+	"key": {
+		"R": {
+			"item": "minecraft:rotten_flesh"
+		},
+		"I": {
+			"item": "minecraft:ice"
+		}
+	},
+	"result": {
+		"id": "frostbound:frozen_flesh",
+		"count": 2
+	}
+}
