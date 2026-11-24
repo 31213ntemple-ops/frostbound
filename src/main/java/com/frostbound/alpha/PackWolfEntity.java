@@ -3,10 +3,8 @@ package com.frostbound.alpha;
 import com.frostbound.config.FrostboundConfig;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
 import net.minecraft.entity.ai.goal.LookAroundGoal;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
-import net.minecraft.entity.ai.goal.RevengeGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -138,11 +136,23 @@ public class PackWolfEntity extends WolfEntity {
 	}
 
 	protected void addTargetGoals() {
-		this.targetSelector.add(1, new RevengeGoal(this));
+		this.targetSelector.add(1, new PackGoals.PackRevengeGoal(this));
 		this.targetSelector.add(2, new PackGoals.AlphaTargetGoal(this));
-		// A den pack only fights when woken; a roaming pack goes for any player it sees.
-		this.targetSelector.add(3, new ActiveTargetGoal<>(this, PlayerEntity.class, true,
-				target -> this.den == null && !this.getAction().isResting()));
+		// A roaming pack goes for any player it sees. A den pack sleeps until attacked, but once up it
+		// finds you again if it loses you mid-fight, until it gives up and heads back to bed.
+		this.targetSelector.add(3, new PackGoals.PackTargetGoal(this, target -> this.isUpForAFight()));
+	}
+
+	/** Awake and not scattering, and for a den pack, not on its way back to bed (or already there). */
+	public boolean isUpForAFight() {
+		if (this.getAction().isResting() || this.scattering) {
+			return false;
+		}
+		if (this.den == null) {
+			return true;
+		}
+		AlphaWolfEntity alpha = this.getAlpha();
+		return alpha != null && !alpha.isGoingHome() && !alpha.isSleeping();
 	}
 
 	// --- What it's doing ---

@@ -10,10 +10,14 @@ import com.frostbound.config.FrostboundConfig;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.boss.BossBar;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.passive.PigEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.GameTestException;
@@ -148,6 +152,72 @@ public class WolfDenTests implements FabricGameTest {
 				check(s.alpha.getBed() != null && s.alpha.squaredDistanceTo(Vec3d.ofBottomCenter(s.alpha.getBed())) < 3.0 * 3.0,
 						"the Alpha should sleep back on its dais");
 				check(s.alpha.reinforcementsLeft() == CONFIG.callOfThePack.maxReinforcements, "a night's sleep restores its reinforcements");
+				ctx.complete();
+			}
+		});
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE, tickLimit = 400)
+	public void denPackChasesYouPastTheDen(TestContext ctx) {
+		Scene s = new Scene();
+		BlockPos center = den(ctx, -600, 29L, s, 48);
+		ctx.runAtEveryTick(() -> {
+			int t = this.denTick(ctx, s, center);
+			if (t == 0) {
+				s.player = ctx.createMockPlayer(GameMode.SURVIVAL);
+				s.player.setInvulnerable(true);
+				s.player.setPosition(Vec3d.ofBottomCenter(center.add(4, 1, 1)));
+				s.alpha.damage(ctx.getWorld().getDamageSources().playerAttack(s.player), 1.0f);
+			} else if (t == 130) {
+				check(s.alpha.getTarget() == s.player, "the Alpha should be after the player who woke it");
+				// Back off well past the den's wall: not far enough to have got away.
+				s.player.setPosition(Vec3d.ofBottomCenter(center.add(34, 1, 0)));
+				s.health = s.alpha.distanceTo(s.player);
+			} else if (t > 130 && t <= 200) {
+				for (PackWolfEntity wolf : s.pack) {
+					check(!wolf.isAlive() || wolf.getTarget() == s.player,
+							"a den pack shouldn't give up on someone just for leaving the den (tick " + t + ")");
+				}
+				check(!s.alpha.isGoingHome(), "the Alpha shouldn't head home mid-chase");
+				if (t == 200) {
+					float now = s.alpha.distanceTo(s.player);
+					check(now < s.health - 4.0f, "the Alpha should come after the player: " + s.health + " → " + now + " blocks");
+					ctx.complete();
+				}
+			}
+		});
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE, tickLimit = 400)
+	public void awakeDenPackFindsYouAgain(TestContext ctx) {
+		Scene s = new Scene();
+		BlockPos center = den(ctx, -700, 31L, s, 30);
+		ServerWorld world = ctx.getWorld();
+		ctx.runAtEveryTick(() -> {
+			int t = this.denTick(ctx, s, center);
+			if (t == 0) {
+				// A real player in the world, so the pack can look for them.
+				ServerPlayerEntity player = ImbuementTests.serverPlayer(ctx);
+				player.changeGameMode(GameMode.SURVIVAL);
+				player.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 100000, 4));
+				player.setPosition(Vec3d.ofBottomCenter(center.add(5, 1, 0)));
+				world.onPlayerConnected(player);
+				s.player = player;
+				s.alpha.damage(world.getDamageSources().playerAttack(player), 1.0f);
+			} else if (t == 130) {
+				check(s.alpha.getTarget() == s.player, "the Alpha should be after the player who woke it");
+				// Out of reach: the pack loses them.
+				s.player.setPosition(Vec3d.ofBottomCenter(center.add(0, 1, 70)));
+			} else if (t == 150) {
+				check(s.pack.stream().allMatch(w -> w.getTarget() == null), "nobody should still be after a player 70 blocks away");
+				check(!s.alpha.isGoingHome() && !s.alpha.isSleeping(), "it hasn't given up yet");
+				// Back in sight before the pack gives up and heads home.
+				s.player.setPosition(Vec3d.ofBottomCenter(center.add(6, 1, 0)));
+			} else if (t == 200) {
+				check(s.alpha.getTarget() == s.player, "a woken pack should find a player who comes back into sight");
+				long after = s.pack.stream().filter(w -> w.isAlive() && w.getTarget() == s.player).count();
+				check(after >= s.pack.size() - 1, "the pack should take the fight back up, " + after + " of " + s.pack.size() + " did");
+				world.removePlayer((ServerPlayerEntity) s.player, Entity.RemovalReason.DISCARDED);
 				ctx.complete();
 			}
 		});
@@ -372,7 +442,12 @@ public class WolfDenTests implements FabricGameTest {
 
 	/** A whole den with its sleeping pack, {@code dz} blocks from the test, built just before {@link #START}. Returns its centre. */
 	private static BlockPos den(TestContext ctx, int dz, long seed, Scene scene) {
-		BlockPos center = arena(ctx, dz, WolfDenLayout.RADIUS + 2);
+		return den(ctx, dz, seed, scene, WolfDenLayout.RADIUS + 2);
+	}
+
+	/** A den on a floor of radius {@code floor}, for chasing someone out of it. */
+	private static BlockPos den(TestContext ctx, int dz, long seed, Scene scene, int floor) {
+		BlockPos center = arena(ctx, dz, floor);
 		ctx.runAtTick(START - 4, () -> scene.alpha = WolfDenPiece.place(ctx.getWorld(), center, WolfDenLayout.generate(seed),
 				BlockBox.infinite(), true));
 		return center;

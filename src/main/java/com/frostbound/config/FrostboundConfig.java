@@ -232,9 +232,7 @@ public final class FrostboundConfig {
 	}
 
 	public static final class Den {
-		/** A den pack gives up on anyone further than this from its den (blocks), and goes home. */
-		public double leashRange = 28.0;
-		/** Seconds without a fight before a den pack walks home and lies back down. */
+		/** Seconds without a fight (you got more than 48 blocks away, or out of sight) before a den pack walks home and lies back down. */
 		public double giveUpSeconds = 10.0;
 		/** Health a sleeping wolf (the Alpha too) gets back each second. */
 		public double sleepHealPerSecond = 1.0;

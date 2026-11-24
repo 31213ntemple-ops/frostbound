@@ -4,7 +4,9 @@ import com.frostbound.config.FrostboundConfig;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.NoPenaltyTargeting;
+import net.minecraft.entity.ai.goal.ActiveTargetGoal;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.ai.goal.RevengeGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -15,6 +17,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.EnumSet;
+import java.util.function.Predicate;
 
 /**
  * The pack's AI. The fight is built from a few readable behaviours rather than raw numbers:
@@ -39,7 +42,8 @@ public final class PackGoals {
 
 	/**
 	 * Someone the pack will go on fighting: alive, close enough, not in creative or spectator, and not a
-	 * pack wolf. A den pack also gives up on anyone who gets far enough from its den (they go home).
+	 * pack wolf. A den pack isn't tied to its den: it chases you as far as any pack, and only goes home
+	 * once you've got away.
 	 */
 	public static boolean isValidTarget(PackWolfEntity wolf, LivingEntity target) {
 		if (!target.isAlive() || target.isRemoved() || target.getWorld() != wolf.getWorld() || target instanceof PackWolfEntity) {
@@ -48,14 +52,39 @@ public final class PackGoals {
 		if (target instanceof PlayerEntity player && (player.isCreative() || player.isSpectator())) {
 			return false;
 		}
-		BlockPos den = wolf.getDen();
-		if (den != null) {
-			double leash = FrostboundConfig.get().alphaWolf.den.leashRange;
-			if (target.squaredDistanceTo(Vec3d.ofBottomCenter(den)) > leash * leash) {
-				return false;
-			}
-		}
 		return wolf.squaredDistanceTo(target) <= MAX_TARGET_DISTANCE * MAX_TARGET_DISTANCE;
+	}
+
+	/**
+	 * Vanilla target goals let go of a target past the mob's follow range (24 for a pack wolf), which
+	 * would shake the pack off well before it means to give up. These keep chasing out to
+	 * {@link #MAX_TARGET_DISTANCE}, like {@link #isValidTarget}.
+	 */
+	public static final class PackRevengeGoal extends RevengeGoal {
+		public PackRevengeGoal(PackWolfEntity wolf) {
+			super(wolf);
+		}
+
+		@Override
+		protected double getFollowRange() {
+			return MAX_TARGET_DISTANCE;
+		}
+	}
+
+	/** Spots players within the follow range as usual, but once on one keeps after them out to {@link #MAX_TARGET_DISTANCE}. */
+	public static final class PackTargetGoal extends ActiveTargetGoal<PlayerEntity> {
+		/** False while the vanilla constructor sizes the spotting range from {@link #getFollowRange}. */
+		private final boolean built;
+
+		public PackTargetGoal(PackWolfEntity wolf, Predicate<LivingEntity> predicate) {
+			super(wolf, PlayerEntity.class, true, predicate);
+			this.built = true;
+		}
+
+		@Override
+		protected double getFollowRange() {
+			return this.built ? MAX_TARGET_DISTANCE : super.getFollowRange();
+		}
 	}
 
 	/** Asleep or getting up: hold still (and keep everything else from running). */
