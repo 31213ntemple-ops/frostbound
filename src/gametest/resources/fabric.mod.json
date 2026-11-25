@@ -26,7 +26,8 @@
 			"com.frostbound.test.ImbuementTests",
 			"com.frostbound.test.AlphaWolfTests",
 			"com.frostbound.test.WolfDenTests",
-			"com.frostbound.test.BlockbenchTests"
+			"com.frostbound.test.BlockbenchTests",
+			"com.frostbound.test.NoThirstTests"
 		]
 	},
 	"depends": {

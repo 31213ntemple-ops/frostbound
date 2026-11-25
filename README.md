@@ -4,7 +4,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 
 ```json
 {
-  "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true },
+  "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true, "noThirst": true },
   "environment": { "coldBiomesOnly": true },
   "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
   "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 },
@@ -25,10 +25,13 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `ice` | Ice drops when mined with a pickaxe better than stone (iron or up, plus the copper pickaxe; tag `frostbound:ice_mining_tools`), no Silk Touch needed, and it no longer melts to water, packed and blue ice can't be crafted, blue ice doesn't generate, new ice textures |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
+| `noThirst` | With Tough As Nails: its thirst is switched off and its thirst items are removed, so only temperature is left (see [No Thirst](#no-thirst-tough-as-nails)) |
 
 Items like the **Ice Ball**, **copper gear**, the **Imbuement Table** and the **Alpha Wolf** and its drops aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` in the config only set their balance.
 
 **Required mods:** Fabric API and **Trinkets** (3.10+, which brings Cardinal Components API with it). Trinkets gives players the necklace slot the Mark of the Pack is worn in.
+
+**Meant to be played with:** **Tough As Nails** (for temperature; Frostbound turns its thirst off, see the `noThirst` module).
 
 ## Hearts and vessels
 
@@ -101,6 +104,17 @@ Roughly what a new world looks like (sampled over 40 km, vanilla terrain): taiga
 - Every biome's vanilla temperature is `0.15 + °C / 40`, so mods that read vanilla temperature get the same winter values.
 - For code: `FrostboundClimate.getCelsius(biome)` and `FrostboundClimate.isArctic(biome)`.
 - In Tough As Nails, being *cold* does no harm; only *icy* freezes you. Night, snowfall, being wet and high altitude each push you one step colder. Caves (below Y=50) always count as neutral.
+
+## No Thirst (Tough As Nails)
+
+Frostbound is played with Tough As Nails for its temperature, but not its thirst. With TAN installed and the `noThirst` module on (the default):
+
+- **Thirst is off:** no thirst bar, no drinking from water, no thirst effects or slower healing. It's forced off whatever `config/toughasnails/thirst.toml` says (that file still reads `enable_thirst = true`; ignore it). Works on servers too: TAN syncs its config to players and the switch applies on both sides.
+- **Thirst items are gone:** every canteen (leather, copper, iron, gold, diamond, netherite; empty, water, dirty and purified), the dirty and purified water bottles, the seven juices, the **Water Purifier** and the **Rain Collector**. They can't be crafted or purified (any recipe that makes one is dropped, data packs' too, and so is every water purifier recipe), they're out of the creative tabs, and the wandering trader never offers juice (it picks another trade instead).
+- **Water Cleansing** (an enchantment that only goes on canteens) is taken out of the loot and trade tags, so its books stop turning up, and its book is out of the creative tabs.
+- **Kept:** all of TAN's temperature content: thermometer, temperature gauge, thermoregulator, wool and leaf armour, ice cream, Charc-Os, Thermal Tuning, the climatologist and its houses.
+- **Existing worlds:** the items stay registered (another mod's items can't be unregistered), so any already in a chest or inventory stay there (with thirst off they do nothing for you). No new ones can be made or found.
+- Without Tough As Nails the module does nothing. Set `"noThirst": false` to get TAN's thirst back.
 
 ## Christmas
 
@@ -454,6 +468,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
   - **Animations:** Blockbench 5's flipped axes (and not for 4), step and before/after keyframes, catmull-rom, arithmetic in values, looping.
   - Turning them into model parts and animations needs client classes, so `runScenes` checks that (`dev/BlockbenchClientCheck`).
   - The importer's error messages are unit tests in `buildSrc/src/test`, run by any build that changes the importer (`./gradlew -p buildSrc test` on their own).
+- `NoThirstTests` (with Tough As Nails, which runs in dev): TAN's thirst is off and stays off after its config reloads; every removed item is a real TAN item and nothing makes one (no water purifier recipes either), while the temperature items keep their recipes; no creative tab or search lists them or a Water Cleansing book; Water Cleansing is out of the loot and trade tags but Thermal Tuning stays; TAN does give the wandering trader juice trades, yet 40 traders never offer one and none is short of trades.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -549,6 +564,8 @@ com.frostbound
 │                           the chest, drained hearts and the J key
 ├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
 │                           client/PassiveTooltips draws them at the top of tooltips
+├── nothirst/NoThirst       Tough As Nails without thirst: the removed items, and hides them from creative tabs;
+│                           mixin/nothirst does the rest (ThirstConfig, recipes, trades, enchantment tags)
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
 │                           installed), ChristmasPresents (what opening a tree present does)
 └── mixin/
@@ -556,6 +573,8 @@ com.frostbound
     │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
     │                             snowy plants instead of snow), SnowyBlockMixin (snowy grass)
     │                             MultiNoiseBiomeSourceParameterList (cold biomes only)
+    ├── nothirst/                 ThirstConfigMixin (forces TAN's thirst off; @Pseudo, only with TAN), RecipeManagerMixin,
+    │                             MerchantEntityMixin + WanderingTraderEntityMixin (no thirst trades), TagGroupLoaderMixin
     ├── imbuement/                ItemStackMixin (tier stats, the (+x) on attribute lines), FrostBonusDamageMixin (Cold Iron, Frostmail, Quenched);
     │                             client/ItemRendererMixin, ArmorFeatureRendererMixin (the frost overlay)
     └── mobs/                     frozen flag, combat, loot, visuals
@@ -564,7 +583,7 @@ com.frostbound
 - The `snowy` plant property is always added (even with the environment module off), so client and server always agree on block states. With the module off, snow simply stops settling into plants.
 
 - The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
-- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed.
+- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed, and the Tough As Nails config mixin when TAN isn't.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.
 - **Trinkets** is a normal (required) dependency from the TerraformersMC maven; Cardinal Components comes with it from the Ladysnake maven. In GameTests, the vanilla mock server player gets kicked when Cardinal Components syncs to its fake connection, so tests that need a server player build an unlisted one (`ImbuementTests.serverPlayer`).
-- **Other mods in dev:** DecorationX: Christmas runs in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.
+- **Other mods in dev:** DecorationX: Christmas and Tough As Nails (with its library GlitchCore) run in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.

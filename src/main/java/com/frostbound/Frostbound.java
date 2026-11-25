@@ -10,6 +10,7 @@ import com.frostbound.ice.IceChanges;
 import com.frostbound.imbuement.Imbuement;
 import com.frostbound.items.FrostboundItems;
 import com.frostbound.mobs.FrozenMobs;
+import com.frostbound.nothirst.NoThirst;
 import com.frostbound.vessels.Vessels;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
  *  - ice          (com.frostbound.ice):         breakable ice, no crafted/blue ice, new textures
  *  - frozenMobs  (com.frostbound.mobs):        Frozen mob variants
  *  - christmas   (com.frostbound.christmas):   festive structures (with DecorationX: Christmas)
+ *  - noThirst    (com.frostbound.nothirst):    Tough As Nails without its thirst (with TAN)
  *
  * Items (com.frostbound.items, e.g. ice balls; com.frostbound.vessels, the heart vessels;
  * com.frostbound.campfire, the fire starter and campfire base; com.frostbound.copper, copper gear
@@ -60,6 +62,9 @@ public class Frostbound implements ModInitializer {
 		}
 		if (modules.christmas) {
 			Christmas.init();
+		}
+		if (NoThirst.isActive()) {
+			NoThirst.init();
 		}
 		LOGGER.info("Frostbound loaded (environment: {}, frozen mobs: {}, christmas: {}). Stay warm.",
 				modules.environment, modules.frozenMobs, modules.christmas);

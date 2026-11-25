@@ -112,6 +112,9 @@ dependencies {
 
 	// DecorationX: Christmas, for building and testing the Christmas structures in dev. See devMods below.
 	devMods "maven.modrinth:decorationx-christmas:${project.decorationx_christmas_version}"
+	// Tough As Nails (and GlitchCore), for testing the No Thirst module.
+	devMods "maven.modrinth:tough-as-nails:${project.toughasnails_version}"
+	devMods "maven.modrinth:glitchcore:${project.glitchcore_version}"
 }
 
 // Other mods to play-test with in dev. They were built with a newer Loom than this project

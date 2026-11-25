@@ -10,7 +10,8 @@ import java.util.Set;
 
 /**
  * Leaves out the snow-in-plants mixins when another mod does that job (Snow! Real Magic),
- * so the two don't fight over snow placement and plant block states.
+ * so the two don't fight over snow placement and plant block states, and the Tough As Nails
+ * config mixin when TAN isn't installed.
  *
  * Must not touch Minecraft classes: it runs before they're allowed to load.
  */
@@ -26,8 +27,14 @@ public final class FrostboundMixinPlugin implements IMixinConfigPlugin {
 			PACKAGE + "environment.ServerWorldMixin",
 			PACKAGE + "environment.SnowyBlockMixin");
 
+	/** Targets a Tough As Nails class, so only applied when TAN is installed. */
+	private static final String THIRST_CONFIG_MIXIN = PACKAGE + "nothirst.ThirstConfigMixin";
+
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+		if (mixinClassName.equals(THIRST_CONFIG_MIXIN)) {
+			return FabricLoader.getInstance().isModLoaded("toughasnails");
+		}
 		return SNOWY_PLANTS || !SNOWY_PLANT_MIXINS.contains(mixinClassName);
 	}
 

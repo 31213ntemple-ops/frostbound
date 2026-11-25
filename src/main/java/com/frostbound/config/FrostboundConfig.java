@@ -32,6 +32,11 @@ public final class FrostboundConfig {
 		public boolean ice = true;
 		/** Christmas structures (needs DecorationX: Christmas; presents need Supplementaries). */
 		public boolean christmas = true;
+		/**
+		 * With Tough As Nails: turns its thirst off and removes the canteens, water bottles, juices,
+		 * water purifier, rain collector and Water Cleansing enchantment. Temperature is untouched.
+		 */
+		public boolean noThirst = true;
 	}
 
 	/** Options for the environment module. */

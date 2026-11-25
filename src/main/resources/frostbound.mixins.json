@@ -16,6 +16,12 @@
 		"imbuement.ItemStackMixin",
 		"mobs.LivingEntityMixin",
 		"mobs.MobEntityMixin",
+		"nothirst.MerchantEntityMixin",
+		"nothirst.RecipeManagerMixin",
+		"nothirst.TagEntryAccessor",
+		"nothirst.TagGroupLoaderMixin",
+		"nothirst.ThirstConfigMixin",
+		"nothirst.WanderingTraderEntityMixin",
 		"vessels.PlayerEntityMixin"
 	],
 	"client": [
