@@ -122,9 +122,9 @@ dependencies {
 // folder, and Fabric Loader remaps them when the game starts. Never part of the built jar.
 def syncDevMods = tasks.register("syncDevMods") {
 	inputs.files(configurations.devMods)
-	outputs.dirs("run/mods", "build/gametest/mods")
+	outputs.dirs("run/mods", "build/gametest/mods", "build/scenes/mods")
 	doLast {
-		["run/mods", "build/gametest/mods"].each { dir ->
+		["run/mods", "build/gametest/mods", "build/scenes/mods"].each { dir ->
 			project.sync {
 				from configurations.devMods
 				into dir
@@ -133,7 +133,7 @@ def syncDevMods = tasks.register("syncDevMods") {
 	}
 }
 
-tasks.matching { it.name in ["runClient", "runServer", "runGametest"] }.configureEach {
+tasks.matching { it.name in ["runClient", "runServer", "runGametest", "runScenes"] }.configureEach {
 	dependsOn syncDevMods
 }
 

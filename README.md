@@ -6,6 +6,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 {
   "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true, "noThirst": true },
   "environment": { "coldBiomesOnly": true },
+  "campfire": { "warmthRadius": 7.0, "warmthHeight": 3, "showWarmthRing": true },
   "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
   "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 },
   "conductivity": { "chance": 0.05, "damageMultiplier": 1.5, "radius": 1.5 },
@@ -75,7 +76,7 @@ New terrain only uses cold biomes: snowy plains, ice spikes, the taigas, groves,
 | beach, river | snowy beach, frozen river |
 | ocean, lukewarm, warm (and deep) | cold ocean / deep cold ocean |
 
-**Sparse Forest** (`frostbound:sparse_forest`, −12 °C): open snowy land with occasional small oaks, flowers, pumpkins and grass. Horses, donkeys and rabbits spawn here along with the usual farm animals. It gets mineshafts, pillager outposts, ruined portals, trial chambers and strongholds like plains did; no villages for now.
+**Sparse Forest** (`frostbound:sparse_forest`, −12 °C): open snowy land with occasional small oaks, flowers, pumpkins and grass. The only biome with horses and donkeys; rabbits and the usual farm animals spawn here too. It gets mineshafts, pillager outposts, ruined portals, trial chambers and strongholds like plains did; no villages for now.
 
 Roughly what a new world looks like (sampled over 40 km, vanilla terrain): taiga 19%, Sparse Forest 18%, old growth taigas 8%, snowy plains 5%, snowy taiga 3%, ice spikes and mountains about 2%. Most of the rest is ocean and frozen rivers.
 
@@ -95,6 +96,26 @@ Roughly what a new world looks like (sampled over 40 km, vanilla terrain): taiga
 - **Snow on plants:** snow settles *into* short grass, ferns, flowers, dead bushes, saplings, mushrooms, sweet berry bushes, pink petals and the bottom of tall plants, instead of leaving holes around them. These plants have a `snowy` block state, and the snowy version draws a thin snow layer around the plant. Breaking it gives the plant as normal. Modded plants that extend these vanilla plant types get it too. **With Snow! Real Magic installed this turns itself off** and Snow! Real Magic handles snow in plants instead (plants then get no `snowy` state from Frostbound).
 - **Water:** "ice floes" uses vanilla's frozen-ocean pattern, so about half is open water (it rains over the open patches). The warm ocean never freezes, though snow still falls on it (only relevant in old chunks or with `coldBiomesOnly` off).
 - **Wildlife:** snow foxes, white rabbits and cold frogs everywhere. Strays join skeletons outside the arctic. Mushroom fields stay free of monsters.
+
+### Animals
+
+Food animals live in the forests and goats in the harsh land (`environment/WinterWildlife.java`):
+
+| Biomes | Animals |
+|---|---|
+| Sparse Forest | farm animals, rabbits, and the **only horses and donkeys** (taken out of every other biome, including old chunks of plains and savanna) |
+| taiga, snowy taiga, old growth taigas, windswept forest | sheep, cows, chickens, pigs, wolves, rabbits, foxes (vanilla) |
+| grove | sheep and **goats** (herds of 2–4), plus vanilla's wolves, rabbits and foxes |
+| snowy plains | **goats**, plus vanilla's rabbits and polar bears |
+| windswept hills, windswept gravelly hills | **goats** and llamas: no sheep, cows, chickens or pigs |
+| snowy slopes, frozen and jagged peaks | goats (vanilla) |
+| ice spikes | desolate: only vanilla's rabbits and the odd polar bear |
+
+**Goats** are the food of the harsh biomes:
+- They drop **1–2 mutton** (cooked if they die burning, up to +1 per Looting level), like sheep. Babies drop nothing.
+- **They ram whatever hurts them** instead of running away. The goat backs off 4–7 blocks in a straight line, lowers its head for a second with the prepare-ram sound (your cue to step aside), then charges: 1 heart and a hard knockback, half the knockback through a shield. After a ram it calms down, so each ram takes another hit to set off. A goat forgets its attacker 10 s after the last hit, or once it's more than 24 blocks away. Creative and spectator players are left alone, and in Peaceful the charge doesn't hurt players (as with vanilla rams).
+- Vanilla's own rams (now and then, at any mob or player nearby) are unchanged, and so are screaming goats.
+- Config: `goats.retaliate` (true) and `goats.grudgeSeconds` (10).
 - **Modded biomes** get a winter version automatically, based on how warm they originally were.
 - **Existing worlds:** snowfall, freezing and colours apply straight away. Snow builds up on old chunks during snowfall.
 
@@ -191,6 +212,17 @@ Hold right-click with the fire starter on a campfire base (or any unlit campfire
 The client draws the bar and judges each click; the server keeps the streak, takes durability and lights the fire (`com.frostbound.campfire`, `client.campfire.FireStarterMinigame`).
 
 Try it: `/give @s frostbound:fire_starter` and `/give @s frostbound:campfire_base`.
+
+### Warmth (with Tough As Nails)
+
+A lit campfire warms you (one step on Tough As Nails' scale) anywhere within **7 blocks** of it: a circle round the fire, from 3 blocks below it to 3 above. Standing on the 7th block straight out still counts; 5 and 5 on the diagonal (7.1 away) does too. A soul campfire doesn't warm (TAN counts it as cooling), and nor does an unlit one.
+
+- **The ring:** a soft orange ring on the ground round every lit campfire near you marks the edge of the warm area. It follows the ground (up a step, over snow), glows brighter while you're inside and fades out as you walk away (gone 12 blocks past it). Switch it off in **Options → Video Settings → Campfire Warmth Ring** (the last button; changes apply at once and are saved in `config/frostbound.json` as `campfire.showWarmthRing`). Without Tough As Nails campfires don't warm anything, so there's no ring and no button.
+- **Why it's a circle:** on its own Tough As Nails finds heat by spreading out through the air round you `near_heat_cool_proximity` steps (8), which reaches a campfire 7 blocks straight out but only 3 or 4 blocks out on the diagonals, and a fire 7 blocks overhead. Frostbound takes campfires out of that search and puts in the one inside the circle (`mixin/campfire/TemperatureHelperImplMixin`), so the warm area is exactly what the ring shows. Other heat sources (fire, lava, lanterns, magma) still work TAN's way. Unlike TAN's search, a wall doesn't block a campfire's warmth.
+- **Which blocks:** the tag `frostbound:warming_campfires` (`minecraft:campfire`; a data pack can add more, lit ones only if they have a `lit` property).
+- **Balance:** `campfire` in `config/frostbound.json`: `warmthRadius` (7.0) and `warmthHeight` (3) need a restart; `showWarmthRing` doesn't. The radius is read on each side, so on a server keep the players' copy the same as the server's or the ring won't match.
+
+Try it: place a campfire, light it, and watch the thermometer or TAN's temperature gauge as you walk across the ring.
 
 ## Copper Gear
 
@@ -380,7 +412,8 @@ The pack breaks: every wolf stops fighting, whines and **runs from the nearest p
 |---|---|---|
 | **Alpha Hide** | the Alpha | 5–7, always |
 | **Mark of the Pack** | the Alpha (killed by a player) | 10% (+2% per Looting level) |
-| **Wolf Tooth** | every pack wolf, the Alpha too (killed by a player) | 10%, one tooth |
+| **Wolf Tooth** | the Alpha (killed by a player) | 3–6, always |
+| **Wolf Tooth** | every pack wolf (killed by a player) | 10%, one tooth |
 
 25 XP from the Alpha, 3 from a pack wolf. The den's chest (`loot_table/chests/wolf_den.json`) holds what the pack dragged home: bones, leather and rabbit hide, iron nuggets and the odd ingot, arrows, berries, sometimes a Wolf Tooth, a name tag or a worn iron sword.
 
@@ -447,7 +480,7 @@ The Windows PC already has this set up.
 | Play-test in a dev client | `.\gradlew.bat runClient` | **Minecraft Client** |
 | Dev server | `.\gradlew.bat runServer` | **Minecraft Server** |
 | Build the shippable jar | `.\gradlew.bat build` | Gradle tool window → build |
-| Screenshot the Alpha Wolf content (opens a client for about a minute, then quits) | `.\gradlew.bat runScenes` | **Scenes** |
+| Screenshot the Alpha Wolf content and the campfire ring (opens a client for about a minute, then quits) | `.\gradlew.bat runScenes` | **Scenes** |
 
 On the Mac, use `./gradlew` instead of `.\gradlew.bat`.
 
@@ -463,13 +496,14 @@ If you edit `build.gradle`, click the Gradle **Reload** (elephant) icon in Intel
 
 They live in `src/gametest/java/com/frostbound/test/`:
 - `WinterEnvironmentTests`: every vanilla biome has a winter profile; temperatures and snowfall match the table; water freezes except in open-water biomes; the Nether and caves are untouched; the temperature-mod tags are filled; colours and strays are applied.
+- `WildlifeTests`: horses and donkeys spawn only in Sparse Forest; the forests have sheep, cows and chickens and no goats; snowy plains, slopes, peaks, grove and the windswept hills have goats; the windswept hills lost their food animals but kept their llamas; grove has sheep but no cows, chickens or pigs; ice spikes only has vanilla's rabbits and polar bears; goats drop mutton (cooked if burning); a goat hit by a mob doesn't panic, backs off and rams it.
 - `WinterEnvironmentTests` also checks cold biomes only: removed biomes never generate (it samples real Overworld noise and logs the biome share), every replacement is a cold biome, and Sparse Forest has its oaks, horses and donkeys.
 - `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
 - `ChristmasTests`: the structure only loads with DecorationX; every tree style has the tree, the snow floor and five gift presents; the templates place (directly and through `/place structure`, landing on the surface); gifts are one decent stack (never coal); snow can't settle on the tree, presents or lanterns but still lands on the floor; each present outcome works (gift, one coal, 1–3 Frozen mobs, explosion after the fuse) and the chances match the config. A chest with the present loot table stands in for the Supplementaries present, which can't run in dev.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
 - `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone plus iron; wooden, stone and golden pickaxes can't harvest iron ore, deepslate iron ore or raw iron blocks, and stone still harvests copper, coal and lapis; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
 - `ImbuementTests`: the table's recipe (smithing table, ice on the sides, iron in the corners) and block; each upgrade step needs its exact ring (8 ice, then 8 × 4 packed ice, then 8 blue ice) and only works on gear of the tier before; weapons can be imbued (not tools or bows) for attack damage and durability, held in the main hand, and get Frostbite from Icy, which slows what they hit in melee for the Icy or Frozen time; the tooltip shows "+8 Armor (+1)", "+2 Armor Toughness (+0.5)" and " 6 Attack Damage (+0.5)" with the (+x) in the tier's colour, and the durability line with its (+x), added or appended; Cold/Icy/Frozen armour, toughness and durability (worn and after smithing into netherite); the menu's centre slot only takes armour, taking the result uses up 4 packed ice per slot and closing hands the rest back; the title ("Frozen Leather Tunic ★★★", the tier name in its star's colour), the stars (soft blues, each darker) and the bonus tooltips (none below Icy, Frozen numbers when Frozen, one bonus per material, each coloured after what it does); Cold Iron, Frostmail, Quenched, Diamond Dust, Superconductor, Snowstride, Hearthgold and Tidefrost each do what they say.
-- `AlphaWolfTests`: the Alpha's stats and size, untameable wolves; a new Alpha brings 7 (black Alpha, no black wolves); Call of the Pack heals 0.25 hearts per wolf alive and brings 2, never past 9 or the reinforcement budget; a big enough hit cuts the howl off; never more than `simultaneousAttackers` (3) wolves lunging at once in a real fight; Enrage is Strength I for 1 s, refreshed not stacked; the Alpha's death scatters the pack and they vanish; Draining Bite takes 2 max hearts for 10 s, doesn't stack or extend, comes back when it ends, and only from a landed pack bite; drops (5–7 hides, ~10% Mark, ~10% tooth); Alpha Hide stats, insulation tags and recipes; Pack Instinct (2 vs 4 pieces, rests after triggering); the Life Steal recipes (cardinals only, I → II) and healing (melee and ranged the same, overkill capped, no heal from arcs or plain weapons); the Mark of the Pack in the necklace slot calls 2 wolves, recharges, and the wolves vanish; the tooltips.
+- `AlphaWolfTests`: the Alpha's stats and size, untameable wolves; a new Alpha brings 7 (black Alpha, no black wolves); Call of the Pack heals 0.25 hearts per wolf alive and brings 2, never past 9 or the reinforcement budget; a big enough hit cuts the howl off; never more than `simultaneousAttackers` (3) wolves lunging at once in a real fight; Enrage is Strength I for 1 s, refreshed not stacked; the Alpha's death scatters the pack and they vanish; Draining Bite takes 2 max hearts for 10 s, doesn't stack or extend, comes back when it ends, and only from a landed pack bite; drops (5–7 hides, ~10% Mark, always 3–6 teeth from the Alpha, ~10% one tooth from a pack wolf); Alpha Hide stats, insulation tags and recipes; Pack Instinct (2 vs 4 pieces, rests after triggering); the Life Steal recipes (cardinals only, I → II) and healing (melee and ranged the same, overkill capped, no heal from arcs or plain weapons); the Mark of the Pack in the necklace slot calls 2 wolves, recharges, and the wolves vanish; the tooltips.
 - `WolfDenTests`: den layouts (24 seeds) are fair arenas (a spot for every wolf with floor under it, the Alpha on the dais with nothing over it, at least 3 tall pillars, a wall with gaps, lanterns, a chest); a built den holds a sleeping Alpha and 6 wolves that know their den and never despawn; walking through wakes nobody, one hit wakes the Alpha first and then the whole pack, which goes for the attacker; a woken pack chases you out past its den, and picks you back up if it loses you and you come back into sight; with the attacker gone they walk home and lie back down; the Pounce hits a target who stays in the ring and misses one who steps out once it stops; a Bloodied Alpha roars before its first Charge, runs into a wall and is stunned, taking 1.5x damage; the pack doesn't bite during the Alpha's Pounce and howls with it.
 - `PackHuntingTests`: the ring spreads wolves evenly, keeps their order, moves them as little as it can and turns as one; the Pincer picks the pair most across from each other (and none from two side by side); the next bite goes to the wolf behind the prey, and to another once it turns round; new prey gets no bite for the encircle time and the pack spreads round it; a watched wolf breaks off and then bites, after the unwatched one; the Pincer's order (the Alpha barks, both crouch, the first leaps while the second waits, the Alpha watches) bites twice if you stay put and not at all if you step aside once both lines stop; and the pack keeps up the pressure (20 s against a player walking a circle and turning to face the nearest wolf: at least 10 bites land, some wolf is attacking at least half the time, and the Alpha holds the pack back no more than 40% of it).
 - `BlockbenchTests`: the importer's output for the fixtures in `src/gametest/blockbench`, checked against values worked out by hand from Blockbench's own exporters:
@@ -481,6 +515,7 @@ They live in `src/gametest/java/com/frostbound/test/`:
   - **The Alpha's armour** fits the wolf: every bone pivots and turns where vanilla's wolf part does, the reference wolf isn't exported, and it's spiked.
   - The importer's error messages are unit tests in `buildSrc/src/test`, run by any build that changes the importer (`./gradlew -p buildSrc test` on their own).
 - `NoThirstTests` (with Tough As Nails, which runs in dev): TAN's thirst is off and stays off after its config reloads; every removed item is a real TAN item and nothing makes one (no water purifier recipes either), while the temperature items keep their recipes; no creative tab or search lists them or a Water Cleansing book; Water Cleansing is out of the loot and trade tags but Thermal Tuning stays; TAN does give the wandering trader juice trades, yet 40 traders never offer one and none is short of trades.
+- `CampfireTests`: the fire starter and campfire base recipes, the lighting minigame's server side (three hits light it, a miss costs durability and resets, relighting a put-out campfire); warmth is a circle 7 blocks round (7 straight out and 5 + 5 on the diagonal warm, 8 out and 6 + 5 don't, 3 up or down but not 4), only lit campfires, never soul campfires; the nearest lit campfire is the one found; and with Tough As Nails its temperature agrees (warmed inside the circle, not outside it or 5 blocks overhead, where TAN alone would warm you).
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -533,6 +568,7 @@ Test natural spawning:
 
 - **Christmas tree layout:** edit `ChristmasStructureBuilder` in `src/gametest` and run `./gradlew runGametest -PbuildStructures`. It rebuilds the four `.nbt` templates in `resourcepacks/christmas/data/frostbound/structure/christmas_tree/` (run the tests again afterwards so they see the new files). Or design one by hand in the dev client with a structure block, and save it over one of those files. **How rare:** `spacing`/`separation` in `worldgen/structure_set/christmas_trees.json`. **Where:** the tag `frostbound:has_structure/christmas_tree`. **Gifts:** `loot_table/chests/christmas_present.json`. **Present outcomes:** `christmas.presents` in the config, code in `christmas/ChristmasPresents.java`.
 
+- **Which animals spawn where:** `environment/WinterWildlife.java` (horses' biome, goat herds, which biomes lose their food animals). **Goat drops:** `resourcepacks/winter_environment/data/minecraft/loot_table/entities/goat.json`. **Goat rams:** `environment/GoatGrudges.java`.
 - **Which biomes generate:** `REPLACEMENTS` in `environment/WinterBiomePool.java` (removed biome → what generates instead). **Sparse Forest:** `data/frostbound/worldgen/biome/sparse_forest.json` (spawns, features) and `worldgen/placed_feature/sparse_forest_trees.json` (how many oaks).
 - **Biome temperatures, water, bands:** one line per biome in `environment/WinterClimate.java` (`TABLE`). Colour palettes are on the `Zone` enum in the same file.
 - **Open water biomes:** the tag `frostbound:open_water` (keep it in step with `WaterMode.OPEN` in the table; a test checks this).
@@ -548,12 +584,17 @@ Test natural spawning:
 com.frostbound
 ├── Frostbound              entrypoint; starts the enabled modules
 ├── config/FrostboundConfig config/frostbound.json
+├── campfire/               fire starting: Campfires (fire starter, campfire base, the minigame's server side),
+│                           CampfireWarmth (the circle a lit campfire warms); client/campfire has the
+│                           minigame bar and WarmthRing (the ring on the ground, its Video Settings button)
 ├── client/blockbench/      entity models made in Blockbench: BlockbenchModels (layers, animations, texture),
 │                           BlockbenchEntityModel, BlockbenchEntityRenderer (see src/main/blockbench/README.md)
 ├── environment/            winter environment module
 │   ├── WinterClimate             the climate table (single source of truth)
 │   ├── WinterBiomePool           which biomes new terrain uses (cold only + Sparse Forest)
 │   ├── WinterBiomeModifications  applies it with Fabric's biome modification API
+│   ├── WinterWildlife            which animals spawn where (horses, food animals, goats)
+│   ├── GoatGrudges               goats ram whatever hurts them
 │   ├── WinterEnvironment         module entry; registers the built-in data pack
 │   ├── SnowyPlants               which plants can hold snow, and the snowy property
 │   └── FrostboundClimate         public API (°C per biome)
@@ -587,6 +628,9 @@ com.frostbound
     │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
     │                             snowy plants instead of snow), SnowyBlockMixin (snowy grass)
     │                             MultiNoiseBiomeSourceParameterList (cold biomes only)
+    │                             GoatEntity, PrepareRamTask, FleeTask (goats ram their attacker)
+    ├── campfire/                 TemperatureHelperImplMixin (TAN's campfire warmth as a circle; @Pseudo, only with TAN);
+    │                             client/VideoOptionsScreenMixin (the Campfire Warmth Ring button)
     ├── nothirst/                 ThirstConfigMixin (forces TAN's thirst off; @Pseudo, only with TAN), RecipeManagerMixin,
     │                             MerchantEntityMixin + WanderingTraderEntityMixin (no thirst trades), TagGroupLoaderMixin
     ├── imbuement/                ItemStackMixin (tier stats, the (+x) on attribute lines), FrostBonusDamageMixin (Cold Iron, Frostmail, Quenched);
@@ -596,8 +640,8 @@ com.frostbound
 
 - The `snowy` plant property is always added (even with the environment module off), so client and server always agree on block states. With the module off, snow simply stops settling into plants.
 
-- The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
-- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed, and the Tough As Nails config mixin when TAN isn't.
+- The environment module's data (biome tags, the Tough As Nails tag and the goat loot table) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
+- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed, and the Tough As Nails mixins (thirst config, campfire warmth) when TAN isn't.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.
 - **Trinkets** is a normal (required) dependency from the TerraformersMC maven; Cardinal Components comes with it from the Ladysnake maven. In GameTests, the vanilla mock server player gets kicked when Cardinal Components syncs to its fake connection, so tests that need a server player build an unlisted one (`ImbuementTests.serverPlayer`).
-- **Other mods in dev:** DecorationX: Christmas and Tough As Nails (with its library GlitchCore) run in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.
+- **Other mods in dev:** DecorationX: Christmas and Tough As Nails (with its library GlitchCore) run in the dev client, game tests and scenes. Gradle downloads it from Modrinth and copies it into `run/mods`, `build/gametest/mods` and `build/scenes/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.

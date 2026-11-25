@@ -5,11 +5,15 @@
 	"plugin": "com.frostbound.mixin.FrostboundMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"campfire.TemperatureHelperImplMixin",
 		"environment.BiomeMixin",
 		"environment.BlockMixin",
+		"environment.FleeTaskMixin",
 		"environment.FreezeTopLayerFeatureMixin",
+		"environment.GoatEntityMixin",
 		"environment.IceBlockMixin",
 		"environment.MultiNoiseBiomeSourceParameterListMixin",
+		"environment.PrepareRamTaskMixin",
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",
 		"imbuement.FrostBonusDamageMixin",
@@ -25,6 +29,7 @@
 		"vessels.PlayerEntityMixin"
 	],
 	"client": [
+		"campfire.client.VideoOptionsScreenMixin",
 		"imbuement.client.ArmorFeatureRendererMixin",
 		"imbuement.client.ItemRendererMixin",
 		"mobs.client.LivingEntityRendererMixin",

@@ -19,6 +19,8 @@ import dev.emi.trinkets.api.TrinketsApi;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.impl.resource.loader.ModResourcePackUtil;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.SnowBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -343,6 +345,27 @@ public class SceneShots implements ClientModInitializer {
 		this.add(16, server -> hunter[0].setPincerCooldown(0), client -> { }, "28_pincer_order");
 		this.add(14, server -> { }, client -> { }, "29_pincer_lines");
 		this.add(16, server -> { }, client -> { }, "30_pincer_leap");
+
+		// The campfire warmth ring (needs Tough As Nails, which runScenes loads): a raised step on one side and
+		// snow on the other, so the ring has to follow the ground. From above, the side, and from inside it.
+		this.add(30, server -> {
+			ServerWorld world = server.getOverworld();
+			BlockPos fire = new BlockPos(200, this.ground + 1, -10);
+			for (int x = 203; x <= 212; x++) {
+				for (int z = -20; z <= 0; z++) {
+					world.setBlockState(new BlockPos(x, this.ground + 1, z), Blocks.STONE.getDefaultState());
+				}
+			}
+			for (int x = 188; x <= 196; x++) {
+				for (int z = -20; z <= 0; z++) {
+					world.setBlockState(new BlockPos(x, this.ground + 1, z), Blocks.SNOW.getDefaultState().with(SnowBlock.LAYERS, 2));
+				}
+			}
+			world.setBlockState(fire, Blocks.CAMPFIRE.getDefaultState());
+			this.camera(server, 200.5, 11, -9.5, 0, 90);
+		}, client -> client.options.setPerspective(Perspective.FIRST_PERSON), "31_campfire_ring_from_above");
+		this.add(30, server -> this.camera(server, 200.5, 3.5, -24.5, 0, 18), client -> { }, "32_campfire_ring_side");
+		this.add(30, server -> this.camera(server, 202.5, 1.6, -6.5, 150, 30), client -> { }, "33_campfire_ring_inside");
 	}
 
 	/** The poses the armour shots show, left to right. */

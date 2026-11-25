@@ -285,16 +285,19 @@ public class AlphaWolfTests implements FabricGameTest {
 		AlphaWolfEntity alpha = ctx.spawnEntity(AlphaWolves.ALPHA_WOLF, 4, 2, 4);
 		PlayerEntity player = ctx.createMockPlayer(GameMode.SURVIVAL);
 		LootTable table = world.getServer().getReloadableRegistries().getLootTable(AlphaWolves.ALPHA_WOLF.getLootTableId());
-		int marks = 0, teeth = 0, rolls = 2000;
+		int marks = 0, rolls = 2000;
+		java.util.Set<Integer> toothCounts = new java.util.HashSet<>();
 		for (long seed = 0; seed < rolls; seed++) {
 			List<ItemStack> drops = table.generateLoot(killedBy(world, alpha, player), seed * 0x9E3779B97F4A7C15L);
 			int hides = count(drops, AlphaHide.ALPHA_HIDE);
 			check(hides >= 5 && hides <= 7, "the Alpha should drop 5–7 Alpha Hides, dropped " + hides);
 			marks += count(drops, MarkOfThePack.MARK_OF_THE_PACK);
-			teeth += count(drops, AlphaWolves.WOLF_TOOTH);
+			int teeth = count(drops, AlphaWolves.WOLF_TOOTH);
+			check(teeth >= 3 && teeth <= 6, "the Alpha should always drop 3–6 Wolf Teeth, dropped " + teeth);
+			toothCounts.add(teeth);
 		}
 		check(marks > rolls * 0.07 && marks < rolls * 0.13, "the Mark should drop about 10% of the time, dropped " + marks + "/" + rolls);
-		check(teeth > rolls * 0.07 && teeth < rolls * 0.13, "a Wolf Tooth should drop about 10% of the time, dropped " + teeth + "/" + rolls);
+		check(toothCounts.equals(java.util.Set.of(3, 4, 5, 6)), "every count from 3 to 6 teeth should come up, saw " + toothCounts);
 
 		PackWolfEntity wolf = ctx.spawnEntity(AlphaWolves.PACK_WOLF, 1, 2, 1);
 		LootTable wolfTable = world.getServer().getReloadableRegistries().getLootTable(AlphaWolves.PACK_WOLF.getLootTableId());

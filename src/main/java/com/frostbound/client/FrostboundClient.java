@@ -3,6 +3,7 @@ package com.frostbound.client;
 import com.frostbound.client.alpha.AlphaWolfClient;
 import com.frostbound.client.blockbench.BlockbenchModels;
 import com.frostbound.client.campfire.FireStarterMinigame;
+import com.frostbound.client.campfire.WarmthRing;
 import com.frostbound.client.imbuement.FrostParticles;
 import com.frostbound.client.imbuement.FrostRenderLayers;
 import com.frostbound.client.imbuement.FrostStars;
@@ -37,6 +38,8 @@ public class FrostboundClient implements ClientModInitializer {
 
 		// The fire-starting minigame: the bar under the crosshair while you use a fire starter.
 		FireStarterMinigame.init();
+		// The ring round lit campfires marking where they warm you (with Tough As Nails).
+		WarmthRing.init();
 
 		// The Alpha Wolf and its pack, the Mark of the Pack key, Draining Bite's hollow hearts (in InGameHudMixin).
 		AlphaWolfClient.init();

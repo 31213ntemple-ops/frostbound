@@ -49,16 +49,22 @@
 			"entries": [
 				{
 					"type": "minecraft:item",
-					"name": "frostbound:wolf_tooth"
+					"name": "frostbound:wolf_tooth",
+					"functions": [
+						{
+							"function": "minecraft:set_count",
+							"count": {
+								"type": "minecraft:uniform",
+								"min": 3,
+								"max": 6
+							}
+						}
+					]
 				}
 			],
 			"conditions": [
 				{
 					"condition": "minecraft:killed_by_player"
-				},
-				{
-					"condition": "minecraft:random_chance",
-					"chance": 0.1
 				}
 			]
 		}

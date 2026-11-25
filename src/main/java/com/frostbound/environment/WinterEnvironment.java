@@ -33,6 +33,8 @@ public final class WinterEnvironment {
 
 	public static void init() {
 		WinterBiomeModifications.register();
+		WinterWildlife.register();
+		GoatGrudges.register();
 
 		// The module's data (biome tags, temperature-mod compat) lives in a built-in data pack
 		// at resources/resourcepacks/winter_environment, so it's only present while the module is on.

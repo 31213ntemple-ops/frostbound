@@ -41,6 +41,8 @@
 	"item.frostbound.fire_starter": "Fire Starter",
 	"item.frostbound.fire_starter.hint": "Hold right-click on a campfire base",
 	"block.frostbound.campfire_base": "Campfire Base",
+	"options.frostbound.campfire_ring": "Campfire Warmth Ring",
+	"options.frostbound.campfire_ring.tooltip": "Draws a ring round lit campfires marking how close you need to be for them to warm you.",
 	"frostbound.fire_starter.minigame": "Left-click in the green",
 	"item.frostbound.copper_nugget": "Copper Nugget",
 	"item.frostbound.copper_sword": "Copper Sword",

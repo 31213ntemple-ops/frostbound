@@ -28,7 +28,8 @@
 			"com.frostbound.test.WolfDenTests",
 			"com.frostbound.test.PackHuntingTests",
 			"com.frostbound.test.BlockbenchTests",
-			"com.frostbound.test.NoThirstTests"
+			"com.frostbound.test.NoThirstTests",
+			"com.frostbound.test.WildlifeTests"
 		]
 	},
 	"depends": {

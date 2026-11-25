@@ -47,6 +47,28 @@ public final class FrostboundConfig {
 		public boolean coldBiomesOnly = true;
 	}
 
+	/** Goats in the winter environment (they drop mutton and ram whatever hurts them). */
+	public Goats goats = new Goats();
+
+	public static final class Goats {
+		/** A hurt goat rams its attacker instead of running away. */
+		public boolean retaliate = true;
+		/** How long after a hit the goat still wants to ram its attacker, in seconds. */
+		public int grudgeSeconds = 10;
+	}
+
+	/** Lit campfires warming you (with Tough As Nails, which does the temperature). */
+	public CampfireOptions campfire = new CampfireOptions();
+
+	public static final class CampfireOptions {
+		/** How far from a lit campfire you're warmed, in blocks (a circle round it, not Tough As Nails' own diamond). */
+		public double warmthRadius = 7.0;
+		/** How far above or below the campfire your feet can be and still be warmed, in blocks. */
+		public int warmthHeight = 3;
+		/** Draw a ring round lit campfires marking where they warm you. Also in Options → Video Settings; changes apply at once. */
+		public boolean showWarmthRing = true;
+	}
+
 	/** Options for the christmas module. */
 	public ChristmasOptions christmas = new ChristmasOptions();
 
@@ -331,6 +353,19 @@ public final class FrostboundConfig {
 		return instance;
 	}
 
+	/** Writes the config back to its file, for the options that can be changed in game (the campfire ring). */
+	public static synchronized void save() {
+		write(get(), FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
+	}
+
+	private static void write(FrostboundConfig config, Path file) {
+		try (Writer writer = Files.newBufferedWriter(file)) {
+			GSON.toJson(config, writer);
+		} catch (IOException e) {
+			Frostbound.LOGGER.warn("Could not write {}", file, e);
+		}
+	}
+
 	private static FrostboundConfig load(Path file) {
 		FrostboundConfig config = new FrostboundConfig();
 		if (Files.exists(file)) {
@@ -344,6 +379,12 @@ public final class FrostboundConfig {
 				}
 				if (config.environment == null) {
 					config.environment = new Environment();
+				}
+				if (config.goats == null) {
+					config.goats = new Goats();
+				}
+				if (config.campfire == null) {
+					config.campfire = new CampfireOptions();
 				}
 				if (config.christmas == null) {
 					config.christmas = new ChristmasOptions();
@@ -405,11 +446,7 @@ public final class FrostboundConfig {
 				return config;
 			}
 		}
-		try (Writer writer = Files.newBufferedWriter(file)) {
-			GSON.toJson(config, writer);
-		} catch (IOException e) {
-			Frostbound.LOGGER.warn("Could not write {}", file, e);
-		}
+		write(config, file);
 		return config;
 	}
 }

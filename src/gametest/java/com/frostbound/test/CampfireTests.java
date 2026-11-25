@@ -1,7 +1,9 @@
 package com.frostbound.test;
 
 import com.frostbound.campfire.CampfireBaseBlock;
+import com.frostbound.campfire.CampfireWarmth;
 import com.frostbound.campfire.Campfires;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -13,6 +15,7 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.recipe.input.SingleStackRecipeInput;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.GameTestException;
 import net.minecraft.test.TestContext;
@@ -24,12 +27,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Fire starter and campfire base: recipes, and the server side of the minigame (the client's
- * judging of each click is stood in for by calling {@link Campfires#attempt} directly).
+ * judging of each click is stood in for by calling {@link Campfires#attempt} directly). Then where a
+ * lit campfire warms you ({@link CampfireWarmth}), and that Tough As Nails (in the dev runs) agrees.
  */
 public class CampfireTests implements FabricGameTest {
 	private static final BlockPos FIRE = new BlockPos(1, 2, 1);
@@ -182,6 +189,79 @@ public class CampfireTests implements FabricGameTest {
 		ctx.getWorld().breakBlock(ctx.getAbsolutePos(FIRE), true);
 		ctx.expectItemAt(Campfires.CAMPFIRE_BASE_ITEM, FIRE, 2.0);
 		ctx.complete();
+	}
+
+	// --- Warmth ---
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void warmthIsACircleSevenBlocksRound(TestContext ctx) {
+		BlockPos fire = BlockPos.ORIGIN;
+		check(CampfireWarmth.radius() == 7.0 && CampfireWarmth.ringRadius() == 7.5, "the warmth radius should be 7 (ring at 7.5)");
+		check(CampfireWarmth.warms(fire, fire.add(7, 0, 0)) && CampfireWarmth.warms(fire, fire.add(0, 0, -7)), "7 blocks straight out is warm");
+		check(!CampfireWarmth.warms(fire, fire.add(8, 0, 0)), "8 blocks out is not");
+		check(CampfireWarmth.warms(fire, fire.add(5, 0, 5)), "5 and 5 on the diagonal (7.1 away) is warm: a circle, not a diamond");
+		check(!CampfireWarmth.warms(fire, fire.add(6, 0, 5)), "6 and 5 on the diagonal (7.8 away) is not");
+		check(CampfireWarmth.warms(fire, fire.up(3)) && CampfireWarmth.warms(fire, fire.down(3)), "3 blocks above or below is warm");
+		check(!CampfireWarmth.warms(fire, fire.up(4)) && !CampfireWarmth.warms(fire, fire.down(4)), "4 blocks above or below is not");
+		check(CampfireWarmth.isWarming(Blocks.CAMPFIRE.getDefaultState()), "a lit campfire warms");
+		check(!CampfireWarmth.isWarming(Blocks.CAMPFIRE.getDefaultState().with(CampfireBlock.LIT, false)), "an unlit one doesn't");
+		check(!CampfireWarmth.isWarming(Blocks.SOUL_CAMPFIRE.getDefaultState()), "a soul campfire doesn't (Tough As Nails counts it as cooling)");
+		check(!CampfireWarmth.isWarming(Campfires.CAMPFIRE_BASE.getDefaultState()), "a campfire base doesn't");
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void findsTheNearestLitCampfire(TestContext ctx) {
+		ServerWorld world = ctx.getWorld();
+		BlockPos floor = WolfDenTests.arena(ctx, 2300, 12);
+		ctx.runAtTick(5, () -> {
+			BlockPos fire = floor.up();
+			world.setBlockState(fire, Blocks.CAMPFIRE.getDefaultState());
+			BlockPos near = fire.add(-3, 0, 0);
+			world.setBlockState(near, Blocks.CAMPFIRE.getDefaultState());
+			check(CampfireWarmth.findWarmingCampfire(world, fire.add(5, 0, 5)).equals(Optional.of(fire)), "5 and 5 from the fire is warmed by it");
+			check(CampfireWarmth.findWarmingCampfire(world, fire.add(-5, 0, 0)).equals(Optional.of(near)), "the nearest campfire is the one found");
+			check(CampfireWarmth.findWarmingCampfire(world, fire.add(6, 0, 6)).isEmpty(), "6 and 6 away is out in the cold");
+			world.setBlockState(fire, Blocks.CAMPFIRE.getDefaultState().with(CampfireBlock.LIT, false));
+			check(CampfireWarmth.findWarmingCampfire(world, fire.add(5, 0, 5)).isEmpty(), "an unlit campfire doesn't warm");
+			ctx.complete();
+		});
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void toughAsNailsWarmsInsideTheRing(TestContext ctx) throws ReflectiveOperationException {
+		if (!FabricLoader.getInstance().isModLoaded("toughasnails")) {
+			ctx.complete();
+			return;
+		}
+		Method temperature = Class.forName("toughasnails.api.temperature.TemperatureHelper")
+				.getMethod("getTemperatureAtPos", World.class, BlockPos.class);
+		ServerWorld world = ctx.getWorld();
+		BlockPos floor = WolfDenTests.arena(ctx, 2400, 14);
+		ctx.runAtTick(5, () -> {
+			BlockPos fire = floor.up();
+			int cold = level(temperature, world, fire.add(12, 0, 0));
+			check(cold < 4, "the arena should be below Hot for this test, it's level " + cold);
+			world.setBlockState(fire, Blocks.CAMPFIRE.getDefaultState());
+			check(level(temperature, world, fire.add(7, 0, 0)) == cold + 1, "7 blocks straight out should be warmed");
+			check(level(temperature, world, fire.add(5, 0, 5)) == cold + 1, "5 and 5 on the diagonal should be warmed (TAN alone stops short)");
+			check(level(temperature, world, fire.add(0, 3, 0)) == cold + 1, "3 blocks above should be warmed");
+			check(level(temperature, world, fire.add(8, 0, 0)) == cold, "8 blocks out shouldn't be");
+			check(level(temperature, world, fire.add(6, 0, 6)) == cold, "6 and 6 on the diagonal shouldn't be");
+			check(level(temperature, world, fire.add(0, 5, 0)) == cold, "5 blocks above shouldn't be (TAN alone would warm it)");
+			world.setBlockState(fire, Blocks.CAMPFIRE.getDefaultState().with(CampfireBlock.LIT, false));
+			check(level(temperature, world, fire.add(2, 0, 0)) == cold, "an unlit campfire shouldn't warm");
+			ctx.complete();
+		});
+	}
+
+	/** Tough As Nails' temperature at a spot, ICY = 0 to HOT = 4. */
+	private static int level(Method temperature, World world, BlockPos pos) {
+		try {
+			return ((Enum<?>) temperature.invoke(null, world, pos)).ordinal();
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	private static PlayerEntity playerWithStarter(TestContext ctx) {
