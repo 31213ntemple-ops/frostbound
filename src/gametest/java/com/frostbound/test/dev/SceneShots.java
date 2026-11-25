@@ -9,11 +9,25 @@ import com.frostbound.alpha.PackWolfEntity;
 import com.frostbound.alpha.WolfAction;
 import com.frostbound.alpha.den.WolfDenLayout;
 import com.frostbound.alpha.den.WolfDenPiece;
+import com.frostbound.client.blockbench.BlockbenchModels;
+import com.frostbound.copper.CopperGear;
+import com.frostbound.imbuement.FrostTier;
+import com.frostbound.imbuement.FrostTiers;
+import com.frostbound.imbuement.Imbuement;
+import com.frostbound.imbuement.ImbuementScreenHandler;
 import dev.emi.trinkets.api.TrinketsApi;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.impl.resource.loader.ModResourcePackUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.DiffuseLighting;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.entity.animation.AnimationHelper;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.client.util.ScreenshotRecorder;
@@ -21,10 +35,16 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.passive.WolfVariants;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.RotationAxis;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Difficulty;
@@ -42,7 +62,9 @@ import java.util.function.Consumer;
 /**
  * Dev tool, not shipped: with {@code -Dfrostbound.scenes=true} (gradlew runScenes) the client makes a
  * flat world, stages the Alpha Wolf content (the den by day and night, every pose, the armour and the
- * necklace), saves a screenshot of each into build/scenes/screenshots, and quits. For checking how
+ * necklace), the imbuement table (its menu, frosty gear's tooltips) and the Blockbench pipeline's test
+ * fixtures (after checking them with BlockbenchClientCheck), saves a screenshot of
+ * each into build/scenes/screenshots, and quits. For checking how
  * things look without playing through a fight.
  */
 public class SceneShots implements ClientModInitializer {
@@ -204,6 +226,137 @@ public class SceneShots implements ClientModInitializer {
 				client -> { }, "10_player_front_angle");
 		this.add(30, server -> player(server).teleport(server.getOverworld(), 50.5, this.ground + 1, -10.5, 0.0f, 10.0f),
 				client -> client.options.setPerspective(Perspective.THIRD_PERSON_BACK), "11_player_back");
+
+		// The imbuement table's menu: empty; a Cold → Icy ring caught mid-glow, twice; and a Cold helmet alone in
+		// the centre (the ladder ticks Cold, Icy is next, Frozen is frosted over).
+		BlockPos[] table = new BlockPos[1];
+		this.add(20, server -> {
+			ServerWorld world = server.getOverworld();
+			table[0] = new BlockPos(70, this.ground + 1, -10);
+			world.setBlockState(table[0], Imbuement.TABLE.getDefaultState());
+			ServerPlayerEntity player = player(server);
+			player.equipStack(EquipmentSlot.HEAD, ItemStack.EMPTY);
+			player.equipStack(EquipmentSlot.CHEST, ItemStack.EMPTY);
+			player.equipStack(EquipmentSlot.LEGS, ItemStack.EMPTY);
+			player.equipStack(EquipmentSlot.FEET, ItemStack.EMPTY);
+			player.changeGameMode(GameMode.SURVIVAL);
+			player.teleport(world, 70.5, this.ground + 1, -7.5, 180.0f, 30.0f);
+			player.openHandledScreen(Imbuement.TABLE.getDefaultState().createScreenHandlerFactory(world, table[0]));
+		}, client -> client.options.setPerspective(Perspective.FIRST_PERSON), "12_imbuement_menu_empty");
+		this.add(14, server -> {
+			ItemStack cold = new ItemStack(Items.IRON_SWORD);
+			FrostTiers.setTier(cold, FrostTier.COLD);
+			fillGrid(player(server), cold, new ItemStack(Items.PACKED_ICE, 4));
+		}, client -> { }, "13_imbuement_menu_cold_to_icy");
+		this.add(6, server -> { }, client -> { }, "14_imbuement_menu_cold_to_icy_later");
+		this.add(14, server -> {
+			ItemStack partial = new ItemStack(Items.LEATHER_HELMET);
+			FrostTiers.setTier(partial, FrostTier.COLD);
+			fillGrid(player(server), partial, ItemStack.EMPTY);
+		}, client -> { }, "15_imbuement_menu_ladder");
+
+		// Frosty gear's tooltips, side by side: the (+x) after vanilla's numbers and the durability line.
+		this.add(10, server -> {
+			ServerPlayerEntity player = player(server);
+			fillGrid(player, ItemStack.EMPTY, ItemStack.EMPTY);
+			player.closeHandledScreen();
+		}, client -> { }, null);
+		this.add(30, server -> { }, client -> client.setScreen(new TooltipBoard(0)), "16_tooltip_frozen_diamond_chestplate");
+		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(1)), "17_tooltip_cold_iron_sword");
+		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(2)), "18_tooltip_icy_copper_sword");
+
+		// The Blockbench pipeline's test fixtures (src/gametest/blockbench): the client check, the lantern block
+		// in the world with the wand in hand, and the critter at rest and mid-animation.
+		this.add(10, server -> { }, client -> {
+			client.setScreen(null);
+			BlockbenchClientCheck.run();
+		}, null);
+		this.add(40, server -> {
+			ServerWorld world = server.getOverworld();
+			BlockPos lantern = new BlockPos(90, this.ground + 1, -10);
+			world.setBlockState(lantern, BlockbenchFixtures.LANTERN.getDefaultState());
+			world.setBlockState(lantern.east(2), net.minecraft.block.Blocks.ICE.getDefaultState());
+			ServerPlayerEntity player = player(server);
+			player.changeGameMode(GameMode.SURVIVAL);
+			player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, new ItemStack(BlockbenchFixtures.WAND));
+			player.teleport(world, 91.0, this.ground + 1, -12.6, 20.0f, 30.0f);
+		}, client -> client.options.hudHidden = false, "19_blockbench_lantern_and_wand");
+		this.add(20, server -> { }, client -> {
+			client.options.hudHidden = true;
+			client.setScreen(new CritterBoard());
+		}, "20_blockbench_critter");
+	}
+
+	/** Puts {@code center} in the middle of the open imbuement menu and a copy of {@code ring} around it. */
+	private static void fillGrid(ServerPlayerEntity player, ItemStack center, ItemStack ring) {
+		if (player.currentScreenHandler instanceof ImbuementScreenHandler menu) {
+			for (int i = 0; i < 9; i++) {
+				menu.getSlot(ImbuementScreenHandler.GRID_START + i).setStack(i == ImbuementScreenHandler.CENTER ? center.copy() : ring.copy());
+			}
+		}
+	}
+
+	/** Draws the Blockbench test critter three times: modelled pose, the idle animation at 1 s, and from behind. */
+	private static final class CritterBoard extends Screen {
+		CritterBoard() {
+			super(Text.empty());
+		}
+
+		@Override
+		public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+			super.render(context, mouseX, mouseY, delta);
+			Identifier texture = BlockbenchModels.texture(BlockbenchClientCheck.CRITTER);
+			float[][] views = {{150, 0}, {150, 1000}, {-30, 0}};
+			String[] labels = {"modelled", "idle at 1 s", "from behind"};
+			for (int i = 0; i < views.length; i++) {
+				BlockbenchClientCheck.Preview model = new BlockbenchClientCheck.Preview(
+						BlockbenchModels.texturedModelData(BlockbenchClientCheck.CRITTER).createModel());
+				if (views[i][1] > 0) {
+					AnimationHelper.animate(model, BlockbenchModels.animations(BlockbenchClientCheck.CRITTER).get("idle"), (long) views[i][1],
+							1.0f, new Vector3f());
+				}
+				int cx = this.width * (2 * i + 1) / 6, cy = this.height * 2 / 3;
+				MatrixStack matrices = context.getMatrices();
+				matrices.push();
+				matrices.translate(cx, cy, 150);
+				matrices.scale(90, 90, -90);
+				matrices.multiply(new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateX(-20 * (float) (Math.PI / 180))));
+				// What an entity renderer does: turn to face the yaw, flip into model space, feet on the ground.
+				matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180 - views[i][0]));
+				matrices.scale(-1, -1, 1);
+				matrices.translate(0, -1.501, 0);
+				DiffuseLighting.method_34742();
+				model.render(matrices, context.getVertexConsumers().getBuffer(RenderLayer.getEntityCutoutNoCull(texture)),
+						LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, -1);
+				context.draw();
+				DiffuseLighting.enableGuiDepthLighting();
+				matrices.pop();
+				context.drawCenteredTextWithShadow(this.textRenderer, labels[i], cx, cy + 20, 0xFFFFFF);
+			}
+		}
+	}
+
+	/** A screen that just draws the tooltip of one of a few frosty items. */
+	private static final class TooltipBoard extends Screen {
+		private final int which;
+
+		TooltipBoard(int which) {
+			super(Text.empty());
+			this.which = which;
+		}
+
+		@Override
+		public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+			super.render(context, mouseX, mouseY, delta);
+			ItemStack plate = new ItemStack(Items.DIAMOND_CHESTPLATE);
+			FrostTiers.setTier(plate, FrostTier.FROZEN);
+			ItemStack sword = new ItemStack(Items.IRON_SWORD);
+			FrostTiers.setTier(sword, FrostTier.COLD);
+			ItemStack copper = new ItemStack(CopperGear.COPPER_SWORD);
+			FrostTiers.setTier(copper, FrostTier.ICY);
+			ItemStack[] stacks = {plate, sword, copper};
+			context.drawItemTooltip(this.textRenderer, stacks[this.which], 20, 30);
+		}
 	}
 
 	/** Puts the (spectating) player's camera at a spot relative to the ground, looking along yaw/pitch. */

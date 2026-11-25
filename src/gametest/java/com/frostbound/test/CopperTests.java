@@ -90,6 +90,27 @@ public class CopperTests implements FabricGameTest {
 	}
 
 	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void ironNeedsCopperNotStone(TestContext ctx) {
+		List<Block> iron = List.of(Blocks.IRON_ORE, Blocks.DEEPSLATE_IRON_ORE, Blocks.RAW_IRON_BLOCK);
+		for (Item tool : List.of(Items.WOODEN_PICKAXE, Items.STONE_PICKAXE, Items.GOLDEN_PICKAXE)) {
+			for (Block block : iron) {
+				check(!new ItemStack(tool).isSuitableFor(block.getDefaultState()), tool + " shouldn't harvest " + block);
+			}
+		}
+		for (Item tool : List.of(CopperGear.COPPER_PICKAXE, Items.IRON_PICKAXE, Items.DIAMOND_PICKAXE)) {
+			for (Block block : iron) {
+				check(new ItemStack(tool).isSuitableFor(block.getDefaultState()), tool + " should harvest " + block);
+			}
+		}
+		// Stone still does everything else it did: copper, coal, lapis.
+		ItemStack stone = new ItemStack(Items.STONE_PICKAXE);
+		for (Block block : List.of(Blocks.STONE, Blocks.COPPER_ORE, Blocks.DEEPSLATE_COPPER_ORE, Blocks.COAL_ORE, Blocks.LAPIS_ORE)) {
+			check(stone.isSuitableFor(block.getDefaultState()), "stone pickaxe should still harvest " + block);
+		}
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
 	public void copperRecipesWork(TestContext ctx) {
 		ItemStack ingot = new ItemStack(Items.COPPER_INGOT);
 		ItemStack stick = new ItemStack(Items.STICK);

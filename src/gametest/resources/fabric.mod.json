@@ -6,6 +6,9 @@
 	"description": "Dev-only automated tests for Frostbound. Never shipped.",
 	"environment": "*",
 	"entrypoints": {
+		"main": [
+			"com.frostbound.test.dev.BlockbenchFixtures"
+		],
 		"client": [
 			"com.frostbound.test.dev.SceneShots"
 		],
@@ -22,7 +25,8 @@
 			"com.frostbound.test.CopperTests",
 			"com.frostbound.test.ImbuementTests",
 			"com.frostbound.test.AlphaWolfTests",
-			"com.frostbound.test.WolfDenTests"
+			"com.frostbound.test.WolfDenTests",
+			"com.frostbound.test.BlockbenchTests"
 		]
 	},
 	"depends": {

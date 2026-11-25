@@ -7,10 +7,12 @@ import net.minecraft.inventory.CraftingResultInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
@@ -19,9 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The imbuement table's menu: a 3×3 grid whose centre slot only takes armour, and a result slot. Today
- * it upgrades armour to Cold, Icy and Frozen ({@link FrostTiers#STEPS}); taking the result uses up the
- * armour and the step's count from each outer slot. The grid is emptied back to the player on close.
+ * The imbuement table's menu: a 3×3 grid whose centre slot only takes armour and weapons, and a result
+ * slot. It upgrades them to Cold, Icy and Frozen ({@link FrostTiers#STEPS}); taking the result uses up the
+ * piece and the step's count from each outer slot. The grid is emptied back to the player on close.
  *
  * Slots: 0 result, 1–9 grid (row by row, 5 is the centre), 10–36 inventory, 37–45 hotbar.
  */
@@ -37,12 +39,12 @@ public class ImbuementScreenHandler extends ScreenHandler {
 
 	/** Item positions in the screen: outer slots sit 20 px from the centre (18 px slots + a 2 px gap). */
 	public static final int CENTER_X = 48;
-	public static final int CENTER_Y = 35;
+	public static final int CENTER_Y = 39;
 	public static final int GRID_PITCH = 20;
 	public static final int RESULT_X = 124;
-	public static final int RESULT_Y = 35;
-	/** Where the player's inventory starts (4 px lower than a crafting table, to fit the grid's gaps). */
-	public static final int INVENTORY_Y = 88;
+	public static final int RESULT_Y = 39;
+	/** Where the player's inventory starts (under the ice recess with the grid and the tier ladder). */
+	public static final int INVENTORY_Y = 120;
 
 	private final SimpleInventory grid = new SimpleInventory(9);
 	private final CraftingResultInventory result = new CraftingResultInventory();
@@ -155,7 +157,7 @@ public class ImbuementScreenHandler extends ScreenHandler {
 		return original;
 	}
 
-	/** The centre: one piece of armour, darker in the screen, with an empty-chestplate outline when empty. */
+	/** The centre: one piece of armour or a weapon, darker in the screen, with an empty-chestplate outline when empty. */
 	public static class ArmorSlot extends Slot {
 		public ArmorSlot(Inventory inventory, int index, int x, int y) {
 			super(inventory, index, x, y);
@@ -198,6 +200,11 @@ public class ImbuementScreenHandler extends ScreenHandler {
 				context.run((world, pos) -> {
 					world.playSound(null, pos, SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, SoundCategory.BLOCKS, 1.0f, 0.8f + 0.2f * step.to().level());
 					world.playSound(null, pos, SoundEvents.BLOCK_GLASS_PLACE, SoundCategory.BLOCKS, 0.6f, 1.6f);
+					if (world instanceof ServerWorld server) {
+						// A puff of frost over the table, bigger for each tier.
+						server.spawnParticles(ParticleTypes.SNOWFLAKE, pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5,
+								10 * step.to().level(), 0.35, 0.25, 0.35, 0.03);
+					}
 				});
 			}
 			super.onTakeItem(player, stack);

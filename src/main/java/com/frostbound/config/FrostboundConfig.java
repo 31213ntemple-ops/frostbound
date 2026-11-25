@@ -95,7 +95,7 @@ public final class FrostboundConfig {
 		public double radius = 1.5;
 	}
 
-	/** Cold, Icy and Frozen armour from the imbuement table: the stat boosts of each tier. */
+	/** Cold, Icy and Frozen armour and weapons from the imbuement table: the stat boosts of each tier. */
 	public FrostTierOptions frostTiers = new FrostTierOptions();
 
 	public static final class FrostTierOptions {
@@ -107,6 +107,9 @@ public final class FrostboundConfig {
 		/** Extra durability as a share of the piece's normal durability: Cold adds this (0.25 = +25%), Icy adds icyDurability on top. */
 		public double coldDurability = 0.25;
 		public double icyDurability = 0.15;
+		/** Extra attack damage on a weapon once Cold, and further once Frozen. */
+		public double coldAttackDamage = 0.5;
+		public double frozenAttackDamage = 0.5;
 	}
 
 	/**
@@ -132,6 +135,8 @@ public final class FrostboundConfig {
 		public Tiered quenched = new Tiered(0.06, 0.12);
 		/** Turtle shell, Tidefrost: extra seconds of the helmet's Water Breathing. */
 		public Tiered tidefrost = new Tiered(10, 20);
+		/** Weapons, Frostbite: seconds of Slowness a melee hit gives the target. */
+		public Tiered frostbite = new Tiered(2, 4);
 
 		/** Puts back the default of any pair missing from the file. */
 		void fillMissing() {

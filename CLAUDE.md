@@ -29,6 +29,12 @@ How to add one:
 
 `passives/Passive` and `passives/Passives` hold the data (common code); `client/PassiveTooltips` draws them (client only), so nothing else is needed for the tooltip.
 
+**Stat bonuses** (numbers added to a vanilla line, like the imbuement table's armour, toughness, attack damage and durability) are never merged silently: vanilla's line stays as it is and the bonus follows it as a little "(+x)" in the tier's colour, "+8 Armor (+1)" (`FrostTiers.forTooltip` / `bonusText`; durability in `client/imbuement/FrostStars`).
+
+## Models: Blockbench
+
+New models (blocks, items, entities) are Blockbench projects in `src/main/blockbench/{block,item,entity}/<name>.bbmodel`; the build imports them (buildSrc `BlockbenchImport`, task `importBlockbench`) into `build/generated/blockbench`, so never hand-write or commit the generated JSON/PNGs. Block/item projects use the "Java Block/Item" format, entities "Modded Entity"; entity code extends `client/blockbench/BlockbenchEntityModel` and registers with `BlockbenchModels.registerLayer`. Full workflow and limits: `src/main/blockbench/README.md`. When the user adds a `.bbmodel`, wire up the registration/renderer, add a `runScenes` shot to check it in-game, and keep the importer's checks in step with any new mistake found (unit tests in `buildSrc/src/test`).
+
 ## Backported vanilla content
 
 Content from later Minecraft versions (e.g. copper gear from 1.21.9) is registered under the `frostbound` namespace with the later version's stats, recipes and loot weights. Textures and sounds are taken from the official Mojang client jar / asset index of that version, not redrawn. Vanilla files that get a new entry (chest loot tables) are copies of the **1.21.1** files with the entry added.
@@ -36,6 +42,8 @@ Content from later Minecraft versions (e.g. copper gear from 1.21.9) is register
 ## Boss fights: choreography
 
 The Alpha Wolf fight follows a rule every new move should keep: **tell → action → recovery**. The tell is long enough to react to (0.7–1.8 s) and has a pose (a `WolfAction`, synced to the client and drawn by `client/alpha/PackWolfModel`), a sound, and for big moves a marker on the ground (dust particles: red ring = where it lands, pale line = where it runs). A move can't be cut off by another goal halfway (`canStop() == false`), the recovery is an opening for the player, and the pack holds back while the Alpha moves (`AlphaWolfEntity.isPerformingMove`). Balance numbers go in `FrostboundConfig.alphaWolf`. Check how it looks with `gradlew runScenes` (screenshots in `build/scenes/screenshots`; add a step in `src/gametest/.../dev/SceneShots.java`).
+
+The imbuement table's screen texture comes from `tools/ImbuementGuiTexture.java` (same idea: edit the painter and re-run it).
 
 Textures for the Alpha, its armour and drops come from `tools/AlphaWolfTextures.java` (pixel grids and painted layers in one palette); edit it and re-run it rather than editing the PNGs.
 

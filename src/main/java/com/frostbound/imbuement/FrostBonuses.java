@@ -55,6 +55,7 @@ import java.util.function.Function;
  *   <li>Diamond, Diamond Dust: melee attackers take part of the damage back as frost.</li>
  *   <li>Netherite, Quenched: less fire and lava damage, like quenched metal.</li>
  *   <li>Turtle shell, Tidefrost: the helmet's Water Breathing lasts longer.</li>
+ *   <li>Weapons, Frostbite: melee hits slow the target (counts the weapon in the main hand, not armour).</li>
  * </ul>
  */
 public final class FrostBonuses {
@@ -118,6 +119,8 @@ public final class FrostBonuses {
 	public static final Bonus QUENCHED = new Bonus("quenched", Formatting.GOLD, o -> o.quenched, v -> percent(v));
 	/** Dark aqua: water, like Water Breathing. */
 	public static final Bonus TIDEFROST = new Bonus("tidefrost", Formatting.DARK_AQUA, o -> o.tidefrost, v -> new Object[] {Passive.number(v)});
+	/** Aqua: frost dealt, like Diamond Dust (which is on armour, so the two never share a tooltip). */
+	public static final Bonus FROSTBITE = new Bonus("frostbite", Formatting.AQUA, o -> o.frostbite, v -> new Object[] {Passive.number(v)});
 
 	/** Healing Hearthgold has built up towards the next half heart, per player. */
 	private static final Map<PlayerEntity, Double> WARMTH = new WeakHashMap<>();
@@ -137,6 +140,7 @@ public final class FrostBonuses {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((target, source, baseDamage, damageTaken, blocked) -> {
 			if (!blocked && damageTaken > 0.0f) {
 				diamondDust(target, source, damageTaken);
+				frostbite(target, source);
 			}
 		});
 	}
@@ -230,5 +234,19 @@ public final class FrostBonuses {
 		world.spawnParticles(ParticleTypes.SNOWFLAKE, attacker.getX(), attacker.getBodyY(0.6), attacker.getZ(), 10, 0.3, 0.4, 0.3, 0.02);
 		world.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.BLOCK_GLASS_BREAK,
 				SoundCategory.PLAYERS, 0.4f, 1.8f);
+	}
+
+	/** Frostbite: a melee hit with an Icy or Frozen weapon slows the target for a few seconds. */
+	private static void frostbite(LivingEntity target, DamageSource source) {
+		if (!(source.getAttacker() instanceof LivingEntity attacker) || attacker == target || !Conductivity.isMelee(source)
+				|| !target.isAlive() || !(target.getWorld() instanceof ServerWorld world)) {
+			return;
+		}
+		double seconds = FROSTBITE.perPiece(attacker.getMainHandStack());
+		if (seconds <= 0.0) {
+			return;
+		}
+		target.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, (int) Math.round(seconds * TICKS_PER_SECOND), 0), attacker);
+		world.spawnParticles(ParticleTypes.SNOWFLAKE, target.getX(), target.getBodyY(0.5), target.getZ(), 8, 0.3, 0.3, 0.3, 0.02);
 	}
 }
