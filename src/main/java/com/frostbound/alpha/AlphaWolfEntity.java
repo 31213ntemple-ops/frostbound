@@ -46,8 +46,10 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -66,8 +68,15 @@ import java.util.Set;
  *    gets faster, and it starts to <b>Charge</b>: paws the ground while a pale line shows its path,
  *    then runs it. If the line ends at a wall or pillar, it runs into it and is stunned (and takes
  *    extra damage), so the den's pillars are cover worth using.
+ *  - <b>Pincer</b>: barks an order, and two wolves on opposite sides of you crouch while pale lines
+ *    show where each will land, then leap one after the other (see {@link AlphaGoals.PincerGoal}).
  *  - <b>Draining Bite</b> (any pack wolf; see {@link DrainingBite}) and <b>Enrage</b> ({@link #enrage}).
- *  - While it makes a big move the pack gives it room ({@link #canClaimLunge}).
+ *  - While it winds up or carries out a big move the pack gives it room ({@link #holdsPackBack}).
+ *
+ * It runs the hunt ({@link PackTactics}): on new prey the pack first spreads out round it
+ * ({@link #beginHunt}), its wolves keep an even ring that turns round the prey together
+ * ({@link #ringPoint}), and each bite goes to the wolf furthest behind where the prey is looking
+ * ({@link #nextBiter}).
  *  - When it dies, the pack breaks: the rest scatter and vanish ({@link #breakUp}).
  *
  * A boss bar (white, red once Bloodied) shows its health and how many wolves it leads, to players
@@ -109,12 +118,36 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	/** The boss bar's shown fill (0–1); it fills up as the Alpha wakes rather than appearing full. */
 	private float barFill = 1.0f;
 
+	/** The hunt: each circling wolf's spot round the prey, recomputed every {@link #RING_UPDATE_TICKS}. */
+	private final Map<PackWolfEntity, Double> ringSlots = new HashMap<>();
+	@Nullable
+	private LivingEntity ringPrey;
+	private long ringTime = Long.MIN_VALUE;
+	/** Which way the ring turns this hunt (1 or -1). */
+	private int ringDirection = 1;
+	/** Whose turn to bite is next, worked out once a tick; and how long the same wolf has been offered it. */
+	@Nullable
+	private PackWolfEntity nextBiter;
+	@Nullable
+	private LivingEntity nextBiterPrey;
+	private long nextBiterTime = Long.MIN_VALUE;
+	private int offeredTicks;
+	/** The Pincer under way, if any, and ticks of fighting before the next. */
+	@Nullable
+	Pincer pincer;
+	int pincerCooldown;
+
+	static final int RING_UPDATE_TICKS = 10;
+	/** How far round (radians) the ring turns at each update: a slow prowl. */
+	static final double RING_TURN = 0.18;
+
 	public AlphaWolfEntity(EntityType<? extends AlphaWolfEntity> type, World world) {
 		super(type, world);
 		FrostboundConfig.CallOfThePack call = FrostboundConfig.get().alphaWolf.callOfThePack;
 		this.callCooldown = ticks(call.firstCallSeconds);
 		this.reinforcementsLeft = call.maxReinforcements;
 		this.moveCooldown = 40;
+		this.pincerCooldown = ticks(FrostboundConfig.get().alphaWolf.pincer.firstSeconds);
 		// The scale attribute's default doesn't resize the hitbox by itself.
 		this.calculateDimensions();
 	}
@@ -145,6 +178,7 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		this.goalSelector.add(2, new PackGoals.CallOfThePackGoal(this));
 		this.goalSelector.add(3, new AlphaGoals.ChargeGoal(this));
 		this.goalSelector.add(3, new AlphaGoals.PounceGoal(this));
+		this.goalSelector.add(3, new AlphaGoals.PincerGoal(this));
 		this.goalSelector.add(4, new PackGoals.LungeGoal(this));
 		this.goalSelector.add(5, new PackGoals.CircleGoal(this));
 		this.goalSelector.add(6, new AlphaGoals.ReturnHomeGoal(this));
@@ -281,8 +315,9 @@ public class AlphaWolfEntity extends PackWolfEntity {
 	}
 
 	/**
-	 * Whether {@code wolf} could take a turn to lunge now. The Alpha always can; pack wolves only while
-	 * a turn is free and the Alpha isn't in the middle of a big move (they give it room).
+	 * Whether {@code wolf} could take a turn to lunge now. The Alpha always can; a pack wolf only while a
+	 * turn is free, the Alpha isn't in the middle of a big move (they give it room), and it's the wolf the
+	 * Alpha sends next ({@link #nextBiter}: the one its prey can least see).
 	 */
 	public boolean canClaimLunge(PackWolfEntity wolf) {
 		if (wolf == this) {
@@ -292,7 +327,204 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		if (this.attackers.contains(wolf)) {
 			return true;
 		}
-		return !this.isPerformingMove() && this.attackers.size() < FrostboundConfig.get().alphaWolf.simultaneousAttackers;
+		if (this.holdsPackBack() || this.attackers.size() >= FrostboundConfig.get().alphaWolf.simultaneousAttackers) {
+			return false;
+		}
+		LivingEntity prey = wolf.getTarget();
+		return prey != null && this.nextBiter(prey) == wolf;
+	}
+
+	/**
+	 * Whose turn to bite {@code prey} is next: of the pack wolves ready to (not on cooldown, not busy),
+	 * the one furthest behind where the prey is looking ({@link PackTactics#behindness}), so the bite
+	 * comes from where you aren't watching. Worked out once a tick. A wolf that's been offered the turn
+	 * for 2 seconds without taking it (stuck, say) is passed over for a while.
+	 */
+	@Nullable
+	public PackWolfEntity nextBiter(LivingEntity prey) {
+		long time = this.getWorld().getTime();
+		if (time == this.nextBiterTime && prey == this.nextBiterPrey) {
+			return this.nextBiter;
+		}
+		this.nextBiterTime = time;
+		this.nextBiterPrey = prey;
+		PackWolfEntity best = null;
+		double behind = -1.0;
+		for (PackWolfEntity wolf : this.getPack()) {
+			if (this.readyToBite(wolf, prey)) {
+				double b = PackTactics.behindness(prey, wolf.getPos());
+				if (b > behind) {
+					behind = b;
+					best = wolf;
+				}
+			}
+		}
+		if (best != null && best == this.nextBiter) {
+			if (++this.offeredTicks > 40) {
+				best.lungeCooldown = 30;
+				best = null;
+			}
+		} else {
+			this.offeredTicks = 0;
+		}
+		this.nextBiter = best;
+		return best;
+	}
+
+	private boolean readyToBite(PackWolfEntity wolf, LivingEntity prey) {
+		WolfAction action = wolf.getAction();
+		return wolf != this && wolf.isAlive() && !wolf.isScattering() && !wolf.lunging && wolf.lungeCooldown <= 0 && wolf.getTarget() == prey
+				&& !action.isResting() && action != WolfAction.CHORUS && this.pincerRole(wolf) < 0;
+	}
+
+	/**
+	 * Where pack wolf {@code wolf} should be in the ring round {@code prey}: the pack's circling wolves
+	 * spread evenly round it, keeping their order, about {@code hunting.ringRadius} out, and the whole
+	 * ring turns slowly one way (see {@link PackTactics#ringSlots}).
+	 */
+	public Vec3d ringPoint(PackWolfEntity wolf, LivingEntity prey) {
+		long time = this.getWorld().getTime();
+		if (prey != this.ringPrey || time - this.ringTime >= RING_UPDATE_TICKS || !this.ringSlots.containsKey(wolf)) {
+			this.ringPrey = prey;
+			this.ringTime = time;
+			this.ringSlots.clear();
+			List<PackWolfEntity> circling = new ArrayList<>();
+			for (PackWolfEntity member : this.getPack()) {
+				if (member != this && (member == wolf || (member.circling && member.getTarget() == prey))) {
+					circling.add(member);
+				}
+			}
+			if (!circling.contains(wolf)) {
+				circling.add(wolf);
+			}
+			double[] angles = new double[circling.size()];
+			for (int i = 0; i < angles.length; i++) {
+				angles[i] = PackTactics.angleAround(prey.getPos(), circling.get(i).getPos());
+			}
+			double[] slots = PackTactics.ringSlots(angles, this.ringDirection * RING_TURN);
+			for (int i = 0; i < slots.length; i++) {
+				this.ringSlots.put(circling.get(i), slots[i]);
+			}
+		}
+		double angle = this.ringSlots.get(wolf);
+		// A little give in the ring, so it doesn't look drawn with a compass.
+		double radius = FrostboundConfig.get().alphaWolf.hunting.ringRadius + (Math.floorMod(wolf.getId(), 3) - 1) * 0.5;
+		return prey.getPos().add(Math.cos(angle) * radius, 0.0, Math.sin(angle) * radius);
+	}
+
+	/**
+	 * New prey: the pack spreads out round it before anyone bites (every wolf waits
+	 * {@code hunting.encircleSeconds}, give or take), the ring picks a way to turn, and the Pincer
+	 * waits its first {@code pincer.firstSeconds}.
+	 */
+	public void beginHunt() {
+		FrostboundConfig.AlphaWolfOptions config = FrostboundConfig.get().alphaWolf;
+		int encircle = ticks(config.hunting.encircleSeconds);
+		for (PackWolfEntity wolf : this.getPack()) {
+			wolf.lungeCooldown = Math.max(wolf.lungeCooldown, encircle + this.random.nextInt(20));
+			wolf.gazeChecks = 0;
+		}
+		this.ringDirection = this.random.nextBoolean() ? 1 : -1;
+		this.pincerCooldown = Math.max(this.pincerCooldown, ticks(config.pincer.firstSeconds));
+	}
+
+	@Override
+	public void setTarget(@Nullable LivingEntity target) {
+		LivingEntity before = this.getTarget();
+		super.setTarget(target);
+		if (target != null && before == null && this.getTarget() == target && !this.getWorld().isClient) {
+			this.beginHunt();
+		}
+	}
+
+	// --- Pincer ---
+
+	/** A Pincer under way: the prey, the two wolves sent in, where each will land, and ticks since the order. */
+	public static final class Pincer {
+		public final LivingEntity prey;
+		public final PackWolfEntity[] wolves;
+		public final Vec3d[] landing;
+		public final boolean[] done = new boolean[2];
+		int ticks;
+
+		Pincer(LivingEntity prey, PackWolfEntity[] wolves) {
+			this.prey = prey;
+			this.wolves = wolves;
+			this.landing = new Vec3d[] {landingFor(prey, wolves[0]), landingFor(prey, wolves[1])};
+		}
+
+		/** Just short of the prey on the wolf's own side, so the two don't land on top of each other. */
+		static Vec3d landingFor(LivingEntity prey, PackWolfEntity wolf) {
+			Vec3d side = new Vec3d(wolf.getX() - prey.getX(), 0.0, wolf.getZ() - prey.getZ());
+			return side.lengthSquared() < 1.0E-6 ? prey.getPos() : prey.getPos().add(side.normalize().multiply(0.6));
+		}
+
+		/** Ticks since the Alpha's order. */
+		public int ticks() {
+			return this.ticks;
+		}
+
+		/** When wolf {@code role} (0 or 1) leaps: the second goes {@code staggerTicks} after the first. */
+		public static int leapAt(int role) {
+			FrostboundConfig.Pincer config = FrostboundConfig.get().alphaWolf.pincer;
+			return config.windupTicks + role * config.staggerTicks;
+		}
+	}
+
+	/** The Pincer under way, or null. */
+	@Nullable
+	public Pincer pincer() {
+		return this.pincer;
+	}
+
+	/** Which of the Pincer's two wolves {@code wolf} is (0 leaps first, 1 second), or -1. */
+	public int pincerRole(PackWolfEntity wolf) {
+		if (this.pincer != null) {
+			for (int i = 0; i < 2; i++) {
+				if (this.pincer.wolves[i] == wolf) {
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * The two wolves to send at {@code prey}: of those free (not mid-bite, on the ground, 2.5–10 blocks
+	 * away, about level, in sight), the pair most nearly opposite each other round it, at least
+	 * {@code pincer.minAngleDegrees} apart. Null if there's no such pair.
+	 */
+	@Nullable
+	PackWolfEntity[] pincerPair(LivingEntity prey) {
+		List<PackWolfEntity> free = new ArrayList<>();
+		for (PackWolfEntity wolf : this.getPack()) {
+			WolfAction action = wolf.getAction();
+			double distance = Math.sqrt(PackTactics.horizontalSquaredDistance(wolf.getPos(), prey.getPos()));
+			if (wolf != this && wolf.isAlive() && !wolf.lunging && !wolf.isScattering() && wolf.isOnGround() && wolf.getTarget() == prey
+					&& !action.isResting() && action != WolfAction.CHORUS && distance >= 2.5 && distance <= 10.0
+					&& Math.abs(wolf.getY() - prey.getY()) < 2.5 && wolf.canSee(prey)) {
+				free.add(wolf);
+			}
+		}
+		return PackTactics.pincerPair(free, prey.getPos(), FrostboundConfig.get().alphaWolf.pincer.minAngleDegrees);
+	}
+
+	void beginPincer(LivingEntity prey, PackWolfEntity[] wolves) {
+		this.pincer = new Pincer(prey, wolves);
+	}
+
+	void endPincer() {
+		this.pincer = null;
+		this.pincerCooldown = ticks(FrostboundConfig.get().alphaWolf.pincer.intervalSeconds) + this.random.nextInt(20);
+	}
+
+	/** Ticks of fighting left before the next Pincer. */
+	public int pincerCooldown() {
+		return this.pincerCooldown;
+	}
+
+	public void setPincerCooldown(int ticks) {
+		this.pincerCooldown = ticks;
 	}
 
 	/** Takes a lunge turn for {@code wolf}; false if the pack's turns are all taken. Release it with {@link #releaseLunge}. */
@@ -316,12 +548,29 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		return this.attackers.size();
 	}
 
-	/** In the middle of something big (a howl, Pounce, Charge, the roar, a stun, waking): the pack keeps back. */
-	public boolean isPerformingMove() {
+	/**
+	 * Winding up or carrying out something big (a howl, the Pounce's crouch and leap, the Charge's windup
+	 * and run, the roar, the Pincer's order, waking): no pack wolf starts a bite, and any still running in
+	 * peels off, so the move can be read. Not while it's winded or stunned afterwards, or while a Pincer's
+	 * two wolves are in the air: the pack keeps up the pressure through those.
+	 */
+	public boolean holdsPackBack() {
 		return switch (this.getAction()) {
-			case POUNCE_WINDUP, CHARGE_WINDUP, CHARGING, STUNNED, ROARING, HOWLING, WAKING, RECOVERING -> true;
+			case POUNCE_WINDUP, CHARGE_WINDUP, CHARGING, ROARING, HOWLING, WAKING, COMMANDING -> true;
 			case LEAPING -> !this.lunging; // the Pounce's leap, not a bite
 			default -> this.calling;
+		};
+	}
+
+	/**
+	 * In the middle of something big (a howl, Pounce, Charge, Pincer, the roar, a stun, waking), recovery
+	 * included: it won't start another. (What holds the pack back is {@link #holdsPackBack}.)
+	 */
+	public boolean isPerformingMove() {
+		return switch (this.getAction()) {
+			case POUNCE_WINDUP, CHARGE_WINDUP, CHARGING, STUNNED, ROARING, HOWLING, WAKING, RECOVERING, COMMANDING -> true;
+			case LEAPING -> !this.lunging; // the Pounce's leap, not a bite
+			default -> this.calling || this.pincer != null;
 		};
 	}
 
@@ -422,6 +671,7 @@ public class AlphaWolfEntity extends PackWolfEntity {
 		this.callCooldown = ticks(config.callOfThePack.firstCallSeconds);
 		this.calling = false;
 		this.pendingRoar = false;
+		this.pincer = null;
 		this.bossBar.clearPlayers();
 	}
 
@@ -614,6 +864,9 @@ public class AlphaWolfEntity extends PackWolfEntity {
 				}
 				if (this.moveCooldown > 0 && !this.isPerformingMove()) {
 					this.moveCooldown--;
+				}
+				if (this.pincerCooldown > 0 && !this.isPerformingMove()) {
+					this.pincerCooldown--;
 				}
 			}
 		}

@@ -162,8 +162,8 @@ public final class FrostboundConfig {
 	public AlphaWolfOptions alphaWolf = new AlphaWolfOptions();
 
 	public static final class AlphaWolfOptions {
-		/** The Alpha's health (80 = 40 hearts), bite damage (2 = one heart, before armour) and size. */
-		public double health = 80.0;
+		/** The Alpha's health (90 = 45 hearts), bite damage (2 = one heart, before armour) and size. */
+		public double health = 90.0;
 		public double damage = 5.0;
 		public double scale = 1.5;
 		/** Each pack wolf's health and bite damage. */
@@ -173,7 +173,7 @@ public final class FrostboundConfig {
 		public int initialPackSize = 7;
 		public int maxPackSize = 9;
 		/** How many pack wolves may lunge at once; the rest circle and wait their turn (the Alpha lunges on its own). */
-		public int simultaneousAttackers = 2;
+		public int simultaneousAttackers = 3;
 		/** Ticks (20 = 1 s) a wolf crouches and growls before it lunges, so the bite can be seen coming. */
 		public int lungeWindupTicks = 14;
 		/** Below this share of its health (0.5 = half) the Alpha is Bloodied: it roars, speeds up and starts to Charge. */
@@ -189,6 +189,37 @@ public final class FrostboundConfig {
 		public DrainingBite drainingBite = new DrainingBite();
 		public Enrage enrage = new Enrage();
 		public Den den = new Den();
+		public Hunting hunting = new Hunting();
+		public Pincer pincer = new Pincer();
+	}
+
+	/** How the pack hunts as one: surrounding you first, then biting from where you aren't looking. */
+	public static final class Hunting {
+		/** Seconds a pack spends spreading out round new prey before the first bite. */
+		public double encircleSeconds = 1.5;
+		/** Pack wolves circle this far out (blocks), evenly spaced; the Alpha paces outside the ring. */
+		public double ringRadius = 5.0;
+		/**
+		 * A wolf running in while a player looks straight at it (within this many degrees; 0 = off) breaks
+		 * off and slinks back, up to gazeHoldsOff times in a row; after that it calls the bluff.
+		 */
+		public double gazeDegrees = 15.0;
+		public int gazeHoldsOff = 1;
+	}
+
+	public static final class Pincer {
+		/** The Alpha barks an order and two wolves on opposite sides of you leap at once. Seconds into a fight before the first, and between them. */
+		public double firstSeconds = 8.0;
+		public double intervalSeconds = 15.0;
+		/** Ticks the two crouch before the first leaps (pale lines on the ground show where each will land); each line stops following you lockTicks before its wolf leaps. */
+		public int windupTicks = 26;
+		public int lockTicks = 8;
+		/** The second wolf leaps this many ticks after the first (more than 10, so both bites count). */
+		public int staggerTicks = 12;
+		/** Ticks each wolf stands winded after landing (hit them). */
+		public int recoverTicks = 16;
+		/** The two must be at least this many degrees apart round you. */
+		public double minAngleDegrees = 120.0;
 	}
 
 	public static final class CallOfThePack {
@@ -353,6 +384,12 @@ public final class FrostboundConfig {
 				}
 				if (config.alphaWolf.den == null) {
 					config.alphaWolf.den = new Den();
+				}
+				if (config.alphaWolf.hunting == null) {
+					config.alphaWolf.hunting = new Hunting();
+				}
+				if (config.alphaWolf.pincer == null) {
+					config.alphaWolf.pincer = new Pincer();
 				}
 				if (config.packInstinct == null) {
 					config.packInstinct = new PackInstinctOptions();

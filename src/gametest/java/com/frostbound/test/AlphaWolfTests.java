@@ -71,7 +71,7 @@ public class AlphaWolfTests implements FabricGameTest {
 	public void alphaIsABigUntameableBoss(TestContext ctx) {
 		AlphaWolfEntity alpha = ctx.spawnEntity(AlphaWolves.ALPHA_WOLF, 3, 2, 3);
 		check(alpha.getMaxHealth() == (float) CONFIG.health, "the Alpha should have " + CONFIG.health + " health, has " + alpha.getMaxHealth());
-		check(CONFIG.health == 80.0, "the Alpha should default to 40 hearts");
+		check(CONFIG.health == 90.0, "the Alpha should default to 45 hearts");
 		check(Math.abs(alpha.getScale() - CONFIG.scale) < 0.001, "the Alpha should be scaled " + CONFIG.scale + ", is " + alpha.getScale());
 		check(alpha.getWidth() > 0.6f * 1.4f, "the Alpha's hitbox should be bigger than a wolf's, width " + alpha.getWidth());
 

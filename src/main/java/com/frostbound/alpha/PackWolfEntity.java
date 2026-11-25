@@ -44,9 +44,12 @@ import java.util.UUID;
  *
  *  - It takes its target from the Alpha (and the Alpha from it), so the whole pack turns on whoever
  *    one wolf picks a fight with.
- *  - Only a few pack wolves lunge at a time ({@link AlphaWolfEntity#tryClaimLunge}); the rest circle
- *    the target and wait their turn, then fall back after their bite (hit and run). While the Alpha
- *    makes a big move the pack gives it room, and when it howls they howl with it.
+ *  - It hunts as one: on new prey the pack spreads out round it first, the wolves keep an even ring
+ *    that turns round it together, creeping with their heads low (STALKING), and only a few lunge at a
+ *    time ({@link AlphaWolfEntity#tryClaimLunge}), sent in by the Alpha from wherever the prey isn't
+ *    looking. Stare one down as it runs in and it breaks off (twice; then it calls the bluff). After
+ *    a bite it falls back (hit and run). While the Alpha makes a big move the pack gives it room, when
+ *    it barks two wolves leap from opposite sides (the Pincer), and when it howls they howl with it.
  *  - When it dies, the rest of the pack is enraged ({@link AlphaWolfEntity#enrage}).
  *  - Without its Alpha (killed, or gone for {@link #ALPHA_GRACE_TICKS}) it {@link #scatter scatters}:
  *    runs from the nearest player and vanishes once it has got away.
@@ -80,6 +83,10 @@ public class PackWolfEntity extends WolfEntity {
 	int lungeCooldown;
 	/** True while its lunge runs; the Alpha counts these against simultaneousAttackers. */
 	boolean lunging;
+	/** True while it circles its prey (it then has a spot in the Alpha's ring). */
+	boolean circling;
+	/** Times in a row a player has stared it down mid-run (see PackGoals.LungeGoal); reset by a bite. */
+	int gazeChecks;
 
 	/** The den this pack sleeps in (its centre), or null for a roaming pack. */
 	@Nullable
@@ -125,6 +132,7 @@ public class PackWolfEntity extends WolfEntity {
 		this.goalSelector.add(1, new PackGoals.RestGoal(this));
 		this.goalSelector.add(1, new PackGoals.ScatterGoal(this));
 		this.goalSelector.add(2, new PackGoals.ChorusGoal(this));
+		this.goalSelector.add(2, new PackGoals.PincerGoal(this));
 		this.goalSelector.add(3, new PackGoals.LungeGoal(this));
 		this.goalSelector.add(4, new PackGoals.CircleGoal(this));
 		this.goalSelector.add(5, new PackGoals.GoToBedGoal(this));
@@ -239,6 +247,20 @@ public class PackWolfEntity extends WolfEntity {
 
 	public boolean isLunging() {
 		return this.lunging;
+	}
+
+	/** Ticks before this wolf may lunge again. */
+	public int lungeCooldown() {
+		return this.lungeCooldown;
+	}
+
+	public void setLungeCooldown(int ticks) {
+		this.lungeCooldown = ticks;
+	}
+
+	/** Times in a row a player has stared it down as it ran in. */
+	public int gazeChecks() {
+		return this.gazeChecks;
 	}
 
 	// --- The den: sleeping and waking ---

@@ -15,7 +15,7 @@ import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Client side of the Alpha Wolf: the pack's renderer and poses, the Alpha Hide Hood's ears and snout,
+ * Client side of the Alpha Wolf: the pack's renderer and poses, the Alpha's spiked armour, the Alpha Hide Hood's ears and snout,
  * the Mark of the Pack on the wearer's chest, and its key (J by default, under Controls → Frostbound).
  */
 public final class AlphaWolfClient {
@@ -25,6 +25,7 @@ public final class AlphaWolfClient {
 	private AlphaWolfClient() {}
 
 	public static void init() {
+		AlphaArmorFeatureRenderer.registerLayer();
 		EntityRendererRegistry.register(AlphaWolves.ALPHA_WOLF, PackWolfRenderer::new);
 		EntityRendererRegistry.register(AlphaWolves.PACK_WOLF, PackWolfRenderer::new);
 		EntityRendererRegistry.register(AlphaWolves.SUMMONED_WOLF, WolfEntityRenderer::new);

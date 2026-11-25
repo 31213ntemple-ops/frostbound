@@ -21,6 +21,7 @@ import net.minecraft.util.Identifier;
  *  - The Alpha has a coat of its own (textures/entity/alpha_wolf.png: the black wolf with a
  *    frost-tipped ruff and a scarred eye) and eyes that burn full-bright in the dark, which snap open
  *    as it wakes. Bloodied, embers drift from them (see AlphaWolfEntity's client tick).
+ *  - The Alpha wears spiked armour over its coat ({@link AlphaArmorFeatureRenderer}, made in Blockbench).
  */
 public class PackWolfRenderer extends MobEntityRenderer<PackWolfEntity, PackWolfModel> {
 	private static final RenderLayer ALPHA_EYES = RenderLayer.getEyes(Frostbound.id("textures/entity/alpha_wolf_eyes.png"));
@@ -29,6 +30,7 @@ public class PackWolfRenderer extends MobEntityRenderer<PackWolfEntity, PackWolf
 
 	public PackWolfRenderer(EntityRendererFactory.Context context) {
 		super(context, new PackWolfModel(context.getPart(EntityModelLayers.WOLF)), 0.5f);
+		this.addFeature(new AlphaArmorFeatureRenderer(this, context.getPart(AlphaArmorFeatureRenderer.layer)));
 		this.addFeature(new EyesFeatureRenderer<>(this) {
 			@Override
 			public void render(MatrixStack matrices, VertexConsumerProvider vertices, int light, PackWolfEntity wolf, float limbAngle,

@@ -335,6 +335,7 @@ public class WolfDenTests implements FabricGameTest {
 			s.alpha.setTarget(s.player);
 			s.alpha.setCallCooldown(100000);
 			s.alpha.setMoveCooldown(100000);
+			s.alpha.setLungeCooldown(100000); // no bites closing the gap: this is about the Charge
 			// Below half health: Bloodied.
 			s.alpha.damage(world.getDamageSources().magic(), (float) (CONFIG.health * 0.55));
 			check(s.alpha.isBloodied(), "below half health the Alpha should be Bloodied");
@@ -399,7 +400,7 @@ public class WolfDenTests implements FabricGameTest {
 				s.markA = tick;
 			}
 			// Once the Pounce is under way, no pack wolf is crouching to bite.
-			if (s.markA >= 0 && tick > s.markA + 18 && s.alpha.isPerformingMove() && !s.alpha.isCalling()) {
+			if (s.markA >= 0 && tick > s.markA + 18 && s.alpha.holdsPackBack() && !s.alpha.isCalling()) {
 				for (PackWolfEntity wolf : s.pack) {
 					check(wolf.getAction() != WolfAction.CROUCH, "pack wolves should give the Alpha room during its Pounce");
 				}
@@ -425,7 +426,7 @@ public class WolfDenTests implements FabricGameTest {
 	}
 
 	/** Force-loads (so mobs tick) and returns a flat stone floor of radius {@code r}, {@code dz} blocks from the test. */
-	private static BlockPos arena(TestContext ctx, int dz, int r) {
+	static BlockPos arena(TestContext ctx, int dz, int r) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos floor = ctx.getAbsolutePos(new BlockPos(0, 1, 0)).add(0, 0, dz);
 		forceLoad(world, floor, r + 8);
@@ -453,7 +454,7 @@ public class WolfDenTests implements FabricGameTest {
 		return center;
 	}
 
-	private static void forceLoad(ServerWorld world, BlockPos center, int r) {
+	static void forceLoad(ServerWorld world, BlockPos center, int r) {
 		ChunkPos min = new ChunkPos(center.add(-r, 0, -r));
 		ChunkPos max = new ChunkPos(center.add(r, 0, r));
 		for (int cx = min.x; cx <= max.x; cx++) {
@@ -464,7 +465,7 @@ public class WolfDenTests implements FabricGameTest {
 	}
 
 	/** A roaming Alpha on its own (persistent: no real player is ever near the test arenas). */
-	private static AlphaWolfEntity spawnAlpha(TestContext ctx, BlockPos pos) {
+	static AlphaWolfEntity spawnAlpha(TestContext ctx, BlockPos pos) {
 		AlphaWolfEntity alpha = AlphaWolves.ALPHA_WOLF.create(ctx.getWorld());
 		alpha.setPersistent();
 		alpha.refreshPositionAndAngles(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0f, 0.0f);

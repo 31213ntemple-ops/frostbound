@@ -22,6 +22,9 @@ import net.minecraft.util.math.MathHelper;
  *  - CHARGING: head low and forward. STUNNED: sitting, head lolling.
  *  - HOWLING / CHORUS: sitting, snout to the sky. ROARING: rears up on its hind legs, then slams down.
  *  - RECOVERING: head low, sides heaving.
+ *  - STALKING (circling its prey): head down level with its shoulders, shoulders hunched, tail held
+ *    straight out, creeping; it blends in so a wolf settling into the ring sinks into the pose.
+ *  - COMMANDING (the Alpha's Pincer order): stands tall, head high, and snaps it forward with each bark.
  *
  * Every part is reset to its default before posing, so poses never leak into the next frame.
  */
@@ -104,8 +107,38 @@ public class PackWolfModel extends WolfEntityModel<PackWolfEntity> {
 				this.realHead.roll = 0.0f;
 			}
 			case ROARING -> this.roar(p);
+			case STALKING -> this.stalk(ease(p / 6.0f), time);
+			case COMMANDING -> this.command(p);
 			default -> {
 			}
+		}
+	}
+
+	/**
+	 * Puts every part of {@code overlay} named after one of this model's parts (head, real_head, body,
+	 * upper_body, the legs, tail, real_tail) into that part's current pose, so a model made to fit the
+	 * wolf (the Alpha's armour) moves with it. Other parts keep their own transforms.
+	 */
+	public void copyPoseTo(ModelPart overlay) {
+		follow(overlay, this.root, EntityModelPartNames.HEAD);
+		follow(overlay, this.root, EntityModelPartNames.BODY);
+		follow(overlay, this.root, "upper_body");
+		follow(overlay, this.root, EntityModelPartNames.RIGHT_HIND_LEG);
+		follow(overlay, this.root, EntityModelPartNames.LEFT_HIND_LEG);
+		follow(overlay, this.root, EntityModelPartNames.RIGHT_FRONT_LEG);
+		follow(overlay, this.root, EntityModelPartNames.LEFT_FRONT_LEG);
+		follow(overlay, this.root, EntityModelPartNames.TAIL);
+		if (overlay.hasChild(EntityModelPartNames.HEAD)) {
+			follow(overlay.getChild(EntityModelPartNames.HEAD), this.head, "real_head");
+		}
+		if (overlay.hasChild(EntityModelPartNames.TAIL)) {
+			follow(overlay.getChild(EntityModelPartNames.TAIL), this.tail, "real_tail");
+		}
+	}
+
+	private static void follow(ModelPart overlay, ModelPart wolf, String name) {
+		if (overlay.hasChild(name) && wolf.hasChild(name)) {
+			overlay.getChild(name).copyTransform(wolf.getChild(name));
 		}
 	}
 
@@ -234,6 +267,42 @@ public class PackWolfModel extends WolfEntityModel<PackWolfEntity> {
 			this.head.pivotY += 0.5f;
 		}
 		this.tail.pitch = 1.65f;
+	}
+
+	/** Hunting: head down level with the shoulders, shoulders hunched, tail straight out behind (blended in by {@code t}). */
+	private void stalk(float t, float time) {
+		this.head.pivotY += 2.4f * t;
+		this.head.pivotZ -= 0.4f * t;
+		this.head.pitch = MathHelper.lerp(t, this.head.pitch, 0.12f);
+		this.neck.pivotY += 1.6f * t;
+		this.neck.pitch += 0.16f * t;
+		this.torso.pivotY += 0.7f * t;
+		this.torso.pitch += 0.06f * t;
+		this.rightFrontLeg.pivotY += 0.8f * t;
+		this.leftFrontLeg.pivotY += 0.8f * t;
+		// A slow sway of the head as it watches.
+		this.head.roll = MathHelper.sin(time * 0.15f) * 0.05f * t;
+		this.tail.pitch = MathHelper.lerp(t, this.tail.pitch, 1.2f);
+	}
+
+	/** The Pincer's order: stands tall with its head high, snapping it forward on each bark (ticks 0 and 7). */
+	private void command(float p) {
+		float up = ease(p / 4.0f);
+		float snap = Math.max(bark(p), bark(p - 7.0f));
+		this.neck.pivotY -= 0.8f * up;
+		this.neck.pitch -= 0.15f * up;
+		this.head.pivotY -= 1.4f * up;
+		this.head.pivotZ -= 1.2f * snap;
+		this.head.pitch = MathHelper.lerp(up, this.head.pitch, -0.45f) + 0.35f * snap;
+		this.torso.pitch -= 0.06f * up;
+		this.rightFrontLeg.pitch = -0.12f * up;
+		this.leftFrontLeg.pitch = -0.12f * up;
+		this.tail.pitch = 1.75f;
+	}
+
+	/** A quick out-and-back over 4 ticks from {@code p} = 0. */
+	private static float bark(float p) {
+		return p < 0.0f || p > 4.0f ? 0.0f : MathHelper.sin(p / 4.0f * (float) Math.PI);
 	}
 
 	/** Rears up on its hind legs, then slams down with its head thrown forward (the shockwave at tick 12). */

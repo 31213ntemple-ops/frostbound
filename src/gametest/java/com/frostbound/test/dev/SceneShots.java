@@ -31,7 +31,9 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.client.util.ScreenshotRecorder;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.passive.PigEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.passive.WolfVariants;
 import net.minecraft.item.ItemStack;
@@ -187,7 +189,7 @@ public class SceneShots implements ClientModInitializer {
 			alpha.setBodyYaw(200.0f);
 			alpha.setVariant(world.getRegistryManager().get(RegistryKeys.WOLF_VARIANT).getEntry(WolfVariants.BLACK).orElseThrow());
 			alpha.setAiDisabled(true);
-			alpha.damage(world.getDamageSources().magic(), 45.0f);
+			alpha.damage(world.getDamageSources().magic(), 50.0f); // below half: Bloodied
 			world.spawnEntity(alpha);
 			AlphaWolfEntity howler = AlphaWolves.ALPHA_WOLF.create(world);
 			howler.refreshPositionAndAngles(24, this.ground + 1, -10, 150.0f, 0.0f);
@@ -285,7 +287,67 @@ public class SceneShots implements ClientModInitializer {
 			client.options.hudHidden = true;
 			client.setScreen(new CritterBoard());
 		}, "20_blockbench_critter");
+
+		// The Alpha's spiked armour (alpha_wolf_armor.bbmodel) on a row of Alphas in different poses, from
+		// the side, the front and the back, then close up.
+		this.add(50, server -> {
+			ServerWorld world = server.getOverworld();
+			WolfAction[] poses = ALPHA_POSES;
+			for (int i = 0; i < poses.length; i++) {
+				AlphaWolfEntity alpha = AlphaWolves.ALPHA_WOLF.create(world);
+				alpha.refreshPositionAndAngles(110 + i * 3.5, this.ground + 1, -10, 90.0f, 0.0f);
+				alpha.setHeadYaw(90.0f);
+				alpha.setBodyYaw(90.0f);
+				alpha.setVariant(world.getRegistryManager().get(RegistryKeys.WOLF_VARIANT).getEntry(WolfVariants.BLACK).orElseThrow());
+				alpha.setAiDisabled(true);
+				alpha.setInSittingPose(poses[i].sits());
+				alpha.setAction(poses[i]);
+				world.spawnEntity(alpha);
+			}
+			this.camera(server, 110 + (poses.length - 1) * 1.75, 2.6, -18, 0, 10);
+		}, client -> client.setScreen(null), "21_alpha_armor_side");
+		this.add(30, server -> this.camera(server, 110 + (ALPHA_POSES.length - 1) * 1.75, 3.5, -1, 180, 14), client -> { },
+				"22_alpha_armor_other_side");
+		this.add(30, server -> this.camera(server, 106.0, 2.3, -10, -90, 10), client -> { }, "23_alpha_armor_front");
+		this.add(30, server -> this.camera(server, 107.6, 2.6, -12.4, -45, 25), client -> { }, "24_alpha_armor_closeup");
+		this.add(30, server -> this.camera(server, 112.4, 2.8, -7.6, 135, 28), client -> { }, "25_alpha_armor_closeup_back");
+
+		// A live hunt (AI on) round a pig that can't be hurt: the pack spreads into its ring, creeping; then
+		// the Alpha barks a Pincer, two wolves crouch with pale lines to where they'll land, and leap.
+		// Bites are held off so the ring stays tidy for the shot.
+		AlphaWolfEntity[] hunter = new AlphaWolfEntity[1];
+		this.add(110, server -> {
+			ServerWorld world = server.getOverworld();
+			PigEntity pig = EntityType.PIG.create(world);
+			pig.refreshPositionAndAngles(160.5, this.ground + 1, -9.5, 0.0f, 0.0f);
+			pig.setAiDisabled(true);
+			pig.setInvulnerable(true);
+			world.spawnEntity(pig);
+			AlphaWolfEntity alpha = AlphaWolves.ALPHA_WOLF.create(world);
+			alpha.refreshPositionAndAngles(150.5, this.ground + 1, -9.5, 0.0f, 0.0f);
+			alpha.setVariant(world.getRegistryManager().get(RegistryKeys.WOLF_VARIANT).getEntry(WolfVariants.BLACK).orElseThrow());
+			alpha.setPersistent();
+			world.spawnEntity(alpha);
+			for (PackWolfEntity wolf : alpha.spawnPack(6)) {
+				wolf.setLungeCooldown(100000);
+			}
+			alpha.setCallCooldown(100000);
+			alpha.setMoveCooldown(100000);
+			alpha.setLungeCooldown(100000);
+			alpha.setTarget(pig);
+			alpha.setPincerCooldown(100000);
+			hunter[0] = alpha;
+			this.camera(server, 160.5, 15, -9.5, 0, 90);
+		}, client -> { }, "26_hunt_ring_from_above");
+		this.add(30, server -> this.camera(server, 151.5, 3.2, -18.5, -40, 16), client -> { }, "27_hunt_ring_stalking");
+		this.add(16, server -> hunter[0].setPincerCooldown(0), client -> { }, "28_pincer_order");
+		this.add(14, server -> { }, client -> { }, "29_pincer_lines");
+		this.add(16, server -> { }, client -> { }, "30_pincer_leap");
 	}
+
+	/** The poses the armour shots show, left to right. */
+	private static final WolfAction[] ALPHA_POSES = {WolfAction.NONE, WolfAction.STALKING, WolfAction.CROUCH, WolfAction.LEAPING,
+			WolfAction.SLEEPING, WolfAction.COMMANDING, WolfAction.ROARING};
 
 	/** Puts {@code center} in the middle of the open imbuement menu and a copy of {@code ring} around it. */
 	private static void fillGrid(ServerPlayerEntity player, ItemStack center, ItemStack ring) {

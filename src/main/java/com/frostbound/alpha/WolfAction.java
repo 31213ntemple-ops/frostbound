@@ -8,10 +8,14 @@ package com.frostbound.alpha;
  *   Lunge (any wolf)    CROUCH ──────────▶ LEAPING ──▶ (falls back)
  *   Pounce (Alpha)      POUNCE_WINDUP ───▶ LEAPING ──▶ RECOVERING
  *   Charge (Bloodied)   CHARGE_WINDUP ───▶ CHARGING ─▶ STUNNED (if it hits a wall) / RECOVERING
+ *   Pincer (Alpha)      COMMANDING (two wolves: CROUCH ─▶ LEAPING ─▶ RECOVERING)
  *   Call of the Pack    HOWLING (the pack joins in: CHORUS)
  *   Bloodied            ROARING
  *   The den             SLEEPING ─▶ WAKING
+ *   Circling its prey   STALKING (head low, creeping)
  * </pre>
+ *
+ * New actions go at the end: the id synced to the client is the position in this list.
  */
 public enum WolfAction {
 	NONE,
@@ -26,7 +30,9 @@ public enum WolfAction {
 	STUNNED,
 	HOWLING,
 	CHORUS,
-	ROARING;
+	ROARING,
+	STALKING,
+	COMMANDING;
 
 	private static final WolfAction[] VALUES = values();
 

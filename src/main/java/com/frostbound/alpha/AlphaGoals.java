@@ -39,6 +39,8 @@ import java.util.List;
  *                                                                     → CHARGING → hit you → RECOVERING
  *                                                                                → hit a wall → STUNNED (3 s, takes 1.5× damage)
  *  Roar     ROARING (30 t, once, on becoming Bloodied: rears, howls, shockwave at t 12)
+ *  Pincer   COMMANDING (26 t: barks; two wolves crouch, pale lines to where each lands, each locked 8 t before it goes)
+ *                                                                     → wolf 1 leaps (t 26), wolf 2 (t 38) → each RECOVERING (16 t)
  * </pre>
  */
 public final class AlphaGoals {
@@ -518,6 +520,149 @@ public final class AlphaGoals {
 		/** Test hook: whether it's stunned right now. */
 		public boolean isStunned() {
 			return this.phase == Phase.STUNNED;
+		}
+	}
+
+	/**
+	 * Pincer, with two or more wolves near its prey: the Alpha stops, stands tall and barks an order
+	 * (COMMANDING), and the two wolves most nearly opposite each other round the prey drop into a crouch.
+	 * A pale line on the ground runs from each to where it will land, following the prey until
+	 * {@code lockTicks} before that wolf goes. The first leaps at {@code windupTicks}, the second
+	 * {@code staggerTicks} later from the other side (so dodging one can put you under the other); each
+	 * stands winded after landing. Meanwhile the Alpha stands and watches (an opening) and the rest of
+	 * the pack holds back. The wolves' side is {@link PackGoals.PincerGoal}.
+	 */
+	public static final class PincerGoal extends Goal {
+		private enum Phase { COMMAND, WATCH, DONE }
+
+		private final AlphaWolfEntity alpha;
+		private Phase phase = Phase.DONE;
+		private PackWolfEntity[] pair;
+
+		public PincerGoal(AlphaWolfEntity alpha) {
+			this.alpha = alpha;
+			this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+		}
+
+		@Override
+		public boolean canStart() {
+			LivingEntity target = this.alpha.getTarget();
+			if (target == null || this.alpha.pincerCooldown > 0 || !this.alpha.isOnGround() || this.alpha.isScattering() || this.alpha.isCalling()
+					|| this.alpha.pendingRoar || this.alpha.getAction().isResting() || this.alpha.isPerformingMove()
+					|| !PackGoals.isValidTarget(this.alpha, target)) {
+				return false;
+			}
+			this.pair = this.alpha.pincerPair(target);
+			return this.pair != null;
+		}
+
+		@Override
+		public boolean shouldContinue() {
+			return this.phase != Phase.DONE && this.alpha.isAlive();
+		}
+
+		@Override
+		public boolean canStop() {
+			return false;
+		}
+
+		@Override
+		public boolean shouldRunEveryTick() {
+			return true;
+		}
+
+		@Override
+		public void start() {
+			this.phase = Phase.COMMAND;
+			this.alpha.beginPincer(this.alpha.getTarget(), this.pair);
+			this.alpha.getNavigation().stop();
+			this.alpha.setAction(WolfAction.COMMANDING);
+			this.bark(0.55f);
+		}
+
+		@Override
+		public void stop() {
+			if (this.alpha.getAction() == WolfAction.COMMANDING) {
+				this.alpha.setAction(WolfAction.NONE);
+			}
+			this.alpha.endPincer();
+			this.phase = Phase.DONE;
+			this.pair = null;
+		}
+
+		private void bark(float pitch) {
+			this.alpha.playSound(SoundEvents.ENTITY_WOLF_AMBIENT, 2.5f, pitch);
+			this.alpha.playSound(SoundEvents.ENTITY_WOLF_GROWL, 1.5f, 0.5f);
+		}
+
+		@Override
+		public void tick() {
+			AlphaWolfEntity.Pincer pincer = this.alpha.pincer();
+			if (pincer == null || !(this.alpha.getWorld() instanceof ServerWorld world)) {
+				this.phase = Phase.DONE;
+				return;
+			}
+			pincer.ticks++;
+			int ticks = pincer.ticks();
+			FrostboundConfig.Pincer config = FrostboundConfig.get().alphaWolf.pincer;
+			LivingEntity prey = pincer.prey;
+			this.alpha.getNavigation().stop();
+			if (prey.isAlive()) {
+				face(this.alpha, prey.getPos());
+			}
+			boolean preyGone = !PackGoals.isValidTarget(this.alpha, prey);
+			if (this.phase == Phase.COMMAND) {
+				if (ticks == 7) {
+					this.bark(0.6f); // the second bark of the order
+				}
+				// Each wolf's line follows the prey until shortly before that wolf leaps, then stops.
+				boolean anyLeft = false;
+				for (int i = 0; i < 2; i++) {
+					PackWolfEntity wolf = pincer.wolves[i];
+					int leapAt = AlphaWolfEntity.Pincer.leapAt(i);
+					if (!wolf.isAlive() || ticks >= leapAt) {
+						continue;
+					}
+					anyLeft = true;
+					int lockAt = leapAt - config.lockTicks;
+					if (ticks < lockAt && !preyGone) {
+						pincer.landing[i] = AlphaWolfEntity.Pincer.landingFor(prey, wolf);
+					} else if (ticks == lockAt) {
+						wolf.playSound(SoundEvents.ENTITY_WOLF_GROWL, 1.4f, 1.2f);
+						world.spawnParticles(ParticleTypes.CRIT, pincer.landing[i].x, pincer.landing[i].y + 0.2, pincer.landing[i].z, 6, 0.2, 0.05, 0.2, 0.1);
+					}
+					if (ticks % 2 == 0) {
+						line(world, ticks >= lockAt ? PackGoals.PINCER_LOCKED : PackGoals.PINCER_LINE, wolf.getPos(), pincer.landing[i], ticks);
+					}
+				}
+				if (ticks >= config.windupTicks) {
+					// The order's given: stand and watch.
+					this.alpha.setAction(WolfAction.NONE);
+					if (!anyLeft) {
+						this.phase = Phase.WATCH;
+					}
+				}
+				if (preyGone && ticks < config.windupTicks) {
+					this.phase = Phase.DONE; // nothing left to send them at: called off
+				}
+			} else if (this.phase == Phase.WATCH) {
+				boolean finished = (pincer.done[0] || !pincer.wolves[0].isAlive()) && (pincer.done[1] || !pincer.wolves[1].isAlive());
+				if (finished || ticks > AlphaWolfEntity.Pincer.leapAt(1) + 50) {
+					this.phase = Phase.DONE;
+				}
+			}
+		}
+
+		/** A dotted line of {@code particle} along the ground from {@code from} to {@code to}, crawling towards the end. */
+		private static void line(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, int ticks) {
+			Vec3d along = to.subtract(from);
+			double length = Math.sqrt(along.x * along.x + along.z * along.z);
+			int points = Math.max(2, (int) (length / 0.5));
+			double crawl = (ticks % 6) / 6.0;
+			for (int i = 0; i < points; i++) {
+				double t = (i + crawl) / points;
+				world.spawnParticles(particle, from.x + along.x * t, MathHelper.lerp(t, from.y, to.y) + 0.15, from.z + along.z * t, 1, 0.0, 0.0, 0.0, 0.0);
+			}
 		}
 	}
 

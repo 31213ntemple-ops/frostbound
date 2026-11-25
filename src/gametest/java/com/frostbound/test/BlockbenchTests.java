@@ -152,6 +152,50 @@ public class BlockbenchTests implements FabricGameTest {
 		ctx.complete();
 	}
 
+	/**
+	 * The Alpha's armour (src/main/blockbench/entity/alpha_wolf_armor.bbmodel) is drawn by copying the wolf
+	 * model's pose onto bones of the same names, so each bone has to pivot exactly where vanilla's
+	 * WolfEntityModel part does, and the reference wolf in the project (Export off) mustn't come along.
+	 */
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void alphaArmorFitsTheWolfModel(TestContext ctx) {
+		JsonObject armor = json("/assets/frostbound/blockbench/entity/alpha_wolf_armor.json");
+		check(armor.get("texture").getAsString().equals("frostbound:textures/entity/alpha_wolf_armor.png"), "armour texture: " + armor.get("texture"));
+		float half = (float) (Math.PI / 2);
+		Object[][] parts = {
+				{"head", null, List.of(-1.0, 13.5, -7.0), 0.0f},
+				{"real_head", "head", List.of(0.0, 0.0, 0.0), 0.0f},
+				{"upper_body", null, List.of(-1.0, 14.0, -3.0), half},
+				{"body", null, List.of(0.0, 14.0, 2.0), half},
+				{"right_hind_leg", null, List.of(-2.5, 16.0, 7.0), 0.0f},
+				{"left_hind_leg", null, List.of(0.5, 16.0, 7.0), 0.0f},
+				{"right_front_leg", null, List.of(-2.5, 16.0, -4.0), 0.0f},
+				{"left_front_leg", null, List.of(0.5, 16.0, -4.0), 0.0f},
+				{"tail", null, List.of(-1.0, 12.0, 8.0), (float) (Math.PI / 5)},
+				{"real_tail", "tail", List.of(0.0, 0.0, 0.0), 0.0f}};
+		for (Object[] part : parts) {
+			JsonObject bone = bone(armor, (String) part[0]);
+			String parent = !bone.has("parent") || bone.get("parent").isJsonNull() ? null : bone.get("parent").getAsString();
+			check(java.util.Objects.equals(parent, part[1]), part[0] + " should hang from " + part[1] + ", hangs from " + parent);
+			check(vec(bone.getAsJsonArray("pivot")).equals(part[2]), part[0] + " should pivot where the wolf's does " + part[2] + ": " + bone.get("pivot"));
+			close(bone.getAsJsonArray("rotation").get(0).getAsFloat(), (float) part[3], part[0] + " pitch");
+		}
+		int spikes = 0;
+		for (JsonElement element : armor.getAsJsonArray("bones")) {
+			JsonObject bone = element.getAsJsonObject();
+			spikes += bone.get("name").getAsString().contains("spike") ? 1 : 0;
+			for (JsonElement c : bone.getAsJsonArray("cubes")) {
+				JsonObject cube = c.getAsJsonObject();
+				// The reference wolf's body (6×9×6 at -3,-2,-3, not inflated) is in the project but not exported.
+				check(!(vec(cube.getAsJsonArray("size")).equals(List.of(6.0, 9.0, 6.0)) && cube.get("inflate").getAsDouble() == 0.0),
+						"the reference wolf (Export off) shouldn't be in the armour: " + bone.get("name"));
+			}
+		}
+		check(spikes >= 10, "the armour is spiked: " + spikes + " spikes");
+		check(bone(armor, "body").getAsJsonArray("cubes").size() >= 3, "the back is plated");
+		ctx.complete();
+	}
+
 	private static JsonObject bone(JsonObject data, String name) {
 		for (JsonElement bone : data.getAsJsonArray("bones")) {
 			if (bone.getAsJsonObject().get("name").getAsString().equals(name)) {
