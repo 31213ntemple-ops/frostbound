@@ -1,0 +1,19 @@
+{
+	"providers": [
+		{
+			"type": "bitmap",
+			"file": "frostbound:font/addon_flame.png",
+			"ascent": 7,
+			"height": 8,
+			"chars": [
+				""
+			]
+		},
+		{
+			"type": "space",
+			"advances": {
+				"": 8
+			}
+		}
+	]
+}

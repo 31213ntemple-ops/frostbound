@@ -4,6 +4,8 @@ import com.frostbound.Frostbound;
 import com.frostbound.config.FrostboundConfig;
 import com.frostbound.imbuement.FrostTier;
 import com.frostbound.imbuement.FrostTiers;
+import com.frostbound.addons.GearAddon;
+import com.frostbound.addons.GearAddons;
 import com.frostbound.imbuement.ImbuementScreenHandler;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
@@ -69,7 +71,7 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 	private int matchTicks = -1;
 	/** Ticks left of the flash after taking a result, and the tier it was. */
 	private int flash;
-	private FrostTier flashTier = FrostTier.COLD;
+	private int flashColor = FrostTier.COLD.starColor;
 
 	public ImbuementScreen(ImbuementScreenHandler handler, PlayerInventory inventory, Text title) {
 		super(handler, inventory, title);
@@ -97,7 +99,7 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 	protected void handledScreenTick() {
 		super.handledScreenTick();
 		ticks++;
-		matchTicks = target() == null ? -1 : matchTicks + 1;
+		matchTicks = making() == null ? -1 : matchTicks + 1;
 		if (flash > 0) {
 			flash--;
 		}
@@ -123,6 +125,25 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 		return result.isEmpty() ? null : FrostTiers.tier(result);
 	}
 
+	/** What the result slot shows being made: a frost tier ("Icy ★★", in its blue) or an add-on ("Flame Extract", in its colour). */
+	private record Making(Text name, int color, int level) {}
+
+	@Nullable
+	private Making making() {
+		ItemStack result = handler.getSlot(ImbuementScreenHandler.RESULT).getStack();
+		if (result.isEmpty()) {
+			return null;
+		}
+		FrostTier tier = FrostTiers.tier(result);
+		FrostTier from = centerTier();
+		List<GearAddon> addons = GearAddons.of(result);
+		if ((from == null || tier.level() > from.level()) || addons.isEmpty()) {
+			return new Making(tierName(tier), tier.starColor, tier.level());
+		}
+		GearAddon added = addons.get(addons.size() - 1);
+		return new Making(added.name(), added.color(), 1);
+	}
+
 	/** The tier of the piece in the centre, or null if there's no piece there. */
 	@Nullable
 	private FrostTier centerTier() {
@@ -132,7 +153,7 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 
 	@Override
 	protected void onMouseClick(Slot slot, int slotId, int button, SlotActionType actionType) {
-		FrostTier made = slot != null && slot.id == ImbuementScreenHandler.RESULT && slot.hasStack() ? target() : null;
+		Making made = slot != null && slot.id == ImbuementScreenHandler.RESULT && slot.hasStack() ? making() : null;
 		super.onMouseClick(slot, slotId, button, actionType);
 		if (made != null) {
 			burst(made);
@@ -140,11 +161,11 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 	}
 
 	/** Frost flies out of the result box, and the ring flashes. */
-	private void burst(FrostTier tier) {
+	private void burst(Making made) {
 		flash = 14;
-		flashTier = tier;
+		flashColor = made.color();
 		float cx = ImbuementScreenHandler.RESULT_X + 8, cy = ImbuementScreenHandler.RESULT_Y + 8;
-		for (int i = 0; i < 18 + 8 * tier.level(); i++) {
+		for (int i = 0; i < 18 + 8 * made.level(); i++) {
 			double angle = random.nextDouble() * Math.PI * 2;
 			float speed = 0.8f + random.nextFloat() * 2.2f;
 			Spark spark = new Spark();
@@ -154,7 +175,7 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 			spark.vy = (float) Math.sin(angle) * speed - 0.4f;
 			spark.life = 12 + random.nextInt(10);
 			spark.big = random.nextInt(3) == 0;
-			spark.color = random.nextBoolean() ? 0xFFFFFF : tier.starColor;
+			spark.color = random.nextBoolean() ? 0xFFFFFF : made.color();
 			sparks.add(spark);
 		}
 	}
@@ -192,16 +213,16 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 		context.disableScissor();
 
 		// The ring at work: a wave of light round the outer slots, the centre and the result aglow, the arrow filling.
-		FrostTier target = target();
+		Making target = making();
 		if (target != null) {
 			float fade = Math.min(1.0f, (matchTicks + delta) / 6.0f);
 			for (int k = 0; k < CLOCKWISE.length; k++) {
 				float wave = Math.max(0.0f, MathHelper.cos(time * 0.22f - k * (float) Math.PI / 4));
-				glow(context, gridX(CLOCKWISE[k]) - 3, gridY(CLOCKWISE[k]) - 3, target.starColor, fade * (0.25f + 0.7f * wave * wave * wave));
+				glow(context, gridX(CLOCKWISE[k]) - 3, gridY(CLOCKWISE[k]) - 3, target.color(), fade * (0.25f + 0.7f * wave * wave * wave));
 			}
 			float pulse = 0.55f + 0.3f * MathHelper.sin(time * 0.15f);
-			glow(context, gridX(ImbuementScreenHandler.CENTER) - 3, gridY(ImbuementScreenHandler.CENTER) - 3, target.starColor, fade * pulse);
-			bigGlow(context, target.starColor, fade * pulse);
+			glow(context, gridX(ImbuementScreenHandler.CENTER) - 3, gridY(ImbuementScreenHandler.CENTER) - 3, target.color(), fade * pulse);
+			bigGlow(context, target.color(), fade * pulse);
 			int filled = Math.round(ARROW_W * Math.min(1.0f, (matchTicks + delta) / FILL_TICKS));
 			tint(1.0f, 1.0f, 1.0f, 1.0f);
 			context.drawTexture(TEXTURE, x + ARROW_X, y + ARROW_Y, ARROW_U, ARROW_V, filled, ARROW_H);
@@ -209,7 +230,7 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 		if (flash > 0) {
 			float strength = (flash - delta) / 14.0f;
 			for (int i = 0; i < 9; i++) {
-				glow(context, gridX(i) - 3, gridY(i) - 3, flashTier.starColor, strength);
+				glow(context, gridX(i) - 3, gridY(i) - 3, flashColor, strength);
 			}
 			bigGlow(context, 0xFFFFFF, strength);
 		}
@@ -270,12 +291,12 @@ public class ImbuementScreen extends HandledScreen<ImbuementScreenHandler> {
 	@Override
 	protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
 		super.drawForeground(context, mouseX, mouseY);
-		// The tier the ring makes, over the result box: "Icy ★★".
-		FrostTier target = target();
+		// What the ring makes, over the result box: "Icy ★★", or an add-on's name.
+		Making target = making();
 		if (target != null) {
-			Text name = tierName(target);
+			Text name = target.name();
 			int cx = ImbuementScreenHandler.RESULT_X + 8;
-			context.drawText(textRenderer, name, cx - textRenderer.getWidth(name) / 2, 22, target.starColor, true);
+			context.drawText(textRenderer, name, cx - textRenderer.getWidth(name) / 2, 22, target.color(), true);
 		}
 		// Sparks from the last imbuing, over the items.
 		if (!sparks.isEmpty()) {

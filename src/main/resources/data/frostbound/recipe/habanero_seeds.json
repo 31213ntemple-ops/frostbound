@@ -1,0 +1,13 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "misc",
+	"ingredients": [
+		{
+			"item": "frostbound:habanero"
+		}
+	],
+	"result": {
+		"count": 1,
+		"id": "frostbound:habanero_seeds"
+	}
+}

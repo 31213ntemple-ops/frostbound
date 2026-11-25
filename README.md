@@ -13,6 +13,8 @@ A collection of winter features, built as one mod split into **modules**. Each m
   "frostTiers": { "coldArmor": 0.5, "frozenArmor": 0.5, "frozenToughness": 0.5, "coldDurability": 0.25, "icyDurability": 0.15,
                   "coldAttackDamage": 0.5, "frozenAttackDamage": 0.5 },
   "frostBonuses": { "snowstride": { "icy": 0.04, "frozen": 0.08 }, "...": "see Imbuement Table" },
+  "habanero": { "wildMaxCelsius": -13.0, "spicySeconds": 120 },
+  "insulation": { "flameExtractsForFull": 4 },
   "alphaWolf": { "health": 90.0, "initialPackSize": 7, "maxPackSize": 9, "...": "see Alpha Wolf" },
   "packInstinct": { "belowHealth": 8.0, "cooldownSeconds": 60.0, "...": "see Alpha Wolf" },
   "lifeSteal": { "healPerLevel": 0.1 },
@@ -28,11 +30,11 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 | `noThirst` | With Tough As Nails: its thirst is switched off and its thirst items are removed, so only temperature is left (see [No Thirst](#no-thirst-tough-as-nails)) |
 
-Items like the **Ice Ball**, **copper gear**, the **Imbuement Table** and the **Alpha Wolf** and its drops aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` in the config only set their balance.
+Items like the **Ice Ball**, **copper gear**, the **Imbuement Table**, **habaneros** and the **Alpha Wolf** and its drops aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `habanero` / `insulation` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` in the config only set their balance.
 
 **Required mods:** Fabric API and **Trinkets** (3.10+, which brings Cardinal Components API with it). Trinkets gives players the necklace slot the Mark of the Pack is worn in.
 
-**Meant to be played with:** **Tough As Nails** (for temperature; Frostbound turns its thirst off, see the `noThirst` module).
+**Meant to be played with:** **Tough As Nails** (for temperature; Frostbound turns its thirst off, see the `noThirst` module) and **Farmer's Delight Refabricated** (its cooking pot turns [habaneros](#habanero-peppers-farmers-delight) into hot sauce and flame extract; without it the peppers still grow, but there's nothing to cook them in).
 
 ## Hearts and vessels
 
@@ -312,6 +314,45 @@ Each armour material gets one bonus, and every weapon gets Frostbite, shown as a
 
 Try it: `/give @s frostbound:imbuement_table`, `/give @s minecraft:iron_chestplate`, `/give @s minecraft:ice 8`, `/give @s minecraft:packed_ice 32`, `/give @s minecraft:blue_ice 8`. Or straight to a tier: `/give @s minecraft:leather_boots[frostbound:frost_tier=3]`.
 
+### Add-on slots
+
+Every piece of gear the table takes (armour and weapons) has **two add-on slots**, so you choose what each piece specialises in. Add-ons go in at the imbuement table: the gear in the centre and **one add-on item in any one outer slot**, the other seven empty. The ring glows in the add-on's colour, its name shows over the result, and taking the result uses up one add-on (its container, like flame extract's bottle, is left in its slot or handed to you) and puts it in the gear's next free slot. The same add-on can fill both slots, and then counts twice. A piece with both slots full takes no more. Add-ons sit beside the frost tier: an Icy piece stays Icy, and Cold/Icy/Frozen can still be added afterwards. Smithing into netherite, the anvil and enchanting keep them.
+
+The slots show in the tooltip **under the stats** (after the attribute lines and the durability line, before the advanced tooltip's item id), one bracket pair per slot:
+
+| Tooltip | Meaning |
+|---|---|
+| <span style="color:#AAAAAA">[ ] [ ]</span> | two empty slots (grey brackets) |
+| <span style="color:#FFAA00">[🔥]</span> <span style="color:#AAAAAA">[ ]</span> | flame extract in the first slot (gold brackets round its icon) |
+| <span style="color:#FFAA00">[🔥] [🔥]</span> | flame extract in both |
+
+| Add-on | Goes on | What it does |
+|---|---|---|
+| **Flame Extract** | armour | **Insulation**, see below |
+
+- **Flame extract's insulation** (shown on the piece as the gold **Flame Lined** passive, "25% insulation"): each flame extract in the armour you wear is a quarter of full insulation, so it takes **four**: one in each piece of a full set, or both slots of just **two** pieces. Partly insulated, powder snow freezes you that much slower (25% slower per extract). **Fully insulated, you can't freeze at all** (powder snow, a Frozen mob's Frostbite), and with Tough As Nails you're kept **one step warmer** (never pushed into Hot), like two pieces of warm clothing. Only worn armour counts. `insulation.flameExtractsForFull` in the config.
+- The add-ons are stored on the item as `frostbound:addons` (a list of add-on ids, in slot order). The icons are glyphs in the `frostbound:addons` font (`assets/frostbound/font/addons.json`; the flame is `textures/font/addon_flame.png`, from `tools/HabaneroTextures.java`).
+- **Adding an add-on (code):** `GearAddons.register(new GearAddon("<id>", () -> ITEM, "<glyph>", colour, fits))` as a constant on the class that implements it (see `addons/FlameExtract.ADDON`), a bitmap glyph for its icon in `font/addons.json`, the lang key `addon.frostbound.<id>`, a passive on the gear that has it (so the tooltip says what it does), the effect itself (`GearAddons.count(stack, addon)` / `countWorn(entity, addon)`), and GameTests.
+- Code: `com.frostbound.addons` (`GearAddons` the slots, the component, the table match and the tooltip line; `GearAddon`; `FlameExtract` the insulation), `mixin/addons/InsulationMixin` (no freezing, slower freezing), `compat/TanTemperature` (the step warmer), `client/addons/AddonSlotTooltips` (the line under the stats).
+
+Try it: `/give @s frostbound:flame_extract 4`, `/give @s minecraft:iron_chestplate`, or straight to a full piece: `/give @s minecraft:iron_chestplate[frostbound:addons=["flame_extract","flame_extract"]]`.
+
+## Habanero Peppers (Farmer's Delight)
+
+Habaneros grow wild in the **very coldest biomes**: the arctic and boreal ones, such as stony peaks, frozen and jagged peaks, snowy slopes, snowy plains, grove, taigas and the windswept hills. Not in the milder ones like forests, plains or meadows, and **never in ice spikes**, oceans, rivers or caves. "Very cold" is a winter temperature (`environment/WinterClimate`) of **−13 °C or colder** (`habanero.wildMaxCelsius`; biomes from other mods get theirs from how warm they were); the biome tag `frostbound:no_wild_habaneros` keeps them out of a biome anyway (ice spikes). They grow on the ground those biomes are made of (dirt, grass, stone, gravel, calcite, snow blocks: `frostbound:wild_habanero_grows_on`), in small patches.
+
+- **Wild Habanero** (`frostbound:wild_habanero`): a frosted bush with orange peppers. Breaks instantly; drops 1–2 **Habaneros** (more with Fortune) and, half the time, **Habanero Seeds**. Shears take the bush itself.
+- **Habanero Seeds** grow on farmland like wheat (4 stages: sprouts, leaves, white flowers, ripe orange peppers) and give 1–2 peppers (Fortune helps) and seeds back. A habanero crafts into a seed. Villagers plant them, bees grow them.
+- **Hot Sauce**: **two habaneros** in Farmer's Delight's **cooking pot** over heat (a stove, or anything else FD counts as heat), served into a **glass bottle**. Craft it (shapeless, anywhere in the grid) with **any savory dish** to make the dish **Spicy**; the bottle comes back. Savory dishes are the tag `frostbound:savory_dishes`: cooked meats and fish, baked potatoes, stews and soups, Farmer's Delight's meals (`farmersdelight:meals`), sandwiches, wraps, dumplings and the like (not sweets). A spicy dish shows the red **Spicy** passive: "Warms you up for 2 minutes once eaten." Eating it gives the **Spicy** effect for **2 minutes** (`habanero.spicySeconds`): with Tough As Nails you're one step warmer (never pushed into Hot), and frost thaws off you, so powder snow takes twice as long to freeze you. A dish can only be spiced once.
+- **Flame Extract**: **three habaneros cooked with a lava bucket** in the cooking pot (the empty bucket comes back), served into a glass bottle. It's an armour **add-on** for insulation (see [Add-on slots](#add-on-slots)). Fireproof.
+
+The two cooking recipes (`data/frostbound/recipe/cooking/`) only load when Farmer's Delight is installed (`fabric:load_conditions`); Frostbound doesn't depend on its code, so any 1.21.1 Farmer's Delight Refabricated works. Habanero items are also in `c:crops/habanero` and `c:seeds/habanero`, and the wild bush in `farmersdelight:wild_crops`.
+
+- Code: `com.frostbound.habanero` (`Habaneros` registers everything and picks the biomes, `HabaneroCropBlock`, `WildHabaneroBlock`, `SpicyDishRecipe`, `SpicyEffect`), `mixin/habanero/LivingEntityEatMixin` (eating a spicy dish). Worldgen: `worldgen/configured_feature` and `placed_feature/patch_wild_habaneros.json` (how many and how often).
+- Art: `tools/HabaneroTextures.java` paints the pepper, seeds, crop stages, wild bush, the Spicy icon and the add-on flame, and recolours vanilla's potion bottle for hot sauce and flame extract. Run it like the Alpha's (`java tools/HabaneroTextures.java ~/.gradle/caches/fabric-loom/1.21.1/minecraft-client.jar`) rather than editing the PNGs.
+
+Try it: `/give @s frostbound:habanero 16`, `/give @s farmersdelight:cooking_pot`, `/give @s farmersdelight:stove`, `/give @s minecraft:lava_bucket`, `/give @s minecraft:glass_bottle 4`, `/give @s frostbound:hot_sauce`, `/give @s minecraft:cooked_beef`. Find a wild one: `/locate biome minecraft:stony_peaks`, or `/place feature frostbound:patch_wild_habaneros` on stone or grass.
+
 ## Alpha Wolf
 
 An early-game Overworld boss: a big black wolf with a frost-tipped ruff, a scarred eye and burning red eyes, in spiked armour, leading a pack. It's built for a player with about 7 hearts in iron (maybe Cold or Icy) armour, and it's about reading the pack's tells and using the den, not a huge health bar.
@@ -516,6 +557,8 @@ They live in `src/gametest/java/com/frostbound/test/`:
   - The importer's error messages are unit tests in `buildSrc/src/test`, run by any build that changes the importer (`./gradlew -p buildSrc test` on their own).
 - `NoThirstTests` (with Tough As Nails, which runs in dev): TAN's thirst is off and stays off after its config reloads; every removed item is a real TAN item and nothing makes one (no water purifier recipes either), while the temperature items keep their recipes; no creative tab or search lists them or a Water Cleansing book; Water Cleansing is out of the loot and trade tags but Thermal Tuning stays; TAN does give the wandering trader juice trades, yet 40 traders never offer one and none is short of trades.
 - `CampfireTests`: the fire starter and campfire base recipes, the lighting minigame's server side (three hits light it, a miss costs durability and resets, relighting a put-out campfire); warmth is a circle 7 blocks round (7 straight out and 5 + 5 on the diagonal warm, 8 out and 6 + 5 don't, 3 up or down but not 4), only lit campfires, never soul campfires; the nearest lit campfire is the one found; and with Tough As Nails its temperature agrees (warmed inside the circle, not outside it or 5 blocks overhead, where TAN alone would warm you).
+- `HabaneroTests` (with Farmer's Delight, which runs in dev): wild habaneros are added to stony peaks, snowy plains, slopes, frozen peaks, grove, taiga and the windswept hills, and not to ice spikes, forests, plains, birch forest, meadow, desert, frozen rivers and oceans or the deep dark; the bush grows on stone, grass, dirt, gravel, snow and calcite but not sand, ice or planks, and drops peppers; the crop plants from seeds on farmland, ripe drops peppers, unripe only its seed, and is in `minecraft:crops`; both cooking recipes load as Farmer's Delight cooking recipes (flame extract with a lava bucket); a real cooking pot on a magma block cooks two peppers and a bottle into hot sauce, and three peppers with a lava bucket into flame extract, handing the bucket back; hot sauce makes cooked beef, stews and FD's meals spicy anywhere in the grid and gives the bottle back, but not cookies, a dish that's already spicy, two dishes or two sauces; eating a spicy dish (not a plain one) gives Spicy for the config's time, which thaws frost; the Spicy tooltip text and colour.
+- `GearAddonTests`: armour and weapons have two add-on slots, tools and food none; flame extract fills one slot or both, never a third, only on armour, and smithing keeps it; the slots line reads "[ ] [ ]" with grey brackets, gold round a filled slot with the icon in the add-on font, and goes under the stats (before the item id in advanced tooltips); at the table one flame extract next to an Icy helmet adds it and keeps the tier, two filled outer slots make nothing, taking the result uses one extract and hands the bottle back, a second fills the second slot, a full piece and a sword take no more, and 8 ice still makes Cold; insulation is a quarter per extract (worn only), three isn't full, four across a set or two pairs is, and then the mob can't freeze; in real powder snow half insulation freezes a pig about half as fast and full not at all; the Flame Lined and flame extract tooltips; the warmth steps (Spicy one, full insulation another, never into Hot) and that they're hooked into Tough As Nails.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -564,6 +607,7 @@ Test natural spawning:
 
 - **Models (Blockbench):** blocks, items and entities are modelled in [Blockbench](https://www.blockbench.net/) and saved as `.bbmodel` in `src/main/blockbench/{block,item,entity}/`. The build imports them on its own (models, textures, blockstates, entity geometry and animations), with no export step. See [`src/main/blockbench/README.md`](src/main/blockbench/README.md) for the workflow and the Java side (`BlockbenchEntityModel`, `BlockbenchModels.registerLayer`).
 - **Imbuement table screen:** edit `tools/ImbuementGuiTexture.java` (layout constants at the top must match `ImbuementScreenHandler` and `ImbuementScreen`), run `java tools/ImbuementGuiTexture.java`, then `runScenes` (the menu empty, mid-glow and with the ladder, and frosty tooltips).
+- **Habanero art:** edit `tools/HabaneroTextures.java` (pixel grids, one character per pixel, and the recoloured bottles) and run `java tools/HabaneroTextures.java ~/.gradle/caches/fabric-loom/1.21.1/minecraft-client.jar`; `runScenes` shows the crop, the wild bush and the add-on, spicy and flame extract tooltips. **Where wild habaneros grow:** `habanero.wildMaxCelsius` and the biome tag `frostbound:no_wild_habaneros`; how many in `worldgen/placed_feature/patch_wild_habaneros.json` (`rarity_filter`) and its configured feature (`tries`). **Which dishes take hot sauce:** `frostbound:savory_dishes`. **Cooking:** `data/frostbound/recipe/cooking/`.
 - **Alpha Wolf art:** edit `tools/AlphaWolfTextures.java` (the icons are pixel grids, one character per pixel; the armour layers are painted in code) and run `java tools/AlphaWolfTextures.java ~/.gradle/caches/fabric-loom/1.21.1/minecraft-client.jar` from the project root. Then `.\gradlew.bat runScenes` and look in `build/scenes/screenshots/` (the den by day and night, every pose, the Alpha, the armour and the necklace, the Alpha's spiked armour in each of its poses, and a live hunt: the ring from above, then a Pincer).
 
 - **Christmas tree layout:** edit `ChristmasStructureBuilder` in `src/gametest` and run `./gradlew runGametest -PbuildStructures`. It rebuilds the four `.nbt` templates in `resourcepacks/christmas/data/frostbound/structure/christmas_tree/` (run the tests again afterwards so they see the new files). Or design one by hand in the dev client with a structure block, and save it over one of those files. **How rare:** `spacing`/`separation` in `worldgen/structure_set/christmas_trees.json`. **Where:** the tag `frostbound:has_structure/christmas_tree`. **Gifts:** `loot_table/chests/christmas_present.json`. **Present outcomes:** `christmas.presents` in the config, code in `christmas/ChristmasPresents.java`.
@@ -617,6 +661,11 @@ com.frostbound
 │                           PackWolfModel (the poses), the renderer, AlphaArmorFeatureRenderer (its spiked
 │                           armour, from Blockbench), the Hood's ears and jaw, the necklace on
 │                           the chest, drained hearts and the J key
+├── addons/                 add-on slots on gear: GearAddons (the two slots, frostbound:addons, the table match,
+│                           the "[🔥] [ ]" line), GearAddon, FlameExtract (insulation); client/addons draws the line
+├── habanero/               habanero peppers: Habaneros (blocks, items, Spicy, the biomes), HabaneroCropBlock,
+│                           WildHabaneroBlock, SpicyDishRecipe (hot sauce + a savory dish), SpicyEffect
+├── compat/TanTemperature   Spicy and full insulation as Tough As Nails warmth (its API, by reflection)
 ├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
 │                           client/PassiveTooltips draws them at the top of tooltips
 ├── nothirst/NoThirst       Tough As Nails without thirst: the removed items, and hides them from creative tabs;
@@ -633,6 +682,8 @@ com.frostbound
     │                             client/VideoOptionsScreenMixin (the Campfire Warmth Ring button)
     ├── nothirst/                 ThirstConfigMixin (forces TAN's thirst off; @Pseudo, only with TAN), RecipeManagerMixin,
     │                             MerchantEntityMixin + WanderingTraderEntityMixin (no thirst trades), TagGroupLoaderMixin
+    ├── addons/                   InsulationMixin (flame extract: no freezing when fully insulated, slower when partly)
+    ├── habanero/                 LivingEntityEatMixin (eating a spicy dish makes you Spicy)
     ├── imbuement/                ItemStackMixin (tier stats, the (+x) on attribute lines), FrostBonusDamageMixin (Cold Iron, Frostmail, Quenched);
     │                             client/ItemRendererMixin, ArmorFeatureRendererMixin (the frost overlay)
     └── mobs/                     frozen flag, combat, loot, visuals
@@ -644,4 +695,4 @@ com.frostbound
 - `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed, and the Tough As Nails mixins (thirst config, campfire warmth) when TAN isn't.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.
 - **Trinkets** is a normal (required) dependency from the TerraformersMC maven; Cardinal Components comes with it from the Ladysnake maven. In GameTests, the vanilla mock server player gets kicked when Cardinal Components syncs to its fake connection, so tests that need a server player build an unlisted one (`ImbuementTests.serverPlayer`).
-- **Other mods in dev:** DecorationX: Christmas and Tough As Nails (with its library GlitchCore) run in the dev client, game tests and scenes. Gradle downloads it from Modrinth and copies it into `run/mods`, `build/gametest/mods` and `build/scenes/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.
+- **Other mods in dev:** DecorationX: Christmas, Tough As Nails (with its library GlitchCore) and Farmer's Delight Refabricated run in the dev client, game tests and scenes. Farmer's Delight is held at 1.21.1-3.2.8 in dev: 3.3.0 and later need Fabric Loader 0.19+ and extend vanilla enums with a class tweaker, which Loader can't remap in a dev run ("Failed to remap mods"). Players can use any 1.21.1 build, since Frostbound only ships JSON recipes and tags for it. Gradle downloads it from Modrinth and copies it into `run/mods`, `build/gametest/mods` and `build/scenes/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.

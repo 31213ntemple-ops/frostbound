@@ -31,6 +31,14 @@ How to add one:
 
 **Stat bonuses** (numbers added to a vanilla line, like the imbuement table's armour, toughness, attack damage and durability) are never merged silently: vanilla's line stays as it is and the bonus follows it as a little "(+x)" in the tier's colour, "+8 Armor (+1)" (`FrostTiers.forTooltip` / `bonusText`; durability in `client/imbuement/FrostStars`).
 
+## Gear add-ons
+
+Armour and weapons (whatever the imbuement table's centre takes) have **two add-on slots** (`addons/GearAddons`, component `frostbound:addons`). An add-on goes in at the table: the gear in the centre and one add-on item in a single outer slot. Tooltip, under the stats: `[🔥] [ ]`, gold brackets round a filled slot's icon (a glyph in the `frostbound:addons` font), grey round an empty one. A new add-on is a `GearAddon` constant registered with `GearAddons.register` on the class that implements it (see `addons/FlameExtract`), plus its glyph in `assets/frostbound/font/addons.json`, its `addon.frostbound.<id>` lang key, a passive on the gear that has it (so the tooltip says what it does) and GameTests (`GearAddonTests`).
+
+## Farmer's Delight
+
+Habaneros (`habanero/`) are cooked in Farmer's Delight's cooking pot. Frostbound never compiles against FD: its recipes are JSON with `fabric:load_conditions` on `farmersdelight`, and tests reach the pot by reflection (`HabaneroTests.pot`). FD runs in dev as a `devMods` entry pinned to 3.2.8 (later builds need Loader 0.19+ and can't be remapped in a dev run).
+
 ## Models: Blockbench
 
 New models (blocks, items, entities) are Blockbench projects in `src/main/blockbench/{block,item,entity}/<name>.bbmodel`; the build imports them (buildSrc `BlockbenchImport`, task `importBlockbench`) into `build/generated/blockbench`, so never hand-write or commit the generated JSON/PNGs. Block/item projects use the "Java Block/Item" format, entities "Modded Entity"; entity code extends `client/blockbench/BlockbenchEntityModel` and registers with `BlockbenchModels.registerLayer`. Full workflow and limits: `src/main/blockbench/README.md`. When the user adds a `.bbmodel`, wire up the registration/renderer, add a `runScenes` shot to check it in-game, and keep the importer's checks in step with any new mistake found (unit tests in `buildSrc/src/test`).

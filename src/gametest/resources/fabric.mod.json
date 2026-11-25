@@ -29,7 +29,9 @@
 			"com.frostbound.test.PackHuntingTests",
 			"com.frostbound.test.BlockbenchTests",
 			"com.frostbound.test.NoThirstTests",
-			"com.frostbound.test.WildlifeTests"
+			"com.frostbound.test.WildlifeTests",
+			"com.frostbound.test.HabaneroTests",
+			"com.frostbound.test.GearAddonTests"
 		]
 	},
 	"depends": {

@@ -10,7 +10,10 @@ import com.frostbound.alpha.WolfAction;
 import com.frostbound.alpha.den.WolfDenLayout;
 import com.frostbound.alpha.den.WolfDenPiece;
 import com.frostbound.client.blockbench.BlockbenchModels;
+import com.frostbound.addons.FlameExtract;
+import com.frostbound.addons.GearAddons;
 import com.frostbound.copper.CopperGear;
+import com.frostbound.habanero.Habaneros;
 import com.frostbound.imbuement.FrostTier;
 import com.frostbound.imbuement.FrostTiers;
 import com.frostbound.imbuement.Imbuement;
@@ -366,6 +369,30 @@ public class SceneShots implements ClientModInitializer {
 		}, client -> client.options.setPerspective(Perspective.FIRST_PERSON), "31_campfire_ring_from_above");
 		this.add(30, server -> this.camera(server, 200.5, 3.5, -24.5, 0, 18), client -> { }, "32_campfire_ring_side");
 		this.add(30, server -> this.camera(server, 202.5, 1.6, -6.5, 150, 30), client -> { }, "33_campfire_ring_inside");
+
+		// Habaneros: the crop's four stages on farmland (ages 0, 2, 4 and 7) and wild bushes on stone, grass and snow.
+		this.add(30, server -> {
+			ServerWorld world = server.getOverworld();
+			int[] ages = {0, 2, 4, 7};
+			for (int i = 0; i < ages.length; i++) {
+				BlockPos soil = new BlockPos(230 + i, this.ground, -10);
+				world.setBlockState(soil, Blocks.FARMLAND.getDefaultState());
+				world.setBlockState(soil.up(), ((net.minecraft.block.CropBlock) Habaneros.HABANERO_CROP).withAge(ages[i]));
+			}
+			net.minecraft.block.Block[] grounds = {Blocks.STONE, Blocks.GRASS_BLOCK, Blocks.SNOW_BLOCK};
+			for (int i = 0; i < grounds.length; i++) {
+				BlockPos soil = new BlockPos(230 + i, this.ground, -8);
+				world.setBlockState(soil, grounds[i].getDefaultState());
+				world.setBlockState(soil.up(), Habaneros.WILD_HABANERO.getDefaultState());
+			}
+			this.camera(server, 231.5, 2.2, -13.0, 0, 30);
+		}, client -> client.setScreen(null), "34_habanero_crop_and_wild");
+
+		// Add-on slots under the stats ("[🔥] [ ]"), a spicy dish and the flame extract itself.
+		this.add(20, server -> { }, client -> client.setScreen(new TooltipBoard(3)), "35_tooltip_flame_extract_chestplate");
+		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(4)), "36_tooltip_empty_addon_slots_sword");
+		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(5)), "37_tooltip_spicy_dish");
+		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(6)), "38_tooltip_flame_extract");
 	}
 
 	/** The poses the armour shots show, left to right. */
@@ -421,7 +448,7 @@ public class SceneShots implements ClientModInitializer {
 		}
 	}
 
-	/** A screen that just draws the tooltip of one of a few frosty items. */
+	/** A screen that just draws the tooltip of one of a few items (frosty gear, add-on slots, a spicy dish). */
 	private static final class TooltipBoard extends Screen {
 		private final int which;
 
@@ -439,7 +466,13 @@ public class SceneShots implements ClientModInitializer {
 			FrostTiers.setTier(sword, FrostTier.COLD);
 			ItemStack copper = new ItemStack(CopperGear.COPPER_SWORD);
 			FrostTiers.setTier(copper, FrostTier.ICY);
-			ItemStack[] stacks = {plate, sword, copper};
+			ItemStack lined = GearAddons.withAdded(new ItemStack(Items.IRON_CHESTPLATE), FlameExtract.ADDON);
+			FrostTiers.setTier(lined, FrostTier.FROZEN);
+			ItemStack plain = new ItemStack(Items.IRON_SWORD);
+			ItemStack stew = new ItemStack(net.minecraft.registry.Registries.ITEM.getOrEmpty(Identifier.of("farmersdelight", "beef_stew"))
+					.orElse(Items.RABBIT_STEW));
+			stew.set(Habaneros.SPICY, net.minecraft.util.Unit.INSTANCE);
+			ItemStack[] stacks = {plate, sword, copper, lined, plain, stew, new ItemStack(Habaneros.FLAME_EXTRACT)};
 			context.drawItemTooltip(this.textRenderer, stacks[this.which], 20, 30);
 		}
 	}

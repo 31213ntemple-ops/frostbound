@@ -1,0 +1,36 @@
+{
+	"fabric:load_conditions": [
+		{
+			"condition": "fabric:all_mods_loaded",
+			"values": [
+				"farmersdelight"
+			]
+		}
+	],
+	"type": "farmersdelight:cooking",
+	"container": {
+		"count": 1,
+		"id": "minecraft:glass_bottle"
+	},
+	"cookingtime": 400,
+	"experience": 1.0,
+	"ingredients": [
+		{
+			"item": "minecraft:lava_bucket"
+		},
+		{
+			"tag": "c:crops/habanero"
+		},
+		{
+			"tag": "c:crops/habanero"
+		},
+		{
+			"tag": "c:crops/habanero"
+		}
+	],
+	"recipe_book_tab": "misc",
+	"result": {
+		"count": 1,
+		"id": "frostbound:flame_extract"
+	}
+}

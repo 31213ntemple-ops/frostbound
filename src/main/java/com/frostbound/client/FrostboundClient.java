@@ -1,6 +1,10 @@
 package com.frostbound.client;
 
+import com.frostbound.client.addons.AddonSlotTooltips;
 import com.frostbound.client.alpha.AlphaWolfClient;
+import com.frostbound.habanero.Habaneros;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.client.render.RenderLayer;
 import com.frostbound.client.blockbench.BlockbenchModels;
 import com.frostbound.client.campfire.FireStarterMinigame;
 import com.frostbound.client.campfire.WarmthRing;
@@ -53,6 +57,10 @@ public class FrostboundClient implements ClientModInitializer {
 		// The imbuement table's screen; Cold/Icy/Frozen armour's stars, frost (mixin.imbuement.client) and snowflakes.
 		HandledScreens.register(Imbuement.SCREEN_HANDLER, ImbuementScreen::new);
 		FrostStars.init();
+		// Add-on slots ("[🔥] [ ]") under the stats; after FrostStars so they follow the durability line.
+		AddonSlotTooltips.init();
+		// The habanero crop and wild bush are cut out of their textures.
+		BlockRenderLayerMap.INSTANCE.putBlocks(RenderLayer.getCutout(), Habaneros.HABANERO_CROP, Habaneros.WILD_HABANERO);
 		FrostParticles.init();
 		FrostRenderLayers.init();
 

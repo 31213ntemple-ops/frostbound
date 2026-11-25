@@ -124,5 +124,21 @@
 	"frostbound.pack_instinct.full": "Pack Instinct: Regeneration and Strength",
 	"frostbound.mark_of_the_pack.resting": "The pack is resting (%ss)",
 	"key.categories.frostbound": "Frostbound",
-	"key.frostbound.mark_of_the_pack": "Mark of the Pack"
+	"key.frostbound.mark_of_the_pack": "Mark of the Pack",
+	"block.frostbound.wild_habanero": "Wild Habanero",
+	"block.frostbound.habaneros": "Habaneros",
+	"item.frostbound.habanero": "Habanero",
+	"item.frostbound.habanero_seeds": "Habanero Seeds",
+	"item.frostbound.hot_sauce": "Hot Sauce",
+	"item.frostbound.hot_sauce.tooltip.1": "Craft with a savory dish",
+	"item.frostbound.hot_sauce.tooltip.2": "to make it spicy",
+	"item.frostbound.flame_extract": "Flame Extract",
+	"item.frostbound.flame_extract.tooltip.1": "Armour add-on (Imbuement Table):",
+	"item.frostbound.flame_extract.tooltip.2": "%s%% insulation each, %s for full",
+	"effect.frostbound.spicy": "Spicy",
+	"addon.frostbound.flame_extract": "Flame Extract",
+	"passive.frostbound.spicy": "Spicy",
+	"passive.frostbound.spicy.desc": "Warms you up for %s minutes once eaten.",
+	"passive.frostbound.flame_lined": "Flame Lined",
+	"passive.frostbound.flame_lined.desc": "%s%% insulation: slows freezing. At 100%% across your armour you can't freeze and stay a step warmer."
 }

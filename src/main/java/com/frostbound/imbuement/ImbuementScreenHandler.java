@@ -1,5 +1,6 @@
 package com.frostbound.imbuement;
 
+import com.frostbound.addons.GearAddons;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -23,7 +24,9 @@ import java.util.List;
 /**
  * The imbuement table's menu: a 3×3 grid whose centre slot only takes armour and weapons, and a result
  * slot. It upgrades them to Cold, Icy and Frozen ({@link FrostTiers#STEPS}); taking the result uses up the
- * piece and the step's count from each outer slot. The grid is emptied back to the player on close.
+ * piece and the step's count from each outer slot. It also puts add-ons into the gear's add-on slots
+ * ({@link GearAddons}): the gear in the centre and one add-on item in any outer slot, the rest empty. The grid is
+ * emptied back to the player on close.
  *
  * Slots: 0 result, 1–9 grid (row by row, 5 is the centre), 10–36 inventory, 37–45 hotbar.
  */
@@ -94,9 +97,24 @@ public class ImbuementScreenHandler extends ScreenHandler {
 	public void onContentChanged(Inventory inventory) {
 		// Server only (the client's context is empty); the result slot syncs to the client like any slot.
 		context.run((world, pos) -> {
-			result.setStack(0, FrostTiers.upgrade(grid.getStack(CENTER), ring()));
+			result.setStack(0, craft(grid.getStack(CENTER), ring()));
 			sendContentUpdates();
 		});
+	}
+
+	/** What the centre and ring make: the next frost tier, or else the gear with an add-on added, or EMPTY. */
+	public static ItemStack craft(ItemStack center, List<ItemStack> ring) {
+		ItemStack upgraded = FrostTiers.upgrade(center, ring);
+		if (!upgraded.isEmpty()) {
+			return upgraded;
+		}
+		GearAddons.Match match = GearAddons.match(center, ring);
+		return match == null ? ItemStack.EMPTY : GearAddons.withAdded(center, match.addon());
+	}
+
+	/** The grid index (0–8) of outer slot {@code ringIndex} (0–7, grid order skipping the centre). */
+	public static int gridIndex(int ringIndex) {
+		return ringIndex < CENTER ? ringIndex : ringIndex + 1;
 	}
 
 	@Override
@@ -193,6 +211,7 @@ public class ImbuementScreenHandler extends ScreenHandler {
 		@Override
 		public void onTakeItem(PlayerEntity player, ItemStack stack) {
 			FrostTiers.Step step = FrostTiers.match(grid.getStack(CENTER), ring());
+			GearAddons.Match addon = step == null ? GearAddons.match(grid.getStack(CENTER), ring()) : null;
 			if (step != null) {
 				for (int i = 0; i < 9; i++) {
 					grid.removeStack(i, i == CENTER ? 1 : step.count());
@@ -204,6 +223,28 @@ public class ImbuementScreenHandler extends ScreenHandler {
 						// A puff of frost over the table, bigger for each tier.
 						server.spawnParticles(ParticleTypes.SNOWFLAKE, pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5,
 								10 * step.to().level(), 0.35, 0.25, 0.35, 0.03);
+					}
+				});
+			} else if (addon != null) {
+				// The add-on item is used up; its container (flame extract's bottle) is left in its slot, or handed over.
+				int slot = gridIndex(addon.ringIndex());
+				ItemStack used = grid.getStack(slot);
+				ItemStack remainder = used.getItem().getRecipeRemainder(used);
+				grid.removeStack(CENTER, 1);
+				grid.removeStack(slot, 1);
+				if (!remainder.isEmpty()) {
+					if (grid.getStack(slot).isEmpty()) {
+						grid.setStack(slot, remainder);
+					} else if (!player.getInventory().insertStack(remainder)) {
+						player.dropItem(remainder, false);
+					}
+				}
+				context.run((world, pos) -> {
+					world.playSound(null, pos, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.BLOCKS, 0.6f, 1.2f);
+					world.playSound(null, pos, SoundEvents.BLOCK_SMITHING_TABLE_USE, SoundCategory.BLOCKS, 0.8f, 1.0f);
+					if (world instanceof ServerWorld server) {
+						server.spawnParticles(ParticleTypes.FLAME, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5,
+								12, 0.3, 0.15, 0.3, 0.02);
 					}
 				});
 			}

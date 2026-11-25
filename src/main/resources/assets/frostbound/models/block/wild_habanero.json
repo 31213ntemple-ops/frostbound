@@ -1,0 +1,6 @@
+{
+	"parent": "minecraft:block/cross",
+	"textures": {
+		"cross": "frostbound:block/wild_habanero"
+	}
+}

@@ -5,6 +5,7 @@
 	"plugin": "com.frostbound.mixin.FrostboundMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"addons.InsulationMixin",
 		"campfire.TemperatureHelperImplMixin",
 		"environment.BiomeMixin",
 		"environment.BlockMixin",
@@ -16,6 +17,7 @@
 		"environment.PrepareRamTaskMixin",
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",
+		"habanero.LivingEntityEatMixin",
 		"imbuement.FrostBonusDamageMixin",
 		"imbuement.ItemStackMixin",
 		"mobs.LivingEntityMixin",

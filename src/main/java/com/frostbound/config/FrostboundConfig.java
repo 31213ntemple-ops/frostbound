@@ -122,6 +122,28 @@ public final class FrostboundConfig {
 		public double radius = 1.5;
 	}
 
+	/** Habanero peppers, their hot sauce and the Spicy effect. */
+	public HabaneroOptions habanero = new HabaneroOptions();
+
+	public static final class HabaneroOptions {
+		/**
+		 * Wild habaneros grow in biomes whose winter temperature (environment/WinterClimate) is at or below this, in °C:
+		 * the arctic and boreal biomes such as stony peaks (-18) and taigas (-15), not forests (-9). Never in the biome
+		 * tag frostbound:no_wild_habaneros (ice spikes). Needs a restart and only affects new chunks.
+		 */
+		public double wildMaxCelsius = -13.0;
+		/** How long a spicy dish warms you, in seconds. */
+		public int spicySeconds = 120;
+	}
+
+	/** Insulation from flame extract, the armour add-on. */
+	public InsulationOptions insulation = new InsulationOptions();
+
+	public static final class InsulationOptions {
+		/** Flame extracts on worn armour for full insulation (two on one piece count as two). */
+		public int flameExtractsForFull = 4;
+	}
+
 	/** Cold, Icy and Frozen armour and weapons from the imbuement table: the stat boosts of each tier. */
 	public FrostTierOptions frostTiers = new FrostTierOptions();
 
@@ -397,6 +419,12 @@ public final class FrostboundConfig {
 				}
 				if (config.conductivity == null) {
 					config.conductivity = new ConductivityOptions();
+				}
+				if (config.habanero == null) {
+					config.habanero = new HabaneroOptions();
+				}
+				if (config.insulation == null) {
+					config.insulation = new InsulationOptions();
 				}
 				if (config.frostTiers == null) {
 					config.frostTiers = new FrostTierOptions();

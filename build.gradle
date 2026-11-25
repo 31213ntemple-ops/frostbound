@@ -115,6 +115,8 @@ dependencies {
 	// Tough As Nails (and GlitchCore), for testing the No Thirst module.
 	devMods "maven.modrinth:tough-as-nails:${project.toughasnails_version}"
 	devMods "maven.modrinth:glitchcore:${project.glitchcore_version}"
+	// Farmer's Delight Refabricated: its cooking pot makes hot sauce and flame extract (habanero peppers).
+	devMods "maven.modrinth:farmers-delight-refabricated:${project.farmersdelight_version}"
 }
 
 // Other mods to play-test with in dev. They were built with a newer Loom than this project

@@ -1,0 +1,75 @@
+{
+	"values": [
+		"minecraft:cooked_beef",
+		"minecraft:cooked_porkchop",
+		"minecraft:cooked_mutton",
+		"minecraft:cooked_chicken",
+		"minecraft:cooked_rabbit",
+		"minecraft:cooked_cod",
+		"minecraft:cooked_salmon",
+		"minecraft:baked_potato",
+		"minecraft:mushroom_stew",
+		"minecraft:rabbit_stew",
+		"minecraft:beetroot_soup",
+		{
+			"id": "#farmersdelight:meals",
+			"required": false
+		},
+		{
+			"id": "#c:foods/cooked_meat",
+			"required": false
+		},
+		{
+			"id": "#c:foods/cooked_fish",
+			"required": false
+		},
+		{
+			"id": "#c:foods/soup",
+			"required": false
+		},
+		{
+			"id": "#c:foods/cooked_egg",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:barbecue_stick",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:egg_sandwich",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:chicken_sandwich",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:hamburger",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:bacon_sandwich",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:mutton_wrap",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:dumplings",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:stuffed_potato",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:cabbage_rolls",
+			"required": false
+		},
+		{
+			"id": "farmersdelight:smoked_ham",
+			"required": false
+		}
+	]
+}
