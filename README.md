@@ -4,12 +4,13 @@ A collection of winter features, built as one mod split into **modules**. Each m
 
 ```json
 {
-  "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true },
+  "modules": { "environment": true, "frozenMobs": true, "ice": true, "christmas": true, "noThirst": true },
   "environment": { "coldBiomesOnly": true },
   "christmas": { "presents": { "frozenMobsWeight": 30, "giftWeight": 35, "coalWeight": 20, "explodeWeight": 15, "...": "see Christmas" } },
   "iceBalls": { "damage": 3.0, "weakToIceMultiplier": 2.0, "slownessSeconds": 4, "slownessLevel": 2, "freezeWaterRadius": 2, "cooldownTicks": 10 },
   "conductivity": { "chance": 0.05, "damageMultiplier": 1.5, "radius": 1.5 },
-  "frostTiers": { "coldArmor": 0.5, "frozenArmor": 0.5, "frozenToughness": 0.5, "coldDurability": 0.25, "icyDurability": 0.15 },
+  "frostTiers": { "coldArmor": 0.5, "frozenArmor": 0.5, "frozenToughness": 0.5, "coldDurability": 0.25, "icyDurability": 0.15,
+                  "coldAttackDamage": 0.5, "frozenAttackDamage": 0.5 },
   "frostBonuses": { "snowstride": { "icy": 0.04, "frozen": 0.08 }, "...": "see Imbuement Table" },
   "alphaWolf": { "health": 80.0, "initialPackSize": 7, "maxPackSize": 9, "...": "see Alpha Wolf" },
   "packInstinct": { "belowHealth": 8.0, "cooldownSeconds": 60.0, "...": "see Alpha Wolf" },
@@ -24,10 +25,13 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `ice` | Ice drops when mined with a pickaxe better than stone (iron or up, plus the copper pickaxe; tag `frostbound:ice_mining_tools`), no Silk Touch needed, and it no longer melts to water, packed and blue ice can't be crafted, blue ice doesn't generate, new ice textures |
 | `frozenMobs` | Some hostile mobs spawn Frozen: tougher, slower, icy |
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
+| `noThirst` | With Tough As Nails: its thirst is switched off and its thirst items are removed, so only temperature is left (see [No Thirst](#no-thirst-tough-as-nails)) |
 
 Items like the **Ice Ball**, **copper gear**, the **Imbuement Table** and the **Alpha Wolf** and its drops aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` in the config only set their balance.
 
 **Required mods:** Fabric API and **Trinkets** (3.10+, which brings Cardinal Components API with it). Trinkets gives players the necklace slot the Mark of the Pack is worn in.
+
+**Meant to be played with:** **Tough As Nails** (for temperature; Frostbound turns its thirst off, see the `noThirst` module).
 
 ## Hearts and vessels
 
@@ -100,6 +104,17 @@ Roughly what a new world looks like (sampled over 40 km, vanilla terrain): taiga
 - Every biome's vanilla temperature is `0.15 + °C / 40`, so mods that read vanilla temperature get the same winter values.
 - For code: `FrostboundClimate.getCelsius(biome)` and `FrostboundClimate.isArctic(biome)`.
 - In Tough As Nails, being *cold* does no harm; only *icy* freezes you. Night, snowfall, being wet and high altitude each push you one step colder. Caves (below Y=50) always count as neutral.
+
+## No Thirst (Tough As Nails)
+
+Frostbound is played with Tough As Nails for its temperature, but not its thirst. With TAN installed and the `noThirst` module on (the default):
+
+- **Thirst is off:** no thirst bar, no drinking from water, no thirst effects or slower healing. It's forced off whatever `config/toughasnails/thirst.toml` says (that file still reads `enable_thirst = true`; ignore it). Works on servers too: TAN syncs its config to players and the switch applies on both sides.
+- **Thirst items are gone:** every canteen (leather, copper, iron, gold, diamond, netherite; empty, water, dirty and purified), the dirty and purified water bottles, the seven juices, the **Water Purifier** and the **Rain Collector**. They can't be crafted or purified (any recipe that makes one is dropped, data packs' too, and so is every water purifier recipe), they're out of the creative tabs, and the wandering trader never offers juice (it picks another trade instead).
+- **Water Cleansing** (an enchantment that only goes on canteens) is taken out of the loot and trade tags, so its books stop turning up, and its book is out of the creative tabs.
+- **Kept:** all of TAN's temperature content: thermometer, temperature gauge, thermoregulator, wool and leaf armour, ice cream, Charc-Os, Thermal Tuning, the climatologist and its houses.
+- **Existing worlds:** the items stay registered (another mod's items can't be unregistered), so any already in a chest or inventory stay there (with thirst off they do nothing for you). No new ones can be made or found.
+- Without Tough As Nails the module does nothing. Set `"noThirst": false` to get TAN's thirst back.
 
 ## Christmas
 
@@ -185,12 +200,12 @@ Copper tools and armour from Minecraft 1.21.9 ("The Copper Age"), brought back t
 |---|---|---|
 | Copper Sword | 5 damage, 1.6 speed, 190 durability | like any sword, with copper ingots |
 | Copper Axe | 9 damage, 0.8 speed | like any axe |
-| Copper Pickaxe, Shovel, Hoe | mine like stone (iron ore yes, diamond/gold/redstone no), dig speed 5 | like any tool |
+| Copper Pickaxe, Shovel, Hoe | mine what stone mines **plus iron ore** (diamond/gold/redstone no), dig speed 5 | like any tool |
 | Copper Helmet / Chestplate / Leggings / Boots | 2 / 4 / 3 / 1 armour, durability 121 / 176 / 165 / 143 | like any armour |
 | Copper Horse Armor | 4 armour | not craftable: found in dungeons, desert and jungle temples, nether fortresses, strongholds, end cities and village weaponsmiths (as often as iron horse armour) |
 | Copper Nugget | | 1 ingot ↔ 9 nuggets; smelting or blasting copper gear gives a nugget |
 
-Copper sits between stone and iron: it mines what stone mines but lasts longer (190 vs 131) and digs faster. Tools are repaired with copper ingots (tag `frostbound:copper_tool_materials`), armour can be enchanted and trimmed, and the copper pickaxe also mines ice when the ice module is on.
+Copper sits between stone and iron, and **iron needs it**: stone (and wooden and golden) pickaxes can't mine iron ore, deepslate iron ore or raw iron blocks any more (they break them slowly and get nothing), so the early game goes wood → stone → copper → iron. The blocks are in the tag `frostbound:needs_copper_tool` (which also takes any modded ore in `c:ores/iron`), added to `minecraft:incorrect_for_stone_tool`. Copper lasts longer than stone (190 vs 131) and digs faster. Tools are repaired with copper ingots (tag `frostbound:copper_tool_materials`), armour can be enchanted and trimmed, and the copper pickaxe also mines ice when the ice module is on.
 
 ### Conductivity
 
@@ -211,15 +226,25 @@ Try it: `/give @s frostbound:copper_sword`, then `/summon pig` a few times close
 
 `frostbound:imbuement_table` (Functional Blocks tab, next to the smithing table): a smithing table that's been frozen over, with a snow cap and icicles, its wood turned a frozen navy, its tools turned to ice, and an ice grid set into the top with a darker centre. **Recipe:** a smithing table in the middle, ice on its four sides, iron ingots in the corners; it unlocks once you pick up ice. Mined with an axe.
 
-Right-click it for a 3×3 grid like a crafting table's, with a result slot. The **centre slot only takes armour** (helmets, chestplates, leggings, boots, turtle shells, modded armour; not horse armour or elytra): it's darker and set apart from the eight outer slots by a small gap. Shift-click puts armour in the centre and anything else around it. Whatever's left in the grid comes back to you when you close it. Taking the result uses up the armour and the items around it.
+Right-click it for a 3×3 grid like a crafting table's, with a result slot. The **centre slot takes armour and weapons** (helmets, chestplates, leggings, boots, turtle shells, modded armour; swords, axes, the mace and the trident; not horse armour, elytra, tools or bows): it's darker and set apart from the eight outer slots by a small gap. Shift-click puts armour or a weapon in the centre and anything else around it. Whatever's left in the grid comes back to you when you close it. Taking the result uses up the piece and the items around it.
 
-### Cold, Icy and Frozen armour
+### The menu
 
-| Tier | Put around the armour | Gets | Name |
-|---|---|---|---|
-| **Cold** | 1 ice in each of the 8 slots | +0.5 armour, +25% durability | <span style="color:#CDE7F2">Cold</span> Iron Chestplate <span style="color:#CDE7F2">★</span> |
-| **Icy** (from Cold) | 4 packed ice in each slot (32) | +15% more durability (+40% in all) and its material's bonus | <span style="color:#A3C9DE">Icy</span> Iron Chestplate <span style="color:#CDE7F2">★</span><span style="color:#A3C9DE">★</span> |
-| **Frozen** (from Icy) | 1 blue ice in each slot | +0.5 more armour (+1 in all), +0.5 toughness, the stronger bonus | <span style="color:#7FA7C6">Frozen</span> Iron Chestplate <span style="color:#CDE7F2">★</span><span style="color:#A3C9DE">★</span><span style="color:#7FA7C6">★</span> |
+The screen is the table frozen over: a frosty panel with a snow cap and icicles, and a dark ice recess where snow drifts down behind the slots.
+
+- **Working:** when the ring around the piece makes an upgrade, the eight outer slots light up in the new tier's colour, a wave of light running clockwise round them. The centre glows, the arrow fills with ice, and the tier it makes ("Icy ★★") shows over the result.
+- **Imbuing:** taking the result throws a burst of frost out of the result box, and the ring flashes.
+- **The tier ladder** along the bottom of the recess shows the path Cold → Icy → Frozen, each tier with its ring item (and how many per slot) and its stars. With a piece in the centre, the tiers it already has are ticked, the next one glows and the ones after are frosted over. Hover a tier to see what goes around the piece and what it gives armour and weapons (with the config's numbers), and whether this piece is ready for it.
+
+The panel is painted by `tools/ImbuementGuiTexture.java` (`java tools/ImbuementGuiTexture.java`); edit and re-run it rather than editing the PNG. The animation is in `client/imbuement/ImbuementScreen`.
+
+### Cold, Icy and Frozen gear
+
+| Tier | Put around the piece | Armour gets | Weapons get | Name |
+|---|---|---|---|---|
+| **Cold** | 1 ice in each of the 8 slots | +0.5 armour, +25% durability | +0.5 attack damage, +25% durability | <span style="color:#CDE7F2">Cold</span> Iron Chestplate <span style="color:#CDE7F2">★</span> |
+| **Icy** (from Cold) | 4 packed ice in each slot (32) | +15% more durability (+40% in all) and its material's bonus | +15% more durability and Frostbite | <span style="color:#A3C9DE">Icy</span> Iron Chestplate <span style="color:#CDE7F2">★</span><span style="color:#A3C9DE">★</span> |
+| **Frozen** (from Icy) | 1 blue ice in each slot | +0.5 more armour (+1 in all), +0.5 toughness, the stronger bonus | +0.5 more attack damage (+1 in all), the stronger Frostbite | <span style="color:#7FA7C6">Frozen</span> Iron Chestplate <span style="color:#CDE7F2">★</span><span style="color:#A3C9DE">★</span><span style="color:#7FA7C6">★</span> |
 
 **How it looks:** frosty gear shows it, in the inventory, in your hand, on the ground and worn. A still frost pattern is laid over the item and the worn armour (drawn the way the enchantment glint is, so it sits only on the item and works alongside enchantments and trims), and it glistens slowly:
 
@@ -229,13 +254,13 @@ Right-click it for a 3×3 grid like a crafting table's, with a result slot. The 
 
 (The frost textures are `textures/misc/frost_{cold,icy,frozen}.png`; the colours and glisten are in `client/imbuement/FrostRenderLayers`.)
 
-In the tooltip the tier's name comes before the item's ("Frozen Iron Chestplate") in that tier's colour, and the stars after it, each a soft blue a little deeper than the one before (`FrostTier.starColor`; names in `frostbound.frost_tier.*` in the lang file). Armour and toughness are added to the piece's own line ("+2.5 Armor"). The tier is stored on the item (`frostbound:frost_tier`, 1–3) and the stats are worked out from the config whenever they're needed, so they follow config changes and carry over when you smith a diamond piece into netherite. Enchanting, trims, repairs and the anvil all keep it.
+In the tooltip the tier's name comes before the item's ("Frozen Iron Chestplate") in that tier's colour, and the stars after it, each a soft blue a little deeper than the one before (`FrostTier.starColor`; names in `frostbound.frost_tier.*` in the lang file). **Every bonus shows as a little (+x) in the tier's colour after vanilla's number**, so you can see what the frost added: "+8 Armor (+1)", "+2 Armor Toughness (+0.5)", " 6 Attack Damage (+0.5)". Vanilla's number stays the item's own; the piece really gives both (a player in that Frozen chestplate has 9 armour). Frosty gear also always shows its durability, with the extra from frost: "Durability: 739 / 739 (+211)" (vanilla only shows durability with advanced tooltips, on a damaged item; with them on, the (+x) goes on that line). The tier is stored on the item (`frostbound:frost_tier`, 1–3) and the stats are worked out from the config whenever they're needed, so they follow config changes and carry over when you smith a diamond piece into netherite. Enchanting, trims, repairs and the anvil all keep it.
 
 **Blue ice:** with the `ice` module on, blue ice doesn't generate and can't be crafted, so Frozen needs blue ice from somewhere else (a wandering trader, another mod, or with the module off).
 
 ### Material bonuses (Icy and Frozen)
 
-Each armour material gets one bonus, shown as a passive at the top of the tooltip, its name coloured after what it does: white Snowstride (snow), yellow Superconductor (electricity), blue Frostmail (protection), red Cold Iron (damage), pink Hearthgold (healing, like Regeneration), aqua Diamond Dust (frost), orange Quenched (fire, like Fire Resistance), dark aqua Tidefrost (water, like Water Breathing). Every bonus is **per piece worn and adds up**, and a Frozen piece counts the Frozen number, so a mixed set still works. The weaker materials get the more useful bonuses, so every set is worth imbuing:
+Each armour material gets one bonus, and every weapon gets Frostbite, shown as a passive at the top of the tooltip (a copper sword lists Conductivity first), its name coloured after what it does: white Snowstride (snow), yellow Superconductor (electricity), blue Frostmail (protection), red Cold Iron (damage), pink Hearthgold (healing, like Regeneration), aqua Diamond Dust and Frostbite (frost), orange Quenched (fire, like Fire Resistance), dark aqua Tidefrost (water, like Water Breathing). Every bonus is **per piece worn and adds up**, and a Frozen piece counts the Frozen number, so a mixed set still works. The weaker materials get the more useful bonuses, so every set is worth imbuing:
 
 | Material | Bonus | Icy / Frozen, per piece | Full set Icy / Frozen |
 |---|---|---|---|
@@ -247,10 +272,11 @@ Each armour material gets one bonus, shown as a passive at the top of the toolti
 | Diamond | **Diamond Dust**: melee attackers take part of the damage back as frost ("was frozen solid trying to hurt") | 5% / 10% | 20% / 40% |
 | Netherite | **Quenched**: less fire and lava damage | −6% / −12% | −24% / −48% |
 | Turtle shell | **Tidefrost**: the helmet's Water Breathing lasts longer | +10 s / +20 s | (helmet only) |
+| Weapons | **Frostbite**: a melee hit chills the target, giving it Slowness I | 2 s / 4 s | (the weapon in your main hand) |
 
-- **Balance:** `frostTiers` (armour, toughness and durability per tier) and `frostBonuses` (each bonus as `{ "icy": ..., "frozen": ... }`; Hearthgold and Tidefrost are in seconds) in `config/frostbound.json`. The tooltips follow the config.
-- **Which items have which bonus:** item tags `frostbound:snowstride`, `superconductor`, `frostmail`, `cold_iron`, `hearthgold`, `diamond_dust`, `quenched`, `tidefrost`. A data pack can give modded armour a bonus; any armour can be imbued for the stats.
-- Code: `com.frostbound.imbuement` (`FrostTiers` the tiers and recipes, `FrostBonuses` the bonuses, `ImbuementScreenHandler` the menu), `mixin/imbuement` (stats and damage), `client/imbuement` (screen, stars, frost layers, snowflakes), `mixin/imbuement/client` (frost on items and worn armour).
+- **Balance:** `frostTiers` (armour, toughness, attack damage and durability per tier) and `frostBonuses` (each bonus as `{ "icy": ..., "frozen": ... }`; Hearthgold and Tidefrost are in seconds) in `config/frostbound.json`. The tooltips follow the config.
+- **Which items have which bonus:** item tags `frostbound:snowstride`, `superconductor`, `frostmail`, `cold_iron`, `hearthgold`, `diamond_dust`, `quenched`, `tidefrost`, `frostbite`. A data pack can give modded armour a bonus; any armour can be imbued for the stats. **Which weapons can be imbued:** `frostbound:imbuable_weapons` (swords, axes, the mace, the trident).
+- Code: `com.frostbound.imbuement` (`FrostTiers` the tiers, recipes and stats, `FrostBonuses` the bonuses, `ImbuementTableBlock` the block, `ImbuementScreenHandler` the menu), `mixin/imbuement` (stats, the (+x) on attribute lines, damage), `client/imbuement` (the animated screen, stars and the durability line, frost layers, snowflakes), `mixin/imbuement/client` (frost on items and worn armour).
 
 Try it: `/give @s frostbound:imbuement_table`, `/give @s minecraft:iron_chestplate`, `/give @s minecraft:ice 8`, `/give @s minecraft:packed_ice 32`, `/give @s minecraft:blue_ice 8`. Or straight to a tier: `/give @s minecraft:leather_boots[frostbound:frost_tier=3]`.
 
@@ -431,10 +457,18 @@ They live in `src/gametest/java/com/frostbound/test/`:
 - `SnowyPlantTests`: which plants get the snowy state; snowfall and world generation make plants snowy (including tall plants' bottom half) and turn the grass under them snowy.
 - `ChristmasTests`: the structure only loads with DecorationX; every tree style has the tree, the snow floor and five gift presents; the templates place (directly and through `/place structure`, landing on the surface); gifts are one decent stack (never coal); snow can't settle on the tree, presents or lanterns but still lands on the floor; each present outcome works (gift, one coal, 1–3 Frozen mobs, explosion after the fuse) and the chances match the config. A chest with the present loot table stands in for the Supplementaries present, which can't run in dev.
 - `FrozenMobTests`: Frozen stats, damage, frostbite, fire weakness, NBT saving, ice drops, spawn tag.
-- `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
-- `ImbuementTests`: the table's recipe (smithing table, ice on the sides, iron in the corners) and block; each upgrade step needs its exact ring (8 ice, then 8 × 4 packed ice, then 8 blue ice) and only works on armour of the tier before; Cold/Icy/Frozen armour, toughness and durability (worn and after smithing into netherite); the menu's centre slot only takes armour, taking the result uses up 4 packed ice per slot and closing hands the rest back; the title ("Frozen Leather Tunic ★★★", the tier name in its star's colour), the stars (soft blues, each darker) and the bonus tooltips (none below Icy, Frozen numbers when Frozen, one bonus per material, each coloured after what it does); Cold Iron, Frostmail, Quenched, Diamond Dust, Superconductor, Snowstride, Hearthgold and Tidefrost each do what they say.
+- `CopperTests`: copper tool and armour stats match 1.21.9; the pickaxe harvests like stone plus iron; wooden, stone and golden pickaxes can't harvest iron ore, deepslate iron ore or raw iron blocks, and stone still harvests copper, coal and lapis; recipes (tools, armour, nuggets, smelting to nuggets) work; copper horse armour turns up in dungeon chests; a Conductivity arc hits a nearby mob for 150% but not a far one; the chain runs down a whole line of mobs when every roll passes (each shocked once, for 150% of the hit) and stops after the first link when they fail, the attacker, its wolf or other players; nothing arcs at 0% or from a non-copper weapon; the tooltip text and colours.
+- `ImbuementTests`: the table's recipe (smithing table, ice on the sides, iron in the corners) and block; each upgrade step needs its exact ring (8 ice, then 8 × 4 packed ice, then 8 blue ice) and only works on gear of the tier before; weapons can be imbued (not tools or bows) for attack damage and durability, held in the main hand, and get Frostbite from Icy, which slows what they hit in melee for the Icy or Frozen time; the tooltip shows "+8 Armor (+1)", "+2 Armor Toughness (+0.5)" and " 6 Attack Damage (+0.5)" with the (+x) in the tier's colour, and the durability line with its (+x), added or appended; Cold/Icy/Frozen armour, toughness and durability (worn and after smithing into netherite); the menu's centre slot only takes armour, taking the result uses up 4 packed ice per slot and closing hands the rest back; the title ("Frozen Leather Tunic ★★★", the tier name in its star's colour), the stars (soft blues, each darker) and the bonus tooltips (none below Icy, Frozen numbers when Frozen, one bonus per material, each coloured after what it does); Cold Iron, Frostmail, Quenched, Diamond Dust, Superconductor, Snowstride, Hearthgold and Tidefrost each do what they say.
 - `AlphaWolfTests`: the Alpha's stats and size, untameable wolves; a new Alpha brings 7 (black Alpha, no black wolves); Call of the Pack heals 0.25 hearts per wolf alive and brings 2, never past 9 or the reinforcement budget; a big enough hit cuts the howl off; never more than 2 wolves lunging at once in a real fight; Enrage is Strength I for 1 s, refreshed not stacked; the Alpha's death scatters the pack and they vanish; Draining Bite takes 2 max hearts for 10 s, doesn't stack or extend, comes back when it ends, and only from a landed pack bite; drops (5–7 hides, ~10% Mark, ~10% tooth); Alpha Hide stats, insulation tags and recipes; Pack Instinct (2 vs 4 pieces, rests after triggering); the Life Steal recipes (cardinals only, I → II) and healing (melee and ranged the same, overkill capped, no heal from arcs or plain weapons); the Mark of the Pack in the necklace slot calls 2 wolves, recharges, and the wolves vanish; the tooltips.
 - `WolfDenTests`: den layouts (24 seeds) are fair arenas (a spot for every wolf with floor under it, the Alpha on the dais with nothing over it, at least 3 tall pillars, a wall with gaps, lanterns, a chest); a built den holds a sleeping Alpha and 6 wolves that know their den and never despawn; walking through wakes nobody, one hit wakes the Alpha first and then the whole pack, which goes for the attacker; a woken pack chases you out past its den, and picks you back up if it loses you and you come back into sight; with the attacker gone they walk home and lie back down; the Pounce hits a target who stays in the ring and misses one who steps out once it stops; a Bloodied Alpha roars before its first Charge, runs into a wall and is stunned, taking 1.5x damage; the pack doesn't bite during the Alpha's Pounce and howls with it.
+- `BlockbenchTests`: the importer's output for the fixtures in `src/gametest/blockbench`, checked against values worked out by hand from Blockbench's own exporters:
+  - **Block (Blockbench 5 file):** textures embedded or vanilla, the particle, UVs scaled to 0–16, inflate, shade, rotation with rescale, cullface, tint, display slots, the default blockstate and item model.
+  - **Item (Blockbench 4 file):** inline groups, faces pointing at textures by index.
+  - **Entity:** bones, pivots (Y flipped, +24 at the root), negated rotations, rotated cubes split into `_r1` parts, cube corners, box UV and mirror, the same bones from a Blockbench 4 copy.
+  - **Animations:** Blockbench 5's flipped axes (and not for 4), step and before/after keyframes, catmull-rom, arithmetic in values, looping.
+  - Turning them into model parts and animations needs client classes, so `runScenes` checks that (`dev/BlockbenchClientCheck`).
+  - The importer's error messages are unit tests in `buildSrc/src/test`, run by any build that changes the importer (`./gradlew -p buildSrc test` on their own).
+- `NoThirstTests` (with Tough As Nails, which runs in dev): TAN's thirst is off and stays off after its config reloads; every removed item is a real TAN item and nothing makes one (no water purifier recipes either), while the temperature items keep their recipes; no creative tab or search lists them or a Water Cleansing book; Water Cleansing is out of the loot and trade tags but Thermal Tuning stays; TAN does give the wandering trader juice trades, yet 40 traders never offer one and none is short of trades.
 - `IceBallTests`: real throws (a ball dropped onto the target): damage, Slowness and frost; double damage to blazes; Frozen mobs aren't slowed; burning targets go out; water freezes into a frosted-ice disc; fire and campfires go out; dispensers shoot them; the recipe and tag load.
 
 A failing check fails the build with a clear message. To add a test, copy a method, rename it and change the body. The snow-in-plants tests skip themselves when Snow! Real Magic is installed. Results are also written to `build/gametest/junit.xml`. The test server's own config is at `build/gametest/config/frostbound.json`.
@@ -481,6 +515,8 @@ Test natural spawning:
 
 ## Tweaking
 
+- **Models (Blockbench):** blocks, items and entities are modelled in [Blockbench](https://www.blockbench.net/) and saved as `.bbmodel` in `src/main/blockbench/{block,item,entity}/`. The build imports them on its own (models, textures, blockstates, entity geometry and animations), with no export step. See [`src/main/blockbench/README.md`](src/main/blockbench/README.md) for the workflow and the Java side (`BlockbenchEntityModel`, `BlockbenchModels.registerLayer`).
+- **Imbuement table screen:** edit `tools/ImbuementGuiTexture.java` (layout constants at the top must match `ImbuementScreenHandler` and `ImbuementScreen`), run `java tools/ImbuementGuiTexture.java`, then `runScenes` (the menu empty, mid-glow and with the ladder, and frosty tooltips).
 - **Alpha Wolf art:** edit `tools/AlphaWolfTextures.java` (the icons are pixel grids, one character per pixel; the armour layers are painted in code) and run `java tools/AlphaWolfTextures.java ~/.gradle/caches/fabric-loom/1.21.1/minecraft-client.jar` from the project root. Then `.\gradlew.bat runScenes` and look in `build/scenes/screenshots/` (the den by day and night, every pose, the Alpha, the armour and the necklace).
 
 - **Christmas tree layout:** edit `ChristmasStructureBuilder` in `src/gametest` and run `./gradlew runGametest -PbuildStructures`. It rebuilds the four `.nbt` templates in `resourcepacks/christmas/data/frostbound/structure/christmas_tree/` (run the tests again afterwards so they see the new files). Or design one by hand in the dev client with a structure block, and save it over one of those files. **How rare:** `spacing`/`separation` in `worldgen/structure_set/christmas_trees.json`. **Where:** the tag `frostbound:has_structure/christmas_tree`. **Gifts:** `loot_table/chests/christmas_present.json`. **Present outcomes:** `christmas.presents` in the config, code in `christmas/ChristmasPresents.java`.
@@ -500,6 +536,8 @@ Test natural spawning:
 com.frostbound
 ├── Frostbound              entrypoint; starts the enabled modules
 ├── config/FrostboundConfig config/frostbound.json
+├── client/blockbench/      entity models made in Blockbench: BlockbenchModels (layers, animations, texture),
+│                           BlockbenchEntityModel, BlockbenchEntityRenderer (see src/main/blockbench/README.md)
 ├── environment/            winter environment module
 │   ├── WinterClimate             the climate table (single source of truth)
 │   ├── WinterBiomePool           which biomes new terrain uses (cold only + Sparse Forest)
@@ -514,7 +552,8 @@ com.frostbound
 ├── copper/                 copper gear backported from 1.21.9: CopperGear (materials, items, creative tabs),
 │                           Conductivity (the copper passive)
 ├── imbuement/              the imbuement table: Imbuement (registers it), ImbuementScreenHandler (the grid),
-│                           FrostTiers (Cold/Icy/Frozen, recipes, stats), FrostBonuses (the material bonuses);
+│                           ImbuementTableBlock (the block), FrostTiers (Cold/Icy/Frozen, recipes, stats,
+│                           the (+x)), FrostBonuses (the material bonuses and Frostbite);
 │                           client/imbuement has the screen, stars, frost overlay and snowflakes
 ├── alpha/                  the Alpha Wolf boss: AlphaWolfEntity, PackWolfEntity, WolfAction (synced, for poses),
 │                           PackGoals (the pack AI), AlphaGoals (Pounce, Charge, roar, going home), DrainingBite,
@@ -525,6 +564,8 @@ com.frostbound
 │                           the chest, drained hearts and the J key
 ├── passives/               Passive (a named item bonus + its tooltip text), Passives (all of them);
 │                           client/PassiveTooltips draws them at the top of tooltips
+├── nothirst/NoThirst       Tough As Nails without thirst: the removed items, and hides them from creative tabs;
+│                           mixin/nothirst does the rest (ThirstConfig, recipes, trades, enchantment tags)
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
 │                           installed), ChristmasPresents (what opening a tree present does)
 └── mixin/
@@ -532,7 +573,9 @@ com.frostbound
     │                             the snowy property), FreezeTopLayerFeature/ServerWorld (place
     │                             snowy plants instead of snow), SnowyBlockMixin (snowy grass)
     │                             MultiNoiseBiomeSourceParameterList (cold biomes only)
-    ├── imbuement/                ItemStackMixin (tier stats), FrostBonusDamageMixin (Cold Iron, Frostmail, Quenched);
+    ├── nothirst/                 ThirstConfigMixin (forces TAN's thirst off; @Pseudo, only with TAN), RecipeManagerMixin,
+    │                             MerchantEntityMixin + WanderingTraderEntityMixin (no thirst trades), TagGroupLoaderMixin
+    ├── imbuement/                ItemStackMixin (tier stats, the (+x) on attribute lines), FrostBonusDamageMixin (Cold Iron, Frostmail, Quenched);
     │                             client/ItemRendererMixin, ArmorFeatureRendererMixin (the frost overlay)
     └── mobs/                     frozen flag, combat, loot, visuals
 ```
@@ -540,7 +583,7 @@ com.frostbound
 - The `snowy` plant property is always added (even with the environment module off), so client and server always agree on block states. With the module off, snow simply stops settling into plants.
 
 - The environment module's data (biome tags and the Tough As Nails tag) is a built-in data pack at `resources/resourcepacks/winter_environment`. It's only registered while the module is on.
-- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed.
+- `mixin/FrostboundMixinPlugin` leaves out the snow-in-plants mixins when Snow! Real Magic is installed, and the Tough As Nails config mixin when TAN isn't.
 - `src/gametest` is a dev-only test mod (`frostbound-gametest`) and never ships.
 - **Trinkets** is a normal (required) dependency from the TerraformersMC maven; Cardinal Components comes with it from the Ladysnake maven. In GameTests, the vanilla mock server player gets kicked when Cardinal Components syncs to its fake connection, so tests that need a server player build an unlisted one (`ImbuementTests.serverPlayer`).
-- **Other mods in dev:** DecorationX: Christmas runs in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.
+- **Other mods in dev:** DecorationX: Christmas and Tough As Nails (with its library GlitchCore) run in the dev client and game tests. Gradle downloads it from Modrinth and copies it into `run/mods` and `build/gametest/mods` (`devMods` in `build.gradle`); Fabric Loader remaps it on start. Supplementaries can't run in dev (its library Moonlight crashes Fabric's dev environment), so the presents are only checked for real in a pack.

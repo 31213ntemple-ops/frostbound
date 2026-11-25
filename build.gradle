@@ -112,6 +112,9 @@ dependencies {
 
 	// DecorationX: Christmas, for building and testing the Christmas structures in dev. See devMods below.
 	devMods "maven.modrinth:decorationx-christmas:${project.decorationx_christmas_version}"
+	// Tough As Nails (and GlitchCore), for testing the No Thirst module.
+	devMods "maven.modrinth:tough-as-nails:${project.toughasnails_version}"
+	devMods "maven.modrinth:glitchcore:${project.glitchcore_version}"
 }
 
 // Other mods to play-test with in dev. They were built with a newer Loom than this project
@@ -133,6 +136,28 @@ def syncDevMods = tasks.register("syncDevMods") {
 tasks.matching { it.name in ["runClient", "runServer", "runGametest"] }.configureEach {
 	dependsOn syncDevMods
 }
+
+// Blockbench models: every .bbmodel in src/<set>/blockbench/{block,item,entity} becomes game files
+// (models, textures, entity model data) in build/generated/blockbench/<set>, which is part of that
+// source set's resources. See src/main/blockbench/README.md.
+def importBlockbench = tasks.register("importBlockbench", frostbound.blockbench.ImportBlockbenchTask) {
+	group = "frostbound"
+	description = "Converts the Blockbench projects in src/main/blockbench into models and textures."
+	sourceDir = file("src/main/blockbench")
+	resourcesDir = file("src/main/resources")
+	namespace = "frostbound"
+	outputDir = layout.buildDirectory.dir("generated/blockbench/main")
+}
+def importBlockbenchGametest = tasks.register("importBlockbenchGametest", frostbound.blockbench.ImportBlockbenchTask) {
+	group = "frostbound"
+	description = "Converts the test fixtures in src/gametest/blockbench."
+	sourceDir = file("src/gametest/blockbench")
+	resourcesDir = file("src/gametest/resources")
+	namespace = "frostbound"
+	outputDir = layout.buildDirectory.dir("generated/blockbench/gametest")
+}
+sourceSets.main.resources.srcDir(importBlockbench)
+sourceSets.gametest.resources.srcDir(importBlockbenchGametest)
 
 processResources {
 	inputs.property "version", project.version

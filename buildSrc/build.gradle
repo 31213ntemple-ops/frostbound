@@ -1,0 +1,22 @@
+// Build logic for Frostbound: the Blockbench importer (see src/main/blockbench/README.md).
+plugins {
+	id 'java'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation gradleApi()
+	implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+dependencies {
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+	useJUnitPlatform()
+}

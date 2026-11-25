@@ -1,6 +1,7 @@
 package com.frostbound.client;
 
 import com.frostbound.client.alpha.AlphaWolfClient;
+import com.frostbound.client.blockbench.BlockbenchModels;
 import com.frostbound.client.campfire.FireStarterMinigame;
 import com.frostbound.client.imbuement.FrostParticles;
 import com.frostbound.client.imbuement.FrostRenderLayers;
@@ -39,6 +40,9 @@ public class FrostboundClient implements ClientModInitializer {
 
 		// The Alpha Wolf and its pack, the Mark of the Pack key, Draining Bite's hollow hearts (in InGameHudMixin).
 		AlphaWolfClient.init();
+
+		// Entity models made in Blockbench (src/main/blockbench/entity): dropped on reload so F3+T picks up a re-import.
+		BlockbenchModels.init();
 
 		// Item passives (e.g. copper's Conductivity) at the top of tooltips.
 		PassiveTooltips.init();

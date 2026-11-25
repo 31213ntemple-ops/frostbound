@@ -8,10 +8,12 @@ import com.frostbound.imbuement.FrostTier;
 import com.frostbound.imbuement.FrostTiers;
 import com.frostbound.imbuement.Imbuement;
 import com.frostbound.imbuement.ImbuementScreenHandler;
+import com.frostbound.client.imbuement.FrostStars;
 import com.frostbound.passives.Passive;
 import com.frostbound.passives.Passives;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.component.type.AttributeModifiersComponent;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -27,6 +29,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -92,7 +95,7 @@ public class ImbuementTests implements FabricGameTest {
 		mixed.set(0, new ItemStack(Items.SNOWBALL));
 		check(FrostTiers.upgrade(plate, mixed).isEmpty(), "anything else in the ring stops it");
 
-		check(FrostTiers.upgrade(new ItemStack(Items.IRON_SWORD), ring(Items.ICE, 1)).isEmpty(), "only armour can be imbued");
+		check(FrostTiers.upgrade(new ItemStack(Items.IRON_PICKAXE), ring(Items.ICE, 1)).isEmpty(), "tools can't be imbued");
 		check(!FrostTiers.canImbue(new ItemStack(Items.IRON_HORSE_ARMOR)), "horse armour can't be imbued");
 		check(!FrostTiers.canImbue(new ItemStack(Items.ELYTRA)), "an elytra isn't armour");
 		check(FrostTiers.canImbue(new ItemStack(Items.TURTLE_HELMET)) && FrostTiers.canImbue(new ItemStack(CopperGear.COPPER_BOOTS)),
@@ -153,6 +156,7 @@ public class ImbuementTests implements FabricGameTest {
 		check(!center.canInsert(new ItemStack(Items.PACKED_ICE)), "the centre slot only takes armour");
 		check(!center.canInsert(new ItemStack(Items.DIAMOND_HORSE_ARMOR)), "the centre slot doesn't take horse armour");
 		check(center.canInsert(new ItemStack(Items.LEATHER_BOOTS)), "the centre slot takes armour");
+		check(center.canInsert(new ItemStack(Items.IRON_SWORD)), "the centre slot takes weapons");
 		check(center.getMaxItemCount() == 1, "one piece at a time");
 
 		ItemStack cold = new ItemStack(Items.GOLDEN_HELMET);
@@ -371,6 +375,154 @@ public class ImbuementTests implements FabricGameTest {
 		check(breathing != null && breathing.getDuration() == 200 + (int) Math.round(o.tidefrost.frozen * 20),
 				"Frozen turtle shell: Water Breathing should last " + (10 + o.tidefrost.frozen) + " s, is " + breathing);
 		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void weaponsCanBeImbued(TestContext ctx) {
+		FrostboundConfig.FrostTierOptions c = FrostboundConfig.get().frostTiers;
+		for (Item item : List.of(Items.IRON_SWORD, Items.DIAMOND_AXE, CopperGear.COPPER_SWORD, Items.MACE, Items.TRIDENT)) {
+			check(FrostTiers.canImbue(new ItemStack(item)), item + " should be imbuable");
+		}
+		for (Item item : List.of(Items.IRON_PICKAXE, Items.BOW, Items.SHIELD, Items.STICK)) {
+			check(!FrostTiers.canImbue(new ItemStack(item)), item + " shouldn't be imbuable");
+		}
+		ItemStack sword = FrostTiers.upgrade(new ItemStack(Items.IRON_SWORD), ring(Items.ICE, 1));
+		check(FrostTiers.tier(sword) == FrostTier.COLD, "iron sword + 8 ice should be Cold");
+
+		// Attack damage: +cold, then +frozen on top; durability like armour.
+		int base = new ItemStack(Items.IRON_SWORD).getMaxDamage();
+		double[] damage = new double[4];
+		for (FrostTier tier : FrostTier.values()) {
+			ItemStack stack = new ItemStack(Items.IRON_SWORD);
+			FrostTiers.setTier(stack, tier);
+			damage[tier.level()] = sum(stack, EquipmentSlot.MAINHAND, EntityAttributes.GENERIC_ATTACK_DAMAGE);
+			check(stack.getMaxDamage() == Math.round(base * FrostTiers.durabilityMultiplier(tier)), tier + " sword durability, is " + stack.getMaxDamage());
+			close(sum(stack, EquipmentSlot.MAINHAND, EntityAttributes.GENERIC_ARMOR), 0.0, tier + " sword gets no armour");
+		}
+		close(damage[0], 5.0, "plain iron sword");
+		close(damage[1], 5.0 + c.coldAttackDamage, "Cold iron sword");
+		close(damage[2], damage[1], "Icy adds no damage");
+		close(damage[3], 5.0 + c.coldAttackDamage + c.frozenAttackDamage, "Frozen iron sword");
+
+		// Held, the player's attack damage picks it up; in the off hand it doesn't.
+		PlayerEntity player = ctx.createMockPlayer(GameMode.SURVIVAL);
+		ItemStack frozen = new ItemStack(Items.IRON_SWORD);
+		FrostTiers.setTier(frozen, FrostTier.FROZEN);
+		player.setStackInHand(Hand.MAIN_HAND, frozen);
+		player.tick();
+		close(player.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE), 1.0 + damage[3], "a player holding a Frozen iron sword");
+
+		// Frostbite: from Icy, the stronger number when Frozen.
+		FrostboundConfig.Tiered o = FrostboundConfig.get().frostBonuses.frostbite;
+		check(Passives.of(sword).isEmpty(), "a Cold sword has no passive yet");
+		ItemStack icy = sword.copy();
+		FrostTiers.setTier(icy, FrostTier.ICY);
+		check(Passives.of(icy).equals(List.of(FrostBonuses.FROSTBITE.passive)), "an Icy sword has Frostbite");
+		Passive frostbite = FrostBonuses.FROSTBITE.passive;
+		check(frostbite.title().getString().equals("Frostbite") && frostbite.color() == Formatting.AQUA, "Frostbite in aqua");
+		String text = "Melee hits chill the target, slowing it for " + Passive.number(o.icy) + " seconds.";
+		check(frostbite.description(icy).getString().equals(text), "Icy text should be \"" + text + "\", got \"" + frostbite.description(icy).getString() + "\"");
+		check(frostbite.description(frozen).getString().contains(Passive.number(o.frozen) + " seconds"), "Frozen shows the stronger number");
+		ItemStack copper = new ItemStack(CopperGear.COPPER_SWORD);
+		FrostTiers.setTier(copper, FrostTier.ICY);
+		check(Passives.of(copper).equals(List.of(Conductivity.PASSIVE, FrostBonuses.FROSTBITE.passive)), "an Icy copper sword has Conductivity, then Frostbite");
+		ItemStack boots = new ItemStack(Items.IRON_BOOTS);
+		FrostTiers.setTier(boots, FrostTier.FROZEN);
+		check(!Passives.of(boots).contains(FrostBonuses.FROSTBITE.passive), "armour doesn't get Frostbite");
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void frostbiteSlowsWhatYouHit(TestContext ctx) {
+		FrostboundConfig.Tiered o = FrostboundConfig.get().frostBonuses.frostbite;
+		PlayerEntity player = ctx.createMockPlayer(GameMode.SURVIVAL);
+		ItemStack icy = new ItemStack(Items.IRON_SWORD);
+		FrostTiers.setTier(icy, FrostTier.ICY);
+		player.setStackInHand(Hand.MAIN_HAND, icy);
+		PigEntity pig = ctx.spawnEntity(EntityType.PIG, 1, 2, 1);
+		pig.damage(ctx.getWorld().getDamageSources().playerAttack(player), 1.0f);
+		StatusEffectInstance slow = pig.getStatusEffect(StatusEffects.SLOWNESS);
+		check(slow != null && slow.getDuration() == Math.round(o.icy * 20), "an Icy sword should slow for " + o.icy + " s, got " + slow);
+
+		ItemStack frozen = icy.copy();
+		FrostTiers.setTier(frozen, FrostTier.FROZEN);
+		player.setStackInHand(Hand.MAIN_HAND, frozen);
+		PigEntity second = ctx.spawnEntity(EntityType.PIG, 3, 2, 1);
+		second.damage(ctx.getWorld().getDamageSources().playerAttack(player), 1.0f);
+		slow = second.getStatusEffect(StatusEffects.SLOWNESS);
+		check(slow != null && slow.getDuration() == Math.round(o.frozen * 20), "a Frozen sword should slow for " + o.frozen + " s, got " + slow);
+
+		player.setStackInHand(Hand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+		PigEntity plain = ctx.spawnEntity(EntityType.PIG, 5, 2, 1);
+		plain.damage(ctx.getWorld().getDamageSources().playerAttack(player), 1.0f);
+		check(!plain.hasStatusEffect(StatusEffects.SLOWNESS), "a plain sword doesn't slow");
+
+		player.setStackInHand(Hand.MAIN_HAND, frozen);
+		PigEntity shot = ctx.spawnEntity(EntityType.PIG, 5, 2, 3);
+		shot.damage(ctx.getWorld().getDamageSources().arrow(EntityType.ARROW.create(ctx.getWorld()), player), 1.0f);
+		check(!shot.hasStatusEffect(StatusEffects.SLOWNESS), "Frostbite is melee only");
+		ctx.complete();
+	}
+
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void bonusesShowNextToVanillaLines(TestContext ctx) {
+		FrostboundConfig.FrostTierOptions c = FrostboundConfig.get().frostTiers;
+		PlayerEntity player = ctx.createMockPlayer(GameMode.SURVIVAL);
+		Item.TooltipContext context = Item.TooltipContext.create(ctx.getWorld());
+
+		List<String> plain = strings(new ItemStack(Items.DIAMOND_CHESTPLATE).getTooltip(context, player, TooltipType.BASIC));
+		check(plain.contains("+8 Armor") && plain.contains("+2 Armor Toughness"), "plain diamond keeps vanilla's lines: " + plain);
+
+		ItemStack plate = new ItemStack(Items.DIAMOND_CHESTPLATE);
+		FrostTiers.setTier(plate, FrostTier.FROZEN);
+		List<Text> lines = plate.getTooltip(context, player, TooltipType.BASIC);
+		String armor = "+8 Armor (+" + fmt(c.coldArmor + c.frozenArmor) + ")";
+		String toughness = "+2 Armor Toughness (+" + fmt(c.frozenToughness) + ")";
+		check(strings(lines).contains(armor) && strings(lines).contains(toughness), "Frozen diamond should show \"" + armor + "\" and \""
+				+ toughness + "\": " + strings(lines));
+		Text armorLine = lines.stream().filter(l -> l.getString().equals(armor)).findFirst().orElseThrow();
+		Text bonus = armorLine.getSiblings().get(armorLine.getSiblings().size() - 1);
+		check(bonus.getStyle().getColor() != null && bonus.getStyle().getColor().getRgb() == FrostTier.FROZEN.starColor,
+				"the (+x) should be in the tier's colour");
+
+		ItemStack cold = new ItemStack(Items.LEATHER_HELMET);
+		FrostTiers.setTier(cold, FrostTier.COLD);
+		check(strings(cold.getTooltip(context, player, TooltipType.BASIC)).contains("+1 Armor (+" + fmt(c.coldArmor) + ")"), "Cold leather cap");
+
+		ItemStack sword = new ItemStack(Items.IRON_SWORD);
+		FrostTiers.setTier(sword, FrostTier.COLD);
+		List<String> swordLines = strings(sword.getTooltip(context, player, TooltipType.BASIC));
+		String attack = " 6 Attack Damage (+" + fmt(c.coldAttackDamage) + ")";
+		check(swordLines.contains(attack) && swordLines.contains(" 1.6 Attack Speed"), "Cold iron sword should show \"" + attack + "\": " + swordLines);
+
+		// Durability: added with its (+x) when vanilla doesn't show it, appended to vanilla's line when it does.
+		int extra = FrostTiers.durabilityBonus(plate);
+		check(extra == plate.getMaxDamage() - new ItemStack(Items.DIAMOND_CHESTPLATE).getMaxDamage() && extra > 0, "durability bonus " + extra);
+		List<Text> basic = new ArrayList<>(lines);
+		FrostStars.addDurabilityBonus(plate, FrostTier.FROZEN, basic, false);
+		String durability = "Durability: " + plate.getMaxDamage() + " / " + plate.getMaxDamage() + " (+" + extra + ")";
+		check(basic.get(basic.size() - 1).getString().equals(durability), "should end with \"" + durability + "\", got " + strings(basic));
+
+		plate.setDamage(10);
+		List<Text> advanced = new ArrayList<>(plate.getTooltip(context, player, TooltipType.ADVANCED));
+		int before = advanced.size();
+		FrostStars.addDurabilityBonus(plate, FrostTier.FROZEN, advanced, true);
+		String damaged = "Durability: " + (plate.getMaxDamage() - 10) + " / " + plate.getMaxDamage() + " (+" + extra + ")";
+		check(advanced.size() == before && strings(advanced).contains(damaged), "advanced tooltips get the (+x) on their own line: " + strings(advanced));
+
+		List<Text> none = new ArrayList<>(new ItemStack(Items.DIAMOND_CHESTPLATE).getTooltip(context, player, TooltipType.BASIC));
+		int size = none.size();
+		FrostStars.addDurabilityBonus(new ItemStack(Items.DIAMOND_CHESTPLATE), FrostTier.NONE, none, false);
+		check(none.size() == size, "plain gear gets no durability line");
+		ctx.complete();
+	}
+
+	private static List<String> strings(List<Text> lines) {
+		return lines.stream().map(Text::getString).toList();
+	}
+
+	private static String fmt(double value) {
+		return AttributeModifiersComponent.DECIMAL_FORMAT.format(value);
 	}
 
 	private static void wear(net.minecraft.entity.LivingEntity entity, Item head, Item chest, Item legs, Item feet, FrostTier tier) {
