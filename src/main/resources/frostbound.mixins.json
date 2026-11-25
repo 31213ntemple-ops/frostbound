@@ -17,6 +17,8 @@
 		"environment.PrepareRamTaskMixin",
 		"environment.ServerWorldMixin",
 		"environment.SnowyBlockMixin",
+		"habanero.BlockEntityLavaMixin",
+		"habanero.CookingPotBlockEntityMixin",
 		"habanero.LivingEntityEatMixin",
 		"imbuement.FrostBonusDamageMixin",
 		"imbuement.ItemStackMixin",
@@ -32,6 +34,8 @@
 	],
 	"client": [
 		"campfire.client.VideoOptionsScreenMixin",
+		"habanero.client.CookingPotScreenMixin",
+		"habanero.client.HandledScreenAccessor",
 		"imbuement.client.ArmorFeatureRendererMixin",
 		"imbuement.client.ItemRendererMixin",
 		"mobs.client.LivingEntityRendererMixin",

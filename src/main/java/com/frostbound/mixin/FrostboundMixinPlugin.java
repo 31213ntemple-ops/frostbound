@@ -10,8 +10,9 @@ import java.util.Set;
 
 /**
  * Leaves out the snow-in-plants mixins when another mod does that job (Snow! Real Magic),
- * so the two don't fight over snow placement and plant block states, and the Tough As Nails
- * mixins (thirst config, campfire warmth) when TAN isn't installed.
+ * so the two don't fight over snow placement and plant block states, the Tough As Nails
+ * mixins (thirst config, campfire warmth) when TAN isn't installed, and the cooking pot mixins
+ * (lava pots) without Farmer's Delight.
  *
  * Must not touch Minecraft classes: it runs before they're allowed to load.
  */
@@ -32,8 +33,16 @@ public final class FrostboundMixinPlugin implements IMixinConfigPlugin {
 			PACKAGE + "nothirst.ThirstConfigMixin",
 			PACKAGE + "campfire.TemperatureHelperImplMixin");
 
+	/** Target Farmer's Delight's cooking pot (a pot can hold lava), so only applied when it's installed. */
+	private static final Set<String> FARMERS_DELIGHT_MIXINS = Set.of(
+			PACKAGE + "habanero.CookingPotBlockEntityMixin",
+			PACKAGE + "habanero.client.CookingPotScreenMixin");
+
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+		if (FARMERS_DELIGHT_MIXINS.contains(mixinClassName)) {
+			return FabricLoader.getInstance().isModLoaded("farmersdelight");
+		}
 		if (TAN_MIXINS.contains(mixinClassName)) {
 			return FabricLoader.getInstance().isModLoaded("toughasnails");
 		}

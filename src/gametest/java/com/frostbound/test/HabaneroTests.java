@@ -3,6 +3,14 @@ package com.frostbound.test;
 import com.frostbound.Frostbound;
 import com.frostbound.config.FrostboundConfig;
 import com.frostbound.habanero.Habaneros;
+import com.frostbound.habanero.LavaPots;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import com.frostbound.passives.Passive;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.loader.api.FabricLoader;
@@ -12,7 +20,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -35,7 +42,6 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
@@ -114,8 +120,9 @@ public class HabaneroTests implements FabricGameTest {
 		var registries = ctx.getWorld().getRegistryManager();
 		check(sauce.get().value().getResult(registries).isOf(Habaneros.HOT_SAUCE), "the pot makes hot sauce");
 		check(extract.get().value().getResult(registries).isOf(Habaneros.FLAME_EXTRACT), "the pot makes flame extract");
-		check(extract.get().value().getIngredients().stream().anyMatch(i -> i.test(new ItemStack(Items.LAVA_BUCKET))),
-				"flame extract is cooked in lava");
+		check(extract.get().value().getIngredients().size() == 3
+						&& extract.get().value().getIngredients().stream().allMatch(i -> i.test(new ItemStack(Habaneros.HABANERO))),
+				"flame extract is three habaneros (cooked in a lava pot)");
 		ctx.complete();
 	}
 
@@ -134,24 +141,65 @@ public class HabaneroTests implements FabricGameTest {
 		});
 	}
 
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void lavaBucketFillsTheCookingPot(TestContext ctx) {
+		pot(ctx, 1);
+		BlockPos pos = ctx.getAbsolutePos(new BlockPos(1, 2, 1));
+		ServerPlayerEntity player = ImbuementTests.serverPlayer(ctx);
+		check(!LavaPots.hasLava(ctx.getWorld(), pos), "a new pot holds no lava");
+
+		ActionResult poured = use(ctx, player, pos, new ItemStack(Items.LAVA_BUCKET));
+		check(poured.isAccepted(), "right-clicking with a lava bucket is handled, got " + poured);
+		check(LavaPots.hasLava(ctx.getWorld(), pos), "the lava goes into the pot");
+		check(player.getMainHandStack().isOf(Items.BUCKET), "the bucket comes back empty, holding " + player.getMainHandStack());
+		check(player.currentScreenHandler == player.playerScreenHandler, "the pot's menu doesn't open");
+
+		use(ctx, player, pos, new ItemStack(Items.LAVA_BUCKET));
+		check(player.getMainHandStack().isOf(Items.LAVA_BUCKET) && LavaPots.hasLava(ctx.getWorld(), pos), "a pot that already holds lava takes no more");
+		player.closeHandledScreen(); // that click opens the menu as usual
+		ActionResult scooped = use(ctx, player, pos, new ItemStack(Items.BUCKET));
+		check(scooped.isAccepted() && player.getMainHandStack().isOf(Items.LAVA_BUCKET), "an empty bucket takes the lava back");
+		check(!LavaPots.hasLava(ctx.getWorld(), pos), "and the pot is empty again");
+
+		// Saved with the pot and sent to clients.
+		LavaPots.setLava(ctx.getWorld(), pos, true);
+		BlockEntity entity = ctx.getWorld().getBlockEntity(pos);
+		var registries = ctx.getWorld().getRegistryManager();
+		NbtCompound saved = entity.createNbt(registries);
+		check(saved.getBoolean(LavaPots.NBT_KEY), "the lava is saved, NBT " + saved.getKeys());
+		check(entity.toInitialChunkDataNbt(registries).getBoolean(LavaPots.NBT_KEY), "the lava is sent to clients");
+		LavaPots.setLava(ctx.getWorld(), pos, false);
+		entity.read(saved, registries);
+		check(LavaPots.hasLava(ctx.getWorld(), pos), "and loaded back");
+		ctx.complete();
+	}
+
 	@GameTest(templateName = EMPTY_STRUCTURE, tickLimit = 600)
-	public void cookingPotMakesFlameExtractInLava(TestContext ctx) {
-		Object inventory = pot(ctx);
-		put(inventory, 0, new ItemStack(Items.LAVA_BUCKET));
-		for (int i = 1; i <= 3; i++) {
-			put(inventory, i, new ItemStack(Habaneros.HABANERO));
-		}
-		put(inventory, 7, new ItemStack(Items.GLASS_BOTTLE));
-		ctx.runAtTick(500, () -> {
-			ItemStack meal = get(inventory, 6), output = get(inventory, 8);
-			check(meal.isOf(Habaneros.FLAME_EXTRACT) || output.isOf(Habaneros.FLAME_EXTRACT),
-					"peppers cooked in lava should make flame extract, got " + meal + " / " + output);
-			Box around = new Box(ctx.getAbsolutePos(new BlockPos(1, 2, 1))).expand(3);
-			boolean bucket = !ctx.getWorld().getEntitiesByClass(ItemEntity.class, around, e -> e.getStack().isOf(Items.BUCKET)).isEmpty();
-			for (int i = 0; i < 9; i++) {
-				bucket |= get(inventory, i).isOf(Items.BUCKET);
+	public void flameExtractOnlyCooksInLava(TestContext ctx) {
+		// Three pots: peppers in lava, peppers without lava, and hot sauce's two peppers in lava.
+		Object lava = pot(ctx, 1);
+		Object dry = pot(ctx, 3);
+		Object sauce = pot(ctx, 5);
+		for (Object inventory : List.of(lava, dry)) {
+			for (int i = 0; i < 3; i++) {
+				put(inventory, i, new ItemStack(Habaneros.HABANERO));
 			}
-			check(bucket, "the empty bucket should come back");
+			put(inventory, 7, new ItemStack(Items.GLASS_BOTTLE));
+		}
+		put(sauce, 0, new ItemStack(Habaneros.HABANERO));
+		put(sauce, 1, new ItemStack(Habaneros.HABANERO));
+		put(sauce, 7, new ItemStack(Items.GLASS_BOTTLE));
+		BlockPos lavaPos = ctx.getAbsolutePos(new BlockPos(1, 2, 1));
+		BlockPos saucePos = ctx.getAbsolutePos(new BlockPos(5, 2, 1));
+		LavaPots.setLava(ctx.getWorld(), lavaPos, true);
+		LavaPots.setLava(ctx.getWorld(), saucePos, true);
+		ctx.runAtTick(480, () -> {
+			check(made(lava, Habaneros.FLAME_EXTRACT), "three peppers cooked in lava make flame extract, got " + get(lava, 6) + " / " + get(lava, 8));
+			check(!LavaPots.hasLava(ctx.getWorld(), lavaPos), "making it uses the lava up");
+			check(!made(dry, Habaneros.FLAME_EXTRACT) && get(dry, 0).isOf(Habaneros.HABANERO),
+					"without lava the peppers don't turn into flame extract, got " + get(dry, 6) + " / " + get(dry, 8));
+			check(!made(sauce, Habaneros.HOT_SAUCE) && get(sauce, 0).isOf(Habaneros.HABANERO), "a lava pot doesn't make hot sauce");
+			check(LavaPots.hasLava(ctx.getWorld(), saucePos), "and keeps its lava");
 			ctx.complete();
 		});
 	}
@@ -249,15 +297,31 @@ public class HabaneroTests implements FabricGameTest {
 
 	/** A cooking pot on a magma block (a heat source); returns its item handler (FD's own class, by reflection). */
 	private static Object pot(TestContext ctx) {
-		ctx.setBlockState(1, 1, 1, Blocks.MAGMA_BLOCK);
-		ctx.setBlockState(1, 2, 1, Registries.BLOCK.get(Identifier.of("farmersdelight", "cooking_pot")));
-		BlockEntity pot = ctx.getWorld().getBlockEntity(ctx.getAbsolutePos(new BlockPos(1, 2, 1)));
+		return pot(ctx, 1);
+	}
+
+	/** A cooking pot at (x, 2, 1) on a magma block; returns its item handler. */
+	private static Object pot(TestContext ctx, int x) {
+		ctx.setBlockState(x, 1, 1, Blocks.MAGMA_BLOCK);
+		ctx.setBlockState(x, 2, 1, Registries.BLOCK.get(Identifier.of("farmersdelight", "cooking_pot")));
+		BlockEntity pot = ctx.getWorld().getBlockEntity(ctx.getAbsolutePos(new BlockPos(x, 2, 1)));
 		check(pot != null, "the cooking pot should have a block entity");
 		try {
 			return pot.getClass().getMethod("getInventory").invoke(pot);
 		} catch (ReflectiveOperationException e) {
 			throw new GameTestException("can't reach the cooking pot's inventory: " + e);
 		}
+	}
+
+	private static boolean made(Object inventory, net.minecraft.item.Item item) {
+		return get(inventory, 6).isOf(item) || get(inventory, 8).isOf(item);
+	}
+
+	/** {@code player} right-clicks the top of the block at {@code pos} holding {@code stack} (through the real interaction, so Fabric's use events fire). */
+	private static ActionResult use(TestContext ctx, ServerPlayerEntity player, BlockPos pos, ItemStack stack) {
+		player.setStackInHand(Hand.MAIN_HAND, stack);
+		BlockHitResult hit = new BlockHitResult(Vec3d.ofCenter(pos).add(0, 0.5, 0), Direction.UP, pos, false);
+		return player.interactionManager.interactBlock(player, ctx.getWorld(), stack, Hand.MAIN_HAND, hit);
 	}
 
 	private static void put(Object inventory, int slot, ItemStack stack) {

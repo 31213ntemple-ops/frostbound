@@ -16,9 +16,6 @@
 	"experience": 1.0,
 	"ingredients": [
 		{
-			"item": "minecraft:lava_bucket"
-		},
-		{
 			"tag": "c:crops/habanero"
 		},
 		{

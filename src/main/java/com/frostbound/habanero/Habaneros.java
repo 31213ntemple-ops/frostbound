@@ -141,6 +141,7 @@ public final class Habaneros {
 
 	public static void init() {
 		FlameExtract.init();
+		LavaPots.init();
 		// Before the winter changes (POST_PROCESSING), so a modded biome's temperature is still its original one.
 		BiomeModifications.addFeature(Habaneros::growsWild, GenerationStep.Feature.VEGETAL_DECORATION, WILD_HABANERO_PATCH);
 

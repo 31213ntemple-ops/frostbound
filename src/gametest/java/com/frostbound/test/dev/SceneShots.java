@@ -393,6 +393,43 @@ public class SceneShots implements ClientModInitializer {
 		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(4)), "36_tooltip_empty_addon_slots_sword");
 		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(5)), "37_tooltip_spicy_dish");
 		this.add(10, server -> { }, client -> client.setScreen(new TooltipBoard(6)), "38_tooltip_flame_extract");
+		this.add(5, server -> { }, client -> client.setScreen(null), null);
+
+		// A cooking pot with lava in it (poured in with a lava bucket) and three peppers: its menu shows a lava bucket
+		// next to the fire icon.
+		this.add(10, server -> {
+			ServerWorld world = server.getOverworld();
+			BlockPos pot = new BlockPos(240, this.ground + 2, -10);
+			world.setBlockState(pot.down(), Blocks.MAGMA_BLOCK.getDefaultState());
+			world.setBlockState(pot, net.minecraft.registry.Registries.BLOCK.get(Identifier.of("farmersdelight", "cooking_pot")).getDefaultState());
+			ServerPlayerEntity player = player(server);
+			player.changeGameMode(GameMode.CREATIVE);
+			player.teleport(world, 240.5, this.ground + 2, -12.5, 0.0f, 30.0f);
+			net.minecraft.util.hit.BlockHitResult hit = new net.minecraft.util.hit.BlockHitResult(
+					net.minecraft.util.math.Vec3d.ofCenter(pot), net.minecraft.util.math.Direction.UP, pot, false);
+			player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, new ItemStack(Items.LAVA_BUCKET));
+			player.interactionManager.interactBlock(player, world, player.getMainHandStack(), net.minecraft.util.Hand.MAIN_HAND, hit);
+			try {
+				Object inventory = world.getBlockEntity(pot).getClass().getMethod("getInventory").invoke(world.getBlockEntity(pot));
+				java.lang.reflect.Method set = inventory.getClass().getMethod("setStackInSlot", int.class, ItemStack.class);
+				for (int i = 0; i < 3; i++) {
+					set.invoke(inventory, i, new ItemStack(Habaneros.HABANERO));
+				}
+				set.invoke(inventory, 7, new ItemStack(Items.GLASS_BOTTLE));
+			} catch (ReflectiveOperationException e) {
+				Frostbound.LOGGER.warn("Couldn't fill the scene's cooking pot", e);
+			}
+			player.setStackInHand(net.minecraft.util.Hand.MAIN_HAND, ItemStack.EMPTY);
+		}, client -> { }, null);
+		// Opened a moment later, once the client has the pot (opening it in the same tick finds no pot client-side).
+		this.add(20, server -> {
+			BlockPos pot = new BlockPos(240, this.ground + 2, -10);
+			ServerPlayerEntity player = player(server);
+			player.interactionManager.interactBlock(player, server.getOverworld(), ItemStack.EMPTY, net.minecraft.util.Hand.MAIN_HAND,
+					new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(pot), net.minecraft.util.math.Direction.UP, pot, false));
+		}, client -> { }, null);
+		this.add(30, server -> { }, client -> { }, "39_cooking_pot_with_lava");
+		this.add(5, server -> player(server).closeHandledScreen(), client -> { }, null);
 	}
 
 	/** The poses the armour shots show, left to right. */

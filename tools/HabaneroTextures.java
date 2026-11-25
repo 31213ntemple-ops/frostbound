@@ -29,11 +29,11 @@ public class HabaneroTextures {
 
 	static final Map<Character, Integer> PALETTE = Map.ofEntries(
 			// The pepper: deep red outline, red-orange body, orange and yellow towards the light.
-			Map.entry('D', 0xFF6E1A0C),
-			Map.entry('R', 0xFFC2361A),
-			Map.entry('O', 0xFFE9621D),
-			Map.entry('Y', 0xFFF6972F),
-			Map.entry('H', 0xFFFFD27E),
+			Map.entry('D', 0xFF6E2209),
+			Map.entry('R', 0xFFC9500F),
+			Map.entry('O', 0xFFE5671A),
+			Map.entry('Y', 0xFFF4892A),
+			Map.entry('H', 0xFFFFB04E),
 			// Unripe pepper.
 			Map.entry('e', 0xFF4E8A2A),
 			Map.entry('E', 0xFF7BB843),
@@ -61,7 +61,7 @@ public class HabaneroTextures {
 			System.err.println("usage: java tools/HabaneroTextures.java <minecraft-client.jar>");
 			System.exit(1);
 		}
-		write(grid(HABANERO), "item/habanero.png");
+		write(grid(HABANERO, PEPPER), "item/habanero.png");
 		write(grid(SEEDS), "item/habanero_seeds.png");
 		write(grid(STAGE_0), "block/habanero_stage0.png");
 		write(grid(STAGE_1), "block/habanero_stage1.png");
@@ -69,37 +69,131 @@ public class HabaneroTextures {
 		write(grid(STAGE_3), "block/habanero_stage3.png");
 		write(grid(WILD), "block/wild_habanero.png");
 		write(grid(FLAME_GLYPH), "font/addon_flame.png");
-		write(grid(SPICY_ICON), "mob_effect/spicy.png");
-		try (ZipFile jar = new ZipFile(args[0])) {
-			BufferedImage bottle = read(jar, "assets/minecraft/textures/item/potion.png");
-			BufferedImage liquid = read(jar, "assets/minecraft/textures/item/potion_overlay.png");
-			write(bottle(bottle, liquid, 0xFF9E1A0E, 0xFFE0481E, null), "item/hot_sauce.png");
-			write(bottle(bottle, liquid, 0xFFD2521A, 0xFFFFC248, FLAME_IN_BOTTLE), "item/flame_extract.png");
-		}
+		write(grid(SPICY_ICON, PEPPER), "mob_effect/spicy.png");
+		write(grid(HOT_SAUCE, SAUCE), "item/hot_sauce.png");
+		write(grid(FLAME_EXTRACT, FLASK), "item/flame_extract.png");
 		System.out.println("done");
 	}
 
 	// --- Pixel grids (16 × 16 unless noted; '.' is transparent) ---
 
+	/**
+	 * The pepper, in Farmer's Delight's style (like its tomato): no black outline but a darker shade of the
+	 * pepper round it, lit from the top left. Lying diagonally like vanilla's carrot: a curved stem and leafy cap
+	 * at the top right, a plump lantern-shaped body with ridges running along it, and a crooked tip at the bottom left.
+	 */
+	static final Map<Character, Integer> PEPPER = Map.ofEntries(
+			Map.entry('E', 0xFF6E2209), // outer shadow (bottom and right)
+			Map.entry('D', 0xFFAE3A0C), // shadow
+			Map.entry('c', 0xFFC9500F), // crease between lobes
+			Map.entry('G', 0xFFE5671A), // orange
+			Map.entry('F', 0xFFF4892A), // light
+			Map.entry('H', 0xFFFFB04E), // highlight
+			Map.entry('I', 0xFFFFE2A6), // shine
+			Map.entry('A', 0xFF0B6E0B), // stem and cap: Farmer's Delight's leaf greens
+			Map.entry('B', 0xFF0A4F0A),
+			Map.entry('C', 0xFF2E922B),
+			Map.entry('L', 0xFF5DB83A),
+			Map.entry('3', 0xFFF7861E)); // heat (Spicy icon)
+
 	static final String[] HABANERO = {
 			"................",
-			"........g.......",
-			".......gG.......",
-			"......glGg......",
-			"....DDgGGDD.....",
-			"...DROOOOOOD....",
-			"...DROYYHOORD...",
-			"..DROYHYOOORD...",
-			"..DRROYOOORRD...",
-			"..DRROOOORRD....",
-			"...DRRROORRD....",
-			"...DRRRORRD.....",
-			"....DRRRRD......",
-			".....DRRD.......",
-			"......DRD.......",
-			".......D........"};
+			"...........BA...",
+			"..........AC....",
+			"........BLCB....",
+			".....DDBCLCBD...",
+			"....DFFHBCBGcE..",
+			"...DFHIHFDGcGGE.",
+			"...DFHHFGGcGGDE.",
+			"..DFFFGGGcGGDDE.",
+			"..DFGGGcGGGDDE..",
+			"..DGGGcGGGDDE...",
+			"..EDGcGGGDDE....",
+			"..EDcGGDDEE.....",
+			"...EDDDEE.......",
+			"..EDDE..........",
+			"..EE............"};
 
-	static final String[] SEEDS = {
+	/**
+	 * A hot sauce bottle: a red cap on a narrow neck, sloping shoulders, a cream label with a little orange
+	 * pepper on it, and the deep red sauce showing through the glass above and below the label. The glass uses
+	 * vanilla's bottle blues (light on the left, darker on the right and bottom).
+	 */
+	static final Map<Character, Integer> SAUCE = Map.ofEntries(
+			Map.entry('k', 0xFF6A150F), // cap, dark
+			Map.entry('K', 0xFFA82A1D), // cap
+			Map.entry('q', 0xFFDA4C3A), // cap, lit
+			Map.entry('a', 0xFFD4E5F7), // glass, lit edge
+			Map.entry('b', 0xFFB3CFEC), // glass
+			Map.entry('y', 0xFF8BADD0), // glass, bottom
+			Map.entry('z', 0xFF5D8FC2), // glass, shadowed edge
+			Map.entry('h', 0xFFF07A5E), // shine on the sauce
+			Map.entry('r', 0xFFC3261B), // sauce
+			Map.entry('R', 0xFF961714), // sauce, darker
+			Map.entry('d', 0xFF62100E), // sauce, darkest
+			Map.entry('w', 0xFFF4E9CC), // label
+			Map.entry('W', 0xFFD3C29A), // label, shaded
+			Map.entry('p', 0xFFE5671A), // the pepper on the label
+			Map.entry('P', 0xFFAE3A0C),
+			Map.entry('l', 0xFF2E922B));
+
+	static final String[] HOT_SAUCE = {
+			"................",
+			"......kqKk......",
+			"......kKKk......",
+			"......akkz......",
+			"......ahRz......",
+			"......ahRz......",
+			".....ahrRRz.....",
+			"....ahrrrRRz....",
+			"....ahwwlwWz....",
+			"....ahwpPwWz....",
+			"....ahwppWWz....",
+			"....ahWWWWWz....",
+			"....ahrrrRdz....",
+			"....ahrrRRdz....",
+			"....byrRRddz....",
+			".....yzzzzz....."};
+
+	/**
+	 * Flame extract: a round flask stoppered with a cork, full of liquid fire that glows from a near-white core out
+	 * to deep red at the glass, with a flame licking up from it into the neck.
+	 */
+	static final Map<Character, Integer> FLASK = Map.ofEntries(
+			Map.entry('A', 0xFFC98B4F), // cork
+			Map.entry('B', 0xFF8E5A2E),
+			Map.entry('C', 0xFFD4E5F7), // glass, lit
+			Map.entry('E', 0xFFB3CFEC), // glass
+			Map.entry('L', 0xFF8BADD0),
+			Map.entry('G', 0xFF5D8FC2), // glass, shadowed
+			Map.entry('r', 0xFF9E1F0A), // fire: deep red at the edges
+			Map.entry('o', 0xFFDF4C12),
+			Map.entry('O', 0xFFF7861E),
+			Map.entry('y', 0xFFFFBE38),
+			Map.entry('Y', 0xFFFFE88A),
+			Map.entry('W', 0xFFFFFCE6), // the core
+			Map.entry('f', 0xFFF7861E), // the flame in the neck
+			Map.entry('F', 0xFFFFC94A));
+
+	static final String[] FLAME_EXTRACT = {
+			"................",
+			".......AB.......",
+			"......BAAB......",
+			"......CEEG......",
+			"......E.fG......",
+			"......EfFG......",
+			".....C.FY.G.....",
+			"....C.fYYf.G....",
+			"...CoOfYYfOoG...",
+			"...COyyYYyOoG...",
+			"...EoyYWWYyoG...",
+			"...EoOyYYyOrG...",
+			"...LroOyyOorG...",
+			"....LroOOorG....",
+			".....GGGGGG.....",
+			"................"};
+
+		static final String[] SEEDS = {
 			"................",
 			"................",
 			"................",
@@ -239,26 +333,30 @@ public class HabaneroTextures {
 
 	/** 18 × 18: a habanero with heat rising off it. */
 	static final String[] SPICY_ICON = {
-			"..................",
-			"....3.....3.......",
-			"...3.....3....3...",
-			"...3.....3...3....",
-			"....3.....3..3....",
-			"..........g...3...",
-			".........gG.......",
-			"........glGg......",
-			".......DgGGD......",
-			"......DROOOOD.....",
-			".....DROYYHORD....",
-			".....DROYHYOORD...",
-			"....DRROYYOOORD...",
-			"....DRROOYOORRD...",
-			".....DRRROORRD....",
-			".....DDRRRRRDD....",
-			"......DDRRRDD.....",
-			"........DDD......."};
+			"...3..............",
+			"..3...3...........",
+			"...3.3............",
+			"......3.....BA....",
+			"....3......AC.....",
+			".........BLCB.....",
+			"......DDBCLCBD....",
+			".....DFFHBCBGcE...",
+			"....DFHIHFDGcGGE..",
+			"....DFHHFGGcGGDE..",
+			"...DFFFGGGcGGDDE..",
+			"...DFGGGcGGGDDE...",
+			"...DGGGcGGGDDE....",
+			"...EDGcGGGDDE.....",
+			"...EDcGGDDEE......",
+			"....EDDDEE........",
+			"...EDDE...........",
+			"...EE............."};
 
 	static BufferedImage grid(String[] rows) {
+		return grid(rows, PALETTE);
+	}
+
+	static BufferedImage grid(String[] rows, Map<Character, Integer> palette) {
 		int width = rows[0].length();
 		BufferedImage out = new BufferedImage(width, rows.length, BufferedImage.TYPE_INT_ARGB);
 		for (int y = 0; y < rows.length; y++) {
@@ -268,7 +366,7 @@ public class HabaneroTextures {
 			for (int x = 0; x < width; x++) {
 				char c = rows[y].charAt(x);
 				if (c != '.') {
-					Integer rgb = PALETTE.get(c);
+					Integer rgb = palette.get(c);
 					if (rgb == null) {
 						throw new IllegalStateException("no colour for '" + c + "'");
 					}

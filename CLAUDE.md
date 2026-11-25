@@ -37,7 +37,7 @@ Armour and weapons (whatever the imbuement table's centre takes) have **two add-
 
 ## Farmer's Delight
 
-Habaneros (`habanero/`) are cooked in Farmer's Delight's cooking pot. Frostbound never compiles against FD: its recipes are JSON with `fabric:load_conditions` on `farmersdelight`, and tests reach the pot by reflection (`HabaneroTests.pot`). FD runs in dev as a `devMods` entry pinned to 3.2.8 (later builds need Loader 0.19+ and can't be remapped in a dev run).
+Habaneros (`habanero/`) are cooked in Farmer's Delight's cooking pot, which can hold lava for flame extract (`habanero/LavaPots`). Frostbound never compiles against FD (Loom refuses its jar, built with a newer Loom): its recipes are JSON with `fabric:load_conditions` on `farmersdelight`, the pot mixins are `@Pseudo` with string targets and hook only FD's own method names (`getMatchingRecipe`, `processCooking`, `writeItems`, `animationTick`, `renderHeatIndicatorTooltip`; never vanilla methods FD overrides, whose names differ between dev and a real pack), anything else of FD's is reached by reflection, and they're left out without FD (`FrostboundMixinPlugin`). Check a new hook exists in both the dev build and the latest one (`javap` on both jars). Tests reach the pot by reflection (`HabaneroTests.pot`). FD runs in dev as a `devMods` entry pinned to 3.2.8 (later builds need Loader 0.19+ and can't be remapped in a dev run).
 
 ## Models: Blockbench
 

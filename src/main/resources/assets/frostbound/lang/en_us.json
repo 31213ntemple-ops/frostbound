@@ -140,5 +140,8 @@
 	"passive.frostbound.spicy": "Spicy",
 	"passive.frostbound.spicy.desc": "Warms you up for %s minutes once eaten.",
 	"passive.frostbound.flame_lined": "Flame Lined",
-	"passive.frostbound.flame_lined.desc": "%s%% insulation: slows freezing. At 100%% across your armour you can't freeze and stay a step warmer."
+	"passive.frostbound.flame_lined.desc": "%s%% insulation: slows freezing. At 100%% across your armour you can't freeze and stay a step warmer.",
+	"frostbound.cooking_pot.lava": "Lava",
+	"frostbound.cooking_pot.lava.desc": "Cook 3 habaneros in it for Flame Extract",
+	"frostbound.cooking_pot.lava.empty": "Take it out with an empty bucket"
 }
