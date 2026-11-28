@@ -50,7 +50,7 @@ public class GiantCapBlock extends Block implements LandingBlock {
 	@Override
 	protected float calcBlockBreakingDelta(BlockState state, PlayerEntity player, BlockView world, BlockPos pos) {
 		return Math.min(super.calcBlockBreakingDelta(state, player, world, pos),
-				GiantMushrooms.maxDelta(FrostboundConfig.get().giantMushrooms.capMinBreakTicks));
+				MushroomMining.maxDelta(FrostboundConfig.get().giantMushrooms.capMinBreakTicks));
 	}
 
 	/** A cap that fell apart ({@link GiantMushrooms#collapse}): each falling block crumbles where it lands. */

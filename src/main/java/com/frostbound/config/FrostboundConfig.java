@@ -18,7 +18,7 @@ import java.nio.file.Path;
  */
 public final class FrostboundConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static FrostboundConfig instance;
+	private static volatile FrostboundConfig instance;
 
 	/** Turn whole features of the mod on or off. */
 	public Modules modules = new Modules();
@@ -427,11 +427,18 @@ public final class FrostboundConfig {
 		}
 	}
 
-	public static synchronized FrostboundConfig get() {
-		if (instance == null) {
-			instance = load(FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
+	/** The config, loaded on first use. Lock-free once loaded, so hot paths can read options live instead of caching them. */
+	public static FrostboundConfig get() {
+		FrostboundConfig config = instance;
+		if (config != null) {
+			return config;
 		}
-		return instance;
+		synchronized (FrostboundConfig.class) {
+			if (instance == null) {
+				instance = load(FabricLoader.getInstance().getConfigDir().resolve(Frostbound.MOD_ID + ".json"));
+			}
+			return instance;
+		}
 	}
 
 	/** Writes the config back to its file, for the options that can be changed in game (the campfire ring). */

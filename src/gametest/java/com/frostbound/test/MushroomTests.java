@@ -4,6 +4,10 @@ import com.frostbound.config.FrostboundConfig;
 import com.frostbound.mushrooms.GiantCapBlock;
 import com.frostbound.mushrooms.GiantMushroomShape;
 import com.frostbound.mushrooms.GiantMushrooms;
+import com.frostbound.mushrooms.Mushroom;
+import com.frostbound.mushrooms.MushroomMining;
+import com.frostbound.mushrooms.MushroomSprouts;
+import com.frostbound.mushrooms.MushroomStore;
 import com.frostbound.mushrooms.GiantStemBlock;
 import com.frostbound.mushrooms.MushroomSproutBlock;
 import com.frostbound.mushrooms.MushroomSproutBlockEntity;
@@ -81,7 +85,7 @@ public class MushroomTests implements FabricGameTest {
 		} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
 			throw new GameTestException("/" + command + " failed: " + e.getMessage());
 		}
-		GiantMushrooms.Mushroom m = GiantMushrooms.find(world, at);
+		Mushroom m = GiantMushrooms.find(world, at);
 		check(m != null && m.shape == GiantMushroomShape.FLATCAP && m.origin.equals(at), "the command should place a flatcap at " + at);
 		check(m.stemPositions().stream().allMatch(p -> world.getBlockState(p).isOf(GiantMushrooms.STEM)), "every stem block placed");
 		check(m.capPositions().stream().allMatch(p -> world.getBlockState(p).isOf(GiantMushrooms.BROWN_CAP)), "a flatcap's cap is brown");
@@ -95,7 +99,7 @@ public class MushroomTests implements FabricGameTest {
 	public void capNeedsAHoeAndNeverBreaksInOneHit(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3100, GiantMushroomShape.TOADSTOOL);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
 		BlockPos cap = m.capPositions().getFirst();
 		BlockState state = world.getBlockState(cap);
 		ServerPlayerEntity player = ImbuementTests.serverPlayer(ctx);
@@ -127,7 +131,7 @@ public class MushroomTests implements FabricGameTest {
 	public void stemMinesTopLayerFirst(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3200, GiantMushroomShape.LEANING);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.LEANING);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.LEANING);
 		int top = at.getY() + m.shape.layers - 1;
 		check(activeLayers(world, m).isEmpty(), "no stem layer is active while the cap is there");
 		// Mined down to just above the collapse: the stem stays inactive.
@@ -178,12 +182,13 @@ public class MushroomTests implements FabricGameTest {
 	public void miningTheCapGrowsSprouts(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3300, GiantMushroomShape.TOADSTOOL);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
 		BlockPos hit = m.capPositions().getLast();
 		long[] start = new long[1];
 		ctx.runAtTick(1, () -> {
 			start[0] = world.getTime();
-			GiantMushrooms.engage(world, hit, null);
+			MushroomSprouts.engage(world, hit, null);
+			check(MushroomStore.get(world).ticking().contains(m), "a mushroom being mined ticks");
 		});
 		ctx.runAtTick(OPTIONS.firstSproutTicks + 4, () -> {
 			check(m.sprouts().size() == 1, "the first sprout should come " + OPTIONS.firstSproutTicks + " ticks after the first hit, near it, have " + m.sprouts().size());
@@ -201,6 +206,7 @@ public class MushroomTests implements FabricGameTest {
 		int quiet = 1 + OPTIONS.engagedTicks + OPTIONS.sproutFuseTicks + 5;
 		ctx.runAtTick(quiet, () -> {
 			check(!m.isEngaged(world.getTime()), "sprouts should stop " + OPTIONS.engagedTicks + " ticks after the last hit");
+			check(!MushroomStore.get(world).ticking().contains(m), "and the mushroom stops ticking");
 			check(m.sprouts().stream().noneMatch(p -> world.getBlockState(p).isOf(GiantMushrooms.SPROUT)),
 					"every sprout should have burst by now");
 		});
@@ -216,7 +222,7 @@ public class MushroomTests implements FabricGameTest {
 	public void burstThrowsYouOffAndRegrowsTheCap(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3400, GiantMushroomShape.TOADSTOOL);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
 		// A hole dug in the top of the cap, on the far (west) side.
 		List<BlockPos> hole = new java.util.ArrayList<>();
 		for (int dz = -2; dz <= 2; dz++) {
@@ -236,7 +242,7 @@ public class MushroomTests implements FabricGameTest {
 		ctx.runAtTick(10, () -> {
 			world.setBlockState(sprout, GiantMushrooms.SPROUT.getDefaultState());
 			check(world.getBlockState(sprout).isOf(GiantMushrooms.SPROUT), "a sprout should stand on the cap");
-			GiantMushrooms.burst(world, sprout);
+			MushroomSprouts.burst(world, sprout);
 			Vec3d v = pig.getVelocity();
 			check(world.getBlockState(sprout).isAir(), "the sprout is gone after bursting");
 			check(v.x > OPTIONS.burstPush * 0.9 && Math.abs(v.z) < 0.1, "the pig east of the stem should be thrown east, off the cap: " + v);
@@ -258,13 +264,13 @@ public class MushroomTests implements FabricGameTest {
 	public void betterHoesCarveMore(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3600, GiantMushroomShape.TOADSTOOL);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
 		FrostboundConfig.HoeBlocks blocks = OPTIONS.hoeBlocks;
-		check(GiantMushrooms.hoeBlocks(new ItemStack(Items.WOODEN_HOE)) == blocks.wood && blocks.wood == 1, "a wooden hoe breaks 1");
-		check(GiantMushrooms.hoeBlocks(new ItemStack(Items.IRON_HOE)) == blocks.iron, "an iron hoe breaks " + blocks.iron);
-		check(GiantMushrooms.hoeBlocks(new ItemStack(Items.NETHERITE_HOE)) == blocks.netherite && blocks.netherite <= 5, "a netherite hoe breaks at most 5");
-		check(GiantMushrooms.hoeBlocks(new ItemStack(com.frostbound.copper.CopperGear.COPPER_HOE)) == blocks.copper, "a copper hoe breaks " + blocks.copper);
-		check(GiantMushrooms.hoeBlocks(new ItemStack(Items.IRON_AXE)) == 1, "anything else breaks 1");
+		check(MushroomMining.hoeBlocks(new ItemStack(Items.WOODEN_HOE)) == blocks.wood && blocks.wood == 1, "a wooden hoe breaks 1");
+		check(MushroomMining.hoeBlocks(new ItemStack(Items.IRON_HOE)) == blocks.iron, "an iron hoe breaks " + blocks.iron);
+		check(MushroomMining.hoeBlocks(new ItemStack(Items.NETHERITE_HOE)) == blocks.netherite && blocks.netherite <= 5, "a netherite hoe breaks at most 5");
+		check(MushroomMining.hoeBlocks(new ItemStack(com.frostbound.copper.CopperGear.COPPER_HOE)) == blocks.copper, "a copper hoe breaks " + blocks.copper);
+		check(MushroomMining.hoeBlocks(new ItemStack(Items.IRON_AXE)) == 1, "anything else breaks 1");
 		check(blocks.wood <= blocks.stone && blocks.stone <= blocks.iron && blocks.iron <= blocks.diamond && blocks.diamond <= blocks.netherite,
 				"better hoes never break fewer");
 
@@ -302,7 +308,7 @@ public class MushroomTests implements FabricGameTest {
 	public void axeSweepsTheActiveLayer(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3700, GiantMushroomShape.TOADSTOOL);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
 		m.capPositions().forEach(p -> world.setBlockState(p, Blocks.AIR.getDefaultState()));
 		int top = at.getY() + m.shape.layers - 1;
 		ctx.runAtTick(3, () -> {
@@ -326,7 +332,7 @@ public class MushroomTests implements FabricGameTest {
 	public void breakingASproutDefusesIt(TestContext ctx) {
 		ServerWorld world = ctx.getWorld();
 		BlockPos at = site(ctx, 3500, GiantMushroomShape.FLATCAP);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.FLATCAP);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.FLATCAP);
 		List<BlockPos> hole = List.of(surface(m, -5, 0), surface(m, -5, 1), surface(m, -5, -1));
 		BlockPos first = surface(m, -2, 0).up(), second = surface(m, 2, 0).up();
 		ctx.runAtTick(2, () -> {
@@ -427,11 +433,11 @@ public class MushroomTests implements FabricGameTest {
 
 		// A netherite hoe carving the cap: the spores of every block it takes.
 		BlockPos at = site(ctx, 4400, GiantMushroomShape.TOADSTOOL);
-		GiantMushrooms.Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
+		Mushroom m = GiantMushrooms.place(world, at, GiantMushroomShape.TOADSTOOL);
 		BlockPos hit = surface(m, 0, 0);
 		world.setBlockState(hit, Blocks.AIR.getDefaultState());
 		int start = Spores.get(player);
-		int carved = GiantMushrooms.carve(world, hit, player, 5);
+		int carved = MushroomMining.carve(world, hit, player, 5);
 		int got = Spores.get(player) - start;
 		check(carved == 4 && got >= 5 * carved && got <= 7 * carved, "carving " + carved + " blocks should give 5-7 spores each, gave " + got);
 
@@ -441,15 +447,92 @@ public class MushroomTests implements FabricGameTest {
 		ctx.complete();
 	}
 
+	/**
+	 * The chunk index: a mushroom on a chunk corner (in four chunks) is found from every one of its blocks,
+	 * next to another mushroom sharing a chunk with it, and nowhere once removed; nearest() finds it from
+	 * any side within reach.
+	 */
+	@GameTest(templateName = EMPTY_STRUCTURE, tickLimit = 40)
+	public void chunkIndexFindsMushroomsAcrossChunks(TestContext ctx) {
+		ServerWorld world = ctx.getWorld();
+		BlockPos base = ctx.getAbsolutePos(new BlockPos(0, 1, 0)).add(0, 0, 4600);
+		BlockPos corner = siteAt(ctx, new BlockPos(base.getX() & ~15, base.getY(), base.getZ() & ~15), GiantMushroomShape.TOADSTOOL);
+		BlockPos beside = siteAt(ctx, corner.add(20, 0, 0), GiantMushroomShape.FLATCAP);
+		Mushroom m = GiantMushrooms.place(world, corner, GiantMushroomShape.TOADSTOOL);
+		Mushroom other = GiantMushrooms.place(world, beside, GiantMushroomShape.FLATCAP);
+		Set<Long> chunks = new HashSet<>();
+		for (BlockPos p : m.capPositions()) {
+			check(GiantMushrooms.find(world, p) == m, "cap block " + p.toShortString() + " should belong to the toadstool");
+			chunks.add(net.minecraft.util.math.ChunkPos.toLong(p.getX() >> 4, p.getZ() >> 4));
+		}
+		for (BlockPos p : m.stemPositions()) {
+			check(GiantMushrooms.find(world, p) == m, "stem block " + p.toShortString() + " should belong to the toadstool");
+		}
+		for (BlockPos p : other.capPositions()) {
+			check(GiantMushrooms.find(world, p) == other, "cap block " + p.toShortString() + " should belong to the flatcap");
+		}
+		check(chunks.size() == 4, "a mushroom on a chunk corner spans four chunks, this one " + chunks.size());
+		check(GiantMushrooms.find(world, corner.up(m.shape.bounds.getMaxY() + 2)) == null, "nothing above the mushroom");
+		check(GiantMushrooms.find(world, corner.add(10, 0, 0)) == null, "nothing in the gap between them");
+		for (int[] side : new int[][] {{-30, 0}, {0, -30}, {-20, 25}, {0, 30}}) {
+			Vec3d from = Vec3d.ofCenter(corner.add(side[0], 0, side[1]));
+			check(GiantMushrooms.nearest(world, from, 48) == m, "the toadstool is nearest from " + side[0] + ", " + side[1]);
+		}
+		check(GiantMushrooms.nearest(world, Vec3d.ofCenter(beside.add(5, 0, 0)), 48) == other, "the flatcap is nearest from its side");
+		check(GiantMushrooms.nearest(world, Vec3d.ofCenter(corner.add(-100, 0, 0)), 48) == null, "nothing in reach far away");
+		GiantMushrooms.remove(world, m);
+		check(m.capPositions().stream().allMatch(p -> GiantMushrooms.find(world, p) == null), "a removed mushroom is gone from every chunk");
+		check(GiantMushrooms.find(world, other.capPositions().get(0)) == other, "and its neighbour is still there");
+		GiantMushrooms.remove(world, other);
+		ctx.complete();
+	}
+
+	/**
+	 * Hoes from other mods: a material goes by the tier it declares (its "incorrect for" tag), whatever its
+	 * speed; a material with a tag of its own goes by its speed. Vanilla's and copper's go by name (gold
+	 * stays gold although it's fast).
+	 */
+	@GameTest(templateName = EMPTY_STRUCTURE)
+	public void moddedHoesGoByTier(TestContext ctx) {
+		FrostboundConfig.HoeBlocks blocks = OPTIONS.hoeBlocks;
+		net.minecraft.registry.tag.TagKey<net.minecraft.block.Block> own = net.minecraft.registry.tag.TagKey.of(RegistryKeys.BLOCK,
+				com.frostbound.Frostbound.id("incorrect_for_test_tool"));
+		check(MushroomMining.hoeBlocks(material(net.minecraft.registry.tag.BlockTags.INCORRECT_FOR_DIAMOND_TOOL, 2.0f)) == blocks.diamond,
+				"a slow diamond-tier hoe carves like diamond");
+		check(MushroomMining.hoeBlocks(material(net.minecraft.registry.tag.BlockTags.INCORRECT_FOR_NETHERITE_TOOL, 1.0f)) == blocks.netherite,
+				"a netherite-tier hoe carves like netherite");
+		check(MushroomMining.hoeBlocks(material(net.minecraft.registry.tag.BlockTags.INCORRECT_FOR_WOODEN_TOOL, 20.0f)) == blocks.wood,
+				"a fast wooden-tier hoe carves like wood");
+		check(MushroomMining.hoeBlocks(material(com.frostbound.copper.CopperGear.INCORRECT_FOR_COPPER_TOOL, 9.0f)) == blocks.copper,
+				"a copper-tier hoe carves like copper");
+		check(MushroomMining.hoeBlocks(material(own, 7.0f)) == blocks.iron, "a tier of its own at speed 7 carves like iron");
+		check(MushroomMining.hoeBlocks(material(own, 12.0f)) == blocks.netherite, "at speed 12 like netherite");
+		check(MushroomMining.hoeBlocks(material(own, 1.0f)) == blocks.wood, "at speed 1 like wood");
+		check(MushroomMining.hoeBlocks(net.minecraft.item.ToolMaterials.GOLD) == blocks.gold, "gold is gold");
+		check(MushroomMining.hoeBlocks(com.frostbound.copper.CopperGear.TOOL_MATERIAL) == blocks.copper, "copper is copper");
+		ctx.complete();
+	}
+
+	private static net.minecraft.item.ToolMaterial material(net.minecraft.registry.tag.TagKey<net.minecraft.block.Block> tier, float speed) {
+		return new net.minecraft.item.ToolMaterial() {
+			@Override public int getDurability() { return 100; }
+			@Override public float getMiningSpeedMultiplier() { return speed; }
+			@Override public float getAttackDamage() { return 1.0f; }
+			@Override public net.minecraft.registry.tag.TagKey<net.minecraft.block.Block> getInverseTag() { return tier; }
+			@Override public int getEnchantability() { return 10; }
+			@Override public net.minecraft.recipe.Ingredient getRepairIngredient() { return net.minecraft.recipe.Ingredient.EMPTY; }
+		};
+	}
+
 	@GameTest(templateName = EMPTY_STRUCTURE)
 	public void countdownAndPushMaths(TestContext ctx) {
 		check(MushroomSproutBlockEntity.countdownText(40).equals("2.0"), "40 ticks reads 2.0");
 		check(MushroomSproutBlockEntity.countdownText(30).equals("1.5"), "30 ticks reads 1.5");
 		check(MushroomSproutBlockEntity.countdownText(-3).equals("0.0"), "never below 0.0");
 		Vec3d axis = new Vec3d(0, 10, 0), sprout = new Vec3d(3, 11, 0);
-		Vec3d north = GiantMushrooms.pushFor(new Vec3d(0, 11, -2), axis, sprout, 0);
+		Vec3d north = MushroomSprouts.pushFor(new Vec3d(0, 11, -2), axis, sprout, 0);
 		check(north.z < 0 && Math.abs(north.x) < 1.0e-6, "pushed away from the stem, not from the sprout: " + north);
-		Vec3d onAxis = GiantMushrooms.pushFor(new Vec3d(0.1, 11, 0), axis, sprout, 0);
+		Vec3d onAxis = MushroomSprouts.pushFor(new Vec3d(0.1, 11, 0), axis, sprout, 0);
 		check(onAxis.x < 0, "right over the stem, pushed away from the sprout: " + onAxis);
 		ctx.complete();
 	}
@@ -458,8 +541,12 @@ public class MushroomTests implements FabricGameTest {
 
 	/** A cleared, force-loaded spot for {@code shape}, {@code dz} blocks from the test, with a stone floor. Returns the origin. */
 	private static BlockPos site(TestContext ctx, int dz, GiantMushroomShape shape) {
+		return siteAt(ctx, ctx.getAbsolutePos(new BlockPos(0, 1, 0)).add(0, 0, dz), shape);
+	}
+
+	/** A cleared, force-loaded spot for {@code shape} with its origin at {@code at}, with a stone floor. Returns {@code at}. */
+	private static BlockPos siteAt(TestContext ctx, BlockPos at, GiantMushroomShape shape) {
 		ServerWorld world = ctx.getWorld();
-		BlockPos at = ctx.getAbsolutePos(new BlockPos(0, 1, 0)).add(0, 0, dz);
 		WolfDenTests.forceLoad(world, at, 24);
 		net.minecraft.util.math.BlockBox box = shape.bounds;
 		for (BlockPos p : BlockPos.iterate(at.add(box.getMinX() - 3, -1, box.getMinZ() - 3), at.add(box.getMaxX() + 3, box.getMaxY() + 3, box.getMaxZ() + 3))) {
@@ -469,18 +556,18 @@ public class MushroomTests implements FabricGameTest {
 	}
 
 	/** The top cap block in the column {@code dx}, {@code dz} from the middle of the cap. */
-	private static BlockPos surface(GiantMushrooms.Mushroom m, int dx, int dz) {
+	private static BlockPos surface(Mushroom m, int dx, int dz) {
 		BlockPos center = m.origin.add(m.shape.capCenter);
 		return m.capPositions().stream().filter(p -> p.getX() == center.getX() + dx && p.getZ() == center.getZ() + dz)
 				.max(java.util.Comparator.comparingInt(BlockPos::getY))
 				.orElseThrow(() -> new GameTestException("no cap at " + dx + ", " + dz));
 	}
 
-	private static long capLeft(ServerWorld world, GiantMushrooms.Mushroom m) {
+	private static long capLeft(ServerWorld world, Mushroom m) {
 		return m.capPositions().stream().filter(p -> world.getBlockState(p).getBlock() instanceof com.frostbound.mushrooms.GiantCapBlock).count();
 	}
 
-	private static Set<Integer> activeLayers(ServerWorld world, GiantMushrooms.Mushroom m) {
+	private static Set<Integer> activeLayers(ServerWorld world, Mushroom m) {
 		Set<Integer> layers = new HashSet<>();
 		for (BlockPos p : m.stemPositions()) {
 			BlockState state = world.getBlockState(p);

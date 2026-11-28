@@ -29,8 +29,6 @@ import org.joml.Vector3f;
  * death; the client shows it in the corner of the screen ({@code client/mushrooms/SporeCounterHud}). No use yet.
  */
 public final class Spores {
-	private static final FrostboundConfig.GiantMushroomOptions OPTIONS = FrostboundConfig.get().giantMushrooms;
-
 	public static final AttachmentType<Integer> COUNT = AttachmentRegistry.<Integer>builder()
 			.persistent(Codec.INT)
 			.copyOnDeath()
@@ -93,8 +91,9 @@ public final class Spores {
 		if (!(breaker instanceof PlayerEntity player) || player.isCreative() || player.isSpectator() || !yields(state)) {
 			return 0;
 		}
-		int min = Math.max(0, OPTIONS.sporesMin);
-		int max = Math.max(min, OPTIONS.sporesMax);
+		FrostboundConfig.GiantMushroomOptions options = GiantMushrooms.options();
+		int min = Math.max(0, options.sporesMin);
+		int max = Math.max(min, options.sporesMax);
 		int amount = min + world.random.nextInt(max - min + 1);
 		add(player, amount);
 		world.spawnParticles(PUFF, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6, 0.3, 0.3, 0.3, 0.0);

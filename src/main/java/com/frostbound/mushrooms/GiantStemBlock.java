@@ -17,7 +17,7 @@ import net.minecraft.world.World;
  * {@link #ACTIVE} layer mines at a normal pace; every other layer, and the whole stem while any of the
  * cap is left, mines at {@code giantMushrooms.inactiveLayerSpeed} of it.
  *
- * The server decides which layer is active and sets the property ({@link GiantMushrooms#refresh}), so
+ * The server decides which layer is active and sets the property ({@link MushroomMining#refresh}), so
  * the client, which works out its own mining progress, always agrees with it, and the active layer can
  * look different.
  */
@@ -47,7 +47,7 @@ public class GiantStemBlock extends Block {
 		if (!state.get(ACTIVE)) {
 			delta *= (float) options.inactiveLayerSpeed;
 		}
-		return Math.min(delta, GiantMushrooms.maxDelta(options.stemMinBreakTicks));
+		return Math.min(delta, MushroomMining.maxDelta(options.stemMinBreakTicks));
 	}
 
 	@Override

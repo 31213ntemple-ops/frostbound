@@ -20,6 +20,9 @@ import com.frostbound.imbuement.Imbuement;
 import com.frostbound.imbuement.ImbuementScreenHandler;
 import com.frostbound.mushrooms.GiantMushroomShape;
 import com.frostbound.mushrooms.GiantMushrooms;
+import com.frostbound.mushrooms.Mushroom;
+import com.frostbound.mushrooms.MushroomMining;
+import com.frostbound.mushrooms.MushroomSprouts;
 import com.frostbound.mushrooms.Spores;
 import dev.emi.trinkets.api.TrinketsApi;
 import net.fabricmc.api.ClientModInitializer;
@@ -454,7 +457,7 @@ public class SceneShots implements ClientModInitializer {
 				GiantMushrooms.place(world, new BlockPos(x, this.ground + 1, z), shape);
 				x += 35;
 			}
-			GiantMushrooms.Mushroom bare = GiantMushrooms.place(world, new BlockPos(x, this.ground + 1, z), GiantMushroomShape.TOADSTOOL);
+			Mushroom bare = GiantMushrooms.place(world, new BlockPos(x, this.ground + 1, z), GiantMushroomShape.TOADSTOOL);
 			bare.capPositions().forEach(p -> world.setBlockState(p, Blocks.AIR.getDefaultState()));
 			this.camera(server, 350.5, 16, z - 62, 0, 4);
 		}, client -> client.options.setPerspective(Perspective.FIRST_PERSON), null);
@@ -466,10 +469,10 @@ public class SceneShots implements ClientModInitializer {
 		this.add(30, server -> this.camera(server, 300.5, 1.5, z - 5.5, 0, -40), client -> { }, "44_toadstool_underside");
 		this.add(12, server -> {
 			ServerWorld world = server.getOverworld();
-			GiantMushrooms.Mushroom m = GiantMushrooms.find(world, new BlockPos(300, this.ground + 1, z));
+			Mushroom m = GiantMushrooms.find(world, new BlockPos(300, this.ground + 1, z));
 			BlockPos hit = m.capPositions().stream().max(java.util.Comparator.comparingInt(BlockPos::getY)).orElseThrow();
-			GiantMushrooms.engage(world, hit, null);
-			BlockPos sprout = GiantMushrooms.growSprout(world, m);
+			MushroomSprouts.engage(world, hit, null);
+			BlockPos sprout = MushroomSprouts.growSprout(world, m);
 			BlockPos at = sprout != null ? sprout : hit.up();
 			player(server).changeGameMode(GameMode.SPECTATOR);
 			player(server).teleport(world, at.getX() + 0.5, at.getY() + 1.6, at.getZ() - 2.5, 0.0f, 30.0f);
@@ -480,12 +483,12 @@ public class SceneShots implements ClientModInitializer {
 		// Blocks a burst grew back (blighted) in the side of the toadstool facing the camera.
 		this.add(30, server -> {
 			ServerWorld world = server.getOverworld();
-			GiantMushrooms.Mushroom m = GiantMushrooms.find(world, new BlockPos(300, this.ground + 1, z));
+			Mushroom m = GiantMushrooms.find(world, new BlockPos(300, this.ground + 1, z));
 			Vec3d eye = new Vec3d(306, this.ground + 7, z - 15);
 			List<BlockPos> near = m.capPositions().stream()
 					.sorted(java.util.Comparator.comparingDouble(p -> p.toCenterPos().squaredDistanceTo(eye))).limit(14).toList();
 			near.forEach(p -> world.setBlockState(p, Blocks.AIR.getDefaultState()));
-			GiantMushrooms.regrowNear(world, m, near.get(0), near.size());
+			MushroomSprouts.regrowNear(world, m, near.get(0), near.size());
 			this.camera(server, 306, 7, z - 15, 25, 4);
 		}, client -> { }, "48_regrown_cap");
 		// The spore counter in the corner, just after a gain.

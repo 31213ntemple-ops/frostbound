@@ -1,5 +1,8 @@
 package com.frostbound.mushrooms;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -53,6 +56,18 @@ public enum GiantMushroomShape {
 	public final BlockPos capCenter;
 	/** Covers every position, relative to the origin. */
 	public final BlockBox bounds;
+
+	// The same positions packed into longs (BlockPos.asLong of the relative position), for the loops that run
+	// on every break and tick: they read these with a BlockPos.Mutable instead of allocating positions.
+	/** The cap, in the same order as {@link #cap}. */
+	final long[] capPacked;
+	/** The stem, bottom layer first; layer y is indices {@code layerStart[y]} to {@code layerStart[y + 1] - 1}. */
+	final long[] stemPacked;
+	final int[] layerStart;
+	final LongOpenHashSet capSet;
+	final LongOpenHashSet stemSet;
+	/** For each cap index, the indices of the cap blocks straight above it (same column, higher up). */
+	final int[][] capAbove;
 
 	GiantMushroomShape(boolean red, int stemHeight, DoubleUnaryOperator stemX, DoubleUnaryOperator stemZ,
 			DoubleUnaryOperator stemRadius, double a, double b, double power, double thickness, double cut, double tilt, double tiltDirection) {
@@ -108,6 +123,33 @@ public enum GiantMushroomShape {
 		List<BlockPos> all = new ArrayList<>(stem);
 		all.addAll(cap);
 		this.bounds = BlockBox.encompassPositions(all).orElseThrow();
+
+		this.capPacked = cap.stream().mapToLong(BlockPos::asLong).toArray();
+		this.stemPacked = stem.stream().mapToLong(BlockPos::asLong).toArray();
+		this.capSet = new LongOpenHashSet(this.capPacked);
+		this.stemSet = new LongOpenHashSet(this.stemPacked);
+		// The stem was added a layer at a time, bottom up.
+		this.layerStart = new int[layers + 1];
+		int index = 0;
+		for (int y = 0; y < layers; y++) {
+			this.layerStart[y] = index;
+			while (index < this.stemPacked.length && BlockPos.unpackLongY(this.stemPacked[index]) == y) {
+				index++;
+			}
+		}
+		this.layerStart[layers] = this.stemPacked.length;
+		Long2ObjectOpenHashMap<IntArrayList> columns = new Long2ObjectOpenHashMap<>();
+		for (int i = 0; i < this.capPacked.length; i++) {
+			long p = this.capPacked[i];
+			columns.computeIfAbsent(BlockPos.asLong(BlockPos.unpackLongX(p), 0, BlockPos.unpackLongZ(p)), k -> new IntArrayList()).add(i);
+		}
+		this.capAbove = new int[this.capPacked.length][];
+		for (int i = 0; i < this.capPacked.length; i++) {
+			long p = this.capPacked[i];
+			int y = BlockPos.unpackLongY(p);
+			this.capAbove[i] = columns.get(BlockPos.asLong(BlockPos.unpackLongX(p), 0, BlockPos.unpackLongZ(p))).intStream()
+					.filter(j -> BlockPos.unpackLongY(this.capPacked[j]) > y).toArray();
+		}
 	}
 
 	private static double shell(double rho, double w, double a, double b, double power) {

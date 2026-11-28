@@ -23,7 +23,7 @@ import net.minecraft.world.WorldView;
 /**
  * A small mushroom that grows on a giant cap while you mine it: vanilla's red or brown mushroom
  * ({@link #BROWN}, matching the cap), drawn with vanilla's own models. Breaks in one hit; left alone for
- * {@code giantMushrooms.sproutFuseTicks} it bursts ({@link GiantMushrooms#burst}). The countdown over it is
+ * {@code giantMushrooms.sproutFuseTicks} it bursts ({@link MushroomSprouts#burst}). The countdown over it is
  * drawn by client.mushrooms.SproutCountdownRenderer from its block entity. If the cap block under it
  * goes, it goes too, quietly.
  */
@@ -82,6 +82,6 @@ public class MushroomSproutBlock extends Block implements BlockEntityProvider {
 		if (world.isClient || type != GiantMushrooms.SPROUT_ENTITY) {
 			return null;
 		}
-		return (w, pos, s, be) -> GiantMushrooms.sproutTick((ServerWorld) w, pos, (MushroomSproutBlockEntity) be);
+		return (w, pos, s, be) -> MushroomSprouts.sproutTick((ServerWorld) w, pos, (MushroomSproutBlockEntity) be);
 	}
 }
