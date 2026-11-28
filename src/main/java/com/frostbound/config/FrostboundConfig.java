@@ -355,6 +355,65 @@ public final class FrostboundConfig {
 		public double cooldownSeconds = 60.0;
 	}
 
+	public GiantMushroomOptions giantMushrooms = new GiantMushroomOptions();
+
+	/** Giant mushrooms: the cap (hoe, sprouts) and stem (axe, layer by layer) minigames. 20 ticks = 1 second. */
+	public static final class GiantMushroomOptions {
+		/**
+		 * Cap blocks: vanilla hardness. A hoe takes 30 × hardness / hoe speed ticks per break: iron 8,
+		 * diamond and better 6 (the floor below), stone 12, wood 24, a bare hand 48.
+		 */
+		public float capHardness = 1.6f;
+		/** No hoe, enchantment or effect breaks a cap block faster than this. */
+		public int capMinBreakTicks = 6;
+		/** A hoe carves: each break takes this many cap blocks (the one hit and its nearest neighbours), by hoe. */
+		public HoeBlocks hoeBlocks = new HoeBlocks();
+		/** Once only this share of the cap is left, the rest falls apart. 0 = never. */
+		public double capCollapseBelow = 0.2;
+		/** Stem blocks in the active (top) layer: an axe takes 30 × hardness / axe speed ticks (iron 7.5, wood 22.5). */
+		public float stemHardness = 1.5f;
+		public int stemMinBreakTicks = 4;
+		/** An axe on the active layer also breaks that layer's blocks within this many blocks (1 = the four beside it). 0 = one at a time. */
+		public double stemSweepRadius = 1.0;
+		/** How fast the stem's other layers (and all of it while any cap is left) mine, next to the active layer. */
+		public double inactiveLayerSpeed = 0.05;
+		/** How long a sprout waits before it bursts. */
+		public int sproutFuseTicks = 40;
+		/** Once you start on the cap, the first sprout comes after this long, then one every min–max ticks. */
+		public int firstSproutTicks = 40;
+		public int sproutIntervalMinTicks = 60;
+		public int sproutIntervalMaxTicks = 90;
+		/** Most sprouts on one cap at a time. */
+		public int maxSprouts = 2;
+		/** Sprouts grow on top of the cap within this many blocks of the player mining. */
+		public double sproutRadius = 5.0;
+		/** Sprouts keep coming this long after the last hit on the cap. */
+		public int engagedTicks = 60;
+		/** A burst throws everything within this radius outward, away from the stem. */
+		public double burstRadius = 4.0;
+		public double burstPush = 1.4;
+		public double burstLift = 0.7;
+		/** Cap blocks a burst grows back (the missing ones nearest the sprout). They're blighted: no drops, no spores. */
+		public int burstRegrowBlocks = 4;
+		/** Spores a player gets for each cap or stem block they harvest (a count on the player, not an item). */
+		public int sporesMin = 5;
+		public int sporesMax = 7;
+	}
+
+	/**
+	 * Cap blocks one hoe break takes, by the hoe's material. A hoe from another mod goes by its mining
+	 * speed: under 4 → wood, under 6 → stone, under 8 → iron, under 9 → diamond, else netherite.
+	 */
+	public static final class HoeBlocks {
+		public int wood = 1;
+		public int gold = 2;
+		public int stone = 2;
+		public int copper = 2;
+		public int iron = 3;
+		public int diamond = 4;
+		public int netherite = 5;
+	}
+
 	/** A number with one value for Icy armour and a stronger one for Frozen. */
 	public static final class Tiered {
 		public double icy;
@@ -468,6 +527,12 @@ public final class FrostboundConfig {
 				}
 				if (config.markOfThePack == null) {
 					config.markOfThePack = new MarkOfThePackOptions();
+				}
+				if (config.giantMushrooms == null) {
+					config.giantMushrooms = new GiantMushroomOptions();
+				}
+				if (config.giantMushrooms.hoeBlocks == null) {
+					config.giantMushrooms.hoeBlocks = new HoeBlocks();
 				}
 			} catch (IOException | JsonParseException e) {
 				Frostbound.LOGGER.error("Could not read {}, using defaults", file, e);

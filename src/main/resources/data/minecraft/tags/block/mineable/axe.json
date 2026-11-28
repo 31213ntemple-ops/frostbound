@@ -2,6 +2,7 @@
 	"replace": false,
 	"values": [
 		"frostbound:campfire_base",
-		"frostbound:imbuement_table"
+		"frostbound:imbuement_table",
+		"frostbound:giant_mushroom_stem"
 	]
 }

@@ -50,6 +50,10 @@ loom {
 			source sourceSets.gametest
 			vmArg "-Dfrostbound.scenes=true"
 			runDir "build/scenes"
+			// gradlew runScenes -PscenesOnly=mushrooms: only those shots.
+			if (project.hasProperty("scenesOnly")) {
+				vmArg "-Dfrostbound.scenes.only=${project.property('scenesOnly')}"
+			}
 		}
 		configureEach {
 			// Lets dev-only tools (e.g. the structure builder) write into src/main/resources.

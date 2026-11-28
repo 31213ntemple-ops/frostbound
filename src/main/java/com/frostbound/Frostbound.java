@@ -13,6 +13,7 @@ import com.frostbound.ice.IceChanges;
 import com.frostbound.imbuement.Imbuement;
 import com.frostbound.items.FrostboundItems;
 import com.frostbound.mobs.FrozenMobs;
+import com.frostbound.mushrooms.GiantMushrooms;
 import com.frostbound.nothirst.NoThirst;
 import com.frostbound.vessels.Vessels;
 import net.fabricmc.api.ModInitializer;
@@ -35,7 +36,8 @@ import org.slf4j.LoggerFactory;
  * backported from 1.21.9 with the Conductivity passive; com.frostbound.imbuement, the imbuement table and
  * Cold/Icy/Frozen armour; com.frostbound.addons, the two add-on slots on gear and flame extract's insulation;
  * com.frostbound.habanero, habanero peppers, hot sauce and flame extract (cooked in Farmer's Delight's pot);
- * com.frostbound.alpha, the Alpha Wolf boss, its pack and its rewards) are always registered.
+ * com.frostbound.alpha, the Alpha Wolf boss, its pack and its rewards; com.frostbound.mushrooms, giant mushrooms and their
+ * cap/stem mining minigames) are always registered.
  */
 public class Frostbound implements ModInitializer {
 	public static final String MOD_ID = "frostbound";
@@ -58,6 +60,7 @@ public class Frostbound implements ModInitializer {
 		Habaneros.init();
 		TanTemperature.init();
 		AlphaWolves.init();
+		GiantMushrooms.init();
 
 		if (modules.environment) {
 			WinterEnvironment.init();

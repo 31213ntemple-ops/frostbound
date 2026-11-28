@@ -12,11 +12,16 @@ import com.frostbound.client.imbuement.FrostParticles;
 import com.frostbound.client.imbuement.FrostRenderLayers;
 import com.frostbound.client.imbuement.FrostStars;
 import com.frostbound.client.imbuement.ImbuementScreen;
+import com.frostbound.client.mushrooms.SporeCounterHud;
+import com.frostbound.client.mushrooms.SproutCountdownRenderer;
 import com.frostbound.imbuement.Imbuement;
 import com.frostbound.client.vessels.VesselClient;
 import com.frostbound.environment.SnowyPlants;
 import com.frostbound.items.FrostboundItems;
+import com.frostbound.mushrooms.GiantMushrooms;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.client.render.RenderLayer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.block.Block;
@@ -47,6 +52,11 @@ public class FrostboundClient implements ClientModInitializer {
 
 		// The Alpha Wolf and its pack, the Mark of the Pack key, Draining Bite's hollow hearts (in InGameHudMixin).
 		AlphaWolfClient.init();
+
+		// Giant mushrooms: the countdown over each sprout, the sprouts' see-through (vanilla mushroom) model, the spore counter.
+		SproutCountdownRenderer.init();
+		SporeCounterHud.init();
+		BlockRenderLayerMap.INSTANCE.putBlock(GiantMushrooms.SPROUT, RenderLayer.getCutout());
 
 		// Entity models made in Blockbench (src/main/blockbench/entity): dropped on reload so F3+T picks up a re-import.
 		BlockbenchModels.init();

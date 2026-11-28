@@ -1,0 +1,6 @@
+{
+	"variants": {
+		"active=false": { "model": "frostbound:block/giant_mushroom_stem" },
+		"active=true": { "model": "frostbound:block/giant_mushroom_stem_active" }
+	}
+}

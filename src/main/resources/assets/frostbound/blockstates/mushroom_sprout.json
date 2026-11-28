@@ -1,0 +1,6 @@
+{
+	"variants": {
+		"brown=false": { "model": "minecraft:block/red_mushroom" },
+		"brown=true": { "model": "minecraft:block/brown_mushroom" }
+	}
+}

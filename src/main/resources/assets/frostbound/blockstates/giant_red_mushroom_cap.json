@@ -1,0 +1,6 @@
+{
+	"variants": {
+		"regrown=false": { "model": "frostbound:block/giant_red_mushroom_cap" },
+		"regrown=true": { "model": "frostbound:block/giant_red_mushroom_cap_regrown" }
+	}
+}

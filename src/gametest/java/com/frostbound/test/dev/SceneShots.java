@@ -18,11 +18,15 @@ import com.frostbound.imbuement.FrostTier;
 import com.frostbound.imbuement.FrostTiers;
 import com.frostbound.imbuement.Imbuement;
 import com.frostbound.imbuement.ImbuementScreenHandler;
+import com.frostbound.mushrooms.GiantMushroomShape;
+import com.frostbound.mushrooms.GiantMushrooms;
+import com.frostbound.mushrooms.Spores;
 import dev.emi.trinkets.api.TrinketsApi;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.impl.resource.loader.ModResourcePackUtil;
 import net.minecraft.block.Blocks;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -154,6 +158,12 @@ public class SceneShots implements ClientModInitializer {
 			this.den = new BlockPos(0, this.ground, 40);
 			WolfDenPiece.place(world, this.den, WolfDenLayout.generate(4242L), BlockBox.infinite(), true);
 		}, client -> client.options.hudHidden = true, null);
+
+		// gradlew runScenes -PscenesOnly=mushrooms: only the giant mushrooms.
+		if ("mushrooms".equals(System.getProperty("frostbound.scenes.only"))) {
+			this.planMushrooms();
+			return;
+		}
 
 		// The den from above, then from its edge (the pack asleep).
 		this.add(60, server -> this.camera(server, 0, 18, 22, 0, 40), client -> { }, "01_den_overview");
@@ -430,6 +440,62 @@ public class SceneShots implements ClientModInitializer {
 		}, client -> { }, null);
 		this.add(30, server -> { }, client -> { }, "39_cooking_pot_with_lava");
 		this.add(5, server -> player(server).closeHandledScreen(), client -> { }, null);
+
+		this.planMushrooms();
+	}
+
+	/** The giant mushrooms in a row and up close, a cap's underside, a sprout's countdown, and a stem's active layer. */
+	private void planMushrooms() {
+		int z = -40;
+		this.add(40, server -> {
+			ServerWorld world = server.getOverworld();
+			int x = 300;
+			for (GiantMushroomShape shape : GiantMushroomShape.values()) {
+				GiantMushrooms.place(world, new BlockPos(x, this.ground + 1, z), shape);
+				x += 35;
+			}
+			GiantMushrooms.Mushroom bare = GiantMushrooms.place(world, new BlockPos(x, this.ground + 1, z), GiantMushroomShape.TOADSTOOL);
+			bare.capPositions().forEach(p -> world.setBlockState(p, Blocks.AIR.getDefaultState()));
+			this.camera(server, 350.5, 16, z - 62, 0, 4);
+		}, client -> client.options.setPerspective(Perspective.FIRST_PERSON), null);
+		// Give the client time to load and draw the chunks out there.
+		this.add(160, server -> this.camera(server, 336.5, 10, z - 30, 0, 8), client -> { }, "40_mushrooms_row");
+		this.add(30, server -> this.camera(server, 306, 7, z - 15, 25, 4), client -> { }, "41_toadstool");
+		this.add(30, server -> this.camera(server, 340, 7, z - 14, 15, 10), client -> { }, "42_flatcap");
+		this.add(30, server -> this.camera(server, 378, 7, z - 15, 20, 0), client -> { }, "43_leaning");
+		this.add(30, server -> this.camera(server, 300.5, 1.5, z - 5.5, 0, -40), client -> { }, "44_toadstool_underside");
+		this.add(12, server -> {
+			ServerWorld world = server.getOverworld();
+			GiantMushrooms.Mushroom m = GiantMushrooms.find(world, new BlockPos(300, this.ground + 1, z));
+			BlockPos hit = m.capPositions().stream().max(java.util.Comparator.comparingInt(BlockPos::getY)).orElseThrow();
+			GiantMushrooms.engage(world, hit, null);
+			BlockPos sprout = GiantMushrooms.growSprout(world, m);
+			BlockPos at = sprout != null ? sprout : hit.up();
+			player(server).changeGameMode(GameMode.SPECTATOR);
+			player(server).teleport(world, at.getX() + 0.5, at.getY() + 1.6, at.getZ() - 2.5, 0.0f, 30.0f);
+		}, client -> { }, "45_sprout_countdown");
+		this.add(30, server -> this.camera(server, 405.5, 18, z - 6, 0, 55), client -> { }, "46_stem_active_layer");
+		this.add(20, server -> { }, client -> client.setScreen(new DropsBoard()), "47_mushroom_drops");
+		this.add(5, server -> { }, client -> client.setScreen(null), null);
+		// Blocks a burst grew back (blighted) in the side of the toadstool facing the camera.
+		this.add(30, server -> {
+			ServerWorld world = server.getOverworld();
+			GiantMushrooms.Mushroom m = GiantMushrooms.find(world, new BlockPos(300, this.ground + 1, z));
+			Vec3d eye = new Vec3d(306, this.ground + 7, z - 15);
+			List<BlockPos> near = m.capPositions().stream()
+					.sorted(java.util.Comparator.comparingDouble(p -> p.toCenterPos().squaredDistanceTo(eye))).limit(14).toList();
+			near.forEach(p -> world.setBlockState(p, Blocks.AIR.getDefaultState()));
+			GiantMushrooms.regrowNear(world, m, near.get(0), near.size());
+			this.camera(server, 306, 7, z - 15, 25, 4);
+		}, client -> { }, "48_regrown_cap");
+		// The spore counter in the corner, just after a gain.
+		this.add(8, server -> {
+			Spores.set(player(server), 1234);
+			Spores.add(player(server), 6);
+		}, client -> client.options.hudHidden = false, "49_spore_counter");
+		this.add(5, server -> { }, client -> client.options.hudHidden = true, null);
+		// Back home and let chunk loading settle before quitting (stopping mid-load can hang the shutdown).
+		this.add(60, server -> this.camera(server, 0, 10, 0, 0, 30), client -> { }, null);
 	}
 
 	/** The poses the armour shots show, left to right. */
@@ -481,6 +547,30 @@ public class SceneShots implements ClientModInitializer {
 				DiffuseLighting.enableGuiDepthLighting();
 				matrices.pop();
 				context.drawCenteredTextWithShadow(this.textRenderer, labels[i], cx, cy + 20, 0xFFFFFF);
+			}
+		}
+	}
+
+	/** The giant mushrooms' drops: big, then at inventory size. */
+	private static final class DropsBoard extends Screen {
+		DropsBoard() {
+			super(Text.empty());
+		}
+
+		@Override
+		public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+			super.render(context, mouseX, mouseY, delta);
+			ItemStack[] stacks = {new ItemStack(GiantMushrooms.MUSHROOM_SAMPLE, 2)};
+			for (int i = 0; i < stacks.length; i++) {
+				MatrixStack matrices = context.getMatrices();
+				matrices.push();
+				matrices.translate(this.width / 2.0f - 90 + i * 110, 30, 0);
+				matrices.scale(5, 5, 1);
+				context.drawItem(stacks[i], 0, 0);
+				matrices.pop();
+				context.drawItem(stacks[i], this.width / 2 - 60 + i * 110, 140);
+				context.drawItemInSlot(this.textRenderer, stacks[i], this.width / 2 - 60 + i * 110, 140);
+				context.drawCenteredTextWithShadow(this.textRenderer, stacks[i].getName(), this.width / 2 - 50 + i * 110, 165, 0xFFFFFF);
 			}
 		}
 	}

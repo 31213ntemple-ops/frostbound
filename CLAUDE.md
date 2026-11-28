@@ -57,7 +57,7 @@ Models drawn over a vanilla model (the Alpha's armour, `client/alpha/AlphaArmorF
 
 The imbuement table's screen texture comes from `tools/ImbuementGuiTexture.java` (same idea: edit the painter and re-run it).
 
-Textures for the Alpha, its armour and drops come from `tools/AlphaWolfTextures.java` (pixel grids and painted layers in one palette); edit it and re-run it rather than editing the PNGs.
+Textures for the Alpha, its armour and drops come from `tools/AlphaWolfTextures.java` (pixel grids and painted layers in one palette); edit it and re-run it rather than editing the PNGs. The giant mushrooms' textures (the spore counter icon, Mushroom Sample, the blighted regrown cap blocks) work the same way from `tools/MushroomTextures.java`.
 
 GameTest pitfalls met here: mock players (`createMockPlayer`) aren't in the world, so area attacks can't find them (use a still mob as the target); never schedule `runAtTick` from inside a scheduled step (it crashes the runner); an arena built far from the test needs `setChunkForced`, a few ticks before entities show up in lookups, and `setPersistent()` on mobs that would otherwise despawn.
 

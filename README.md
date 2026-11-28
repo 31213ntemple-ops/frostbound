@@ -18,7 +18,8 @@ A collection of winter features, built as one mod split into **modules**. Each m
   "alphaWolf": { "health": 90.0, "initialPackSize": 7, "maxPackSize": 9, "...": "see Alpha Wolf" },
   "packInstinct": { "belowHealth": 8.0, "cooldownSeconds": 60.0, "...": "see Alpha Wolf" },
   "lifeSteal": { "healPerLevel": 0.1 },
-  "markOfThePack": { "wolves": 2, "lifetimeSeconds": 30.0, "cooldownSeconds": 60.0 }
+  "markOfThePack": { "wolves": 2, "lifetimeSeconds": 30.0, "cooldownSeconds": 60.0 },
+  "giantMushrooms": { "capHardness": 1.6, "hoeBlocks": { "wood": 1, "iron": 3, "netherite": 5, "...": "" }, "capCollapseBelow": 0.2, "...": "see Giant Mushrooms" }
 }
 ```
 
@@ -30,7 +31,7 @@ A collection of winter features, built as one mod split into **modules**. Each m
 | `christmas` | Christmas tree clearings with surprise presents (needs DecorationX: Christmas; presents need Supplementaries) |
 | `noThirst` | With Tough As Nails: its thirst is switched off and its thirst items are removed, so only temperature is left (see [No Thirst](#no-thirst-tough-as-nails)) |
 
-Items like the **Ice Ball**, **copper gear**, the **Imbuement Table**, **habaneros** and the **Alpha Wolf** and its drops aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `habanero` / `insulation` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` in the config only set their balance.
+Items like the **Ice Ball**, **copper gear**, the **Imbuement Table**, **habaneros**, the **Alpha Wolf** and its drops and **Giant Mushrooms** aren't a module: they're always there (so saved items never disappear), and `iceBalls` / `conductivity` / `frostTiers` / `frostBonuses` / `habanero` / `insulation` / `alphaWolf` / `packInstinct` / `lifeSteal` / `markOfThePack` / `giantMushrooms` in the config only set their balance.
 
 **Required mods:** Fabric API and **Trinkets** (3.10+, which brings Cardinal Components API with it). Trinkets gives players the necklace slot the Mark of the Pack is worn in.
 
@@ -496,6 +497,44 @@ The Alpha's fang in a silver cap, on a braided cord with two red beads, worn in 
 
 Try it: `/locate structure frostbound:wolf_den` (or `/place structure frostbound:wolf_den` where you stand), `/give @s frostbound:alpha_wolf_spawn_egg`, `/give @s frostbound:mark_of_the_pack`, `/give @s frostbound:wolf_tooth 12`, `/give @s frostbound:alpha_hide 24`.
 
+## Giant Mushrooms
+
+Huge red and brown mushrooms, harvested in two parts: first the cap, with a **hoe**, then the stem, with an **axe**. They don't grow in the world yet (this is the first piece of a bigger system); place them with a command:
+
+```
+/frostbound mushroom place toadstool      # red fly agaric: round dome, thick stem with a flared foot, 15 tall, 13 across
+/frostbound mushroom place flatcap        # brown: broad flat-topped cap with a rounded edge, short fat stem, 11 tall
+/frostbound mushroom place leaning        # red: slimmer stem curving a few blocks over, a bell tipped back on top, 15 tall
+/frostbound mushroom place <shape> <x y z>
+/frostbound mushroom regrow               # put the nearest one back whole (to play it again)
+/frostbound mushroom remove               # take the nearest one away
+```
+
+Operators only (cheats on). The stem starts at the given spot (your feet by default) and the mushroom is placed over whatever is there. The caps are hollow shells; the stem carries on up inside to hold the cap. Caps let skylight through (they still look solid), so the stem underneath isn't left in the dark.
+
+### The cap: hoe and sprouts
+
+- **Never in one hit.** A cap block takes 30 × `capHardness` / the hoe's speed ticks: an iron hoe 8 ticks (0.4 s), stone 12, wood 24, a bare hand 48. Other tools are no better than a hand. Nothing gets under `capMinBreakTicks` (6, 0.3 s), where diamond, netherite and any Efficiency hoe land.
+- **A hoe carves, more with a better hoe.** Each break takes that many cap blocks, the one hit and its nearest neighbours (along the surface first): wood 1, stone, copper and gold 2, iron 3, diamond 4, netherite 5 (`hoeBlocks`; a hoe from another mod goes by its mining speed). It never takes the block under a sprout (break the sprout) or a block something stands on (so you don't carve away your own floor). Other tools break one block at a time.
+- **The cap falls apart.** Once only `capCollapseBelow` (20%) of the cap is left, the rest drops its loot and tumbles down as falling blocks that crumble where they land, and the stem's top layer opens up.
+- **Sprouts.** Once you hit the cap, vanilla red or brown mushrooms (matching the cap) start growing on top of it within `sproutRadius` (5) blocks of you: the first after 2 s, then one every 3–4.5 s, at most `maxSprouts` (2) at a time, while you keep at it (until `engagedTicks`, 3 s, after your last hit). Each has a **countdown** over it (2.0 s, yellow turning red, visible through blocks) and hisses half a second before it goes. One hit breaks it.
+- **Bursts.** A sprout left alone bursts: everything within `burstRadius` (4 blocks) is thrown **outward, away from the stem**, and up, so if you're on the cap you go off the edge, and the `burstRegrowBlocks` (4) missing cap blocks nearest the sprout **grow back**, blighted: a bruised mauve (red caps) or ashen grey (brown), and worth nothing (no drops, no spores). They still have to be mined. A sprout whose cap block is mined away just goes.
+
+### The stem: axe, top down
+
+- Nothing on the stem mines at a normal pace **while any of the cap is left**.
+- Once the cap is gone, the stem's **top layer is the active one** (it shows its pale inside on every face): an iron axe takes 7.5 ticks a block, never under `stemMinBreakTicks` (4), and sweeps that layer's blocks within `stemSweepRadius` (1: the four beside it) with it. Every **other layer** mines at `inactiveLayerSpeed` (5%) of that, one block at a time, so you work down a layer at a time. The layer below lights up when the last block of the one above goes.
+
+### Drops and balance
+
+- **Every cap and stem block has a 10% chance to drop a Mushroom Sample**, the same whatever breaks it: each block a hoe carves or an axe sweeps, each block of a cap that falls apart, explosions too (no explosion decay, Fortune does nothing). Creative mode drops nothing, as usual. Samples have no use yet; they stack to 64 and are in the Ingredients tab. Loot tables: `loot_table/blocks/giant_red_mushroom_cap.json`, `giant_brown_mushroom_cap.json` (nothing when `regrown=true`), `giant_mushroom_stem.json`.
+- **Spores are a counter, not an item** (`mushrooms/Spores.java`). Each cap or stem block a player harvests (mined, carved, swept, or in a cap that falls apart under them) adds `sporesMin`–`sporesMax` (5–7) to a count saved on the player and kept through death. Blocks a burst grew back give none, and neither does creative. The count shows in the bottom-right corner (the spore icon and the number, once you have any), with a "+n" that rises off it as you gain them. No use yet. `/frostbound spores` shows yours; `/frostbound spores set <count>` sets it (operators).
+- **Textures:** the counter's icon `gui/sprites/hud/spores.png` (a pile of rose-taupe spore dust in the style of vanilla's glowstone dust), `item/mushroom_sample.png` (a torn chunk of spotted red cap with pale flesh and gills), and the blighted `block/regrown_red_mushroom_block.png`, `regrown_brown_mushroom_block.png` and `regrown_mushroom_block_inside.png` (vanilla's mushroom block textures recoloured, read from the 1.21.1 client jar in the Gradle cache) all come from `tools/MushroomTextures.java`: edit it and run `java tools/MushroomTextures.java` from the project root rather than editing the PNGs.
+- **Balance:** `giantMushrooms` in `config/frostbound.json` (restart): `capHardness` (1.6), `capMinBreakTicks` (6), `hoeBlocks` (`wood` 1, `gold` 2, `stone` 2, `copper` 2, `iron` 3, `diamond` 4, `netherite` 5), `capCollapseBelow` (0.2; 0 = never), `stemHardness` (1.5), `stemMinBreakTicks` (4), `stemSweepRadius` (1.0; 0 = one block), `inactiveLayerSpeed` (0.05), `sproutFuseTicks` (40), `firstSproutTicks` (40), `sproutIntervalMinTicks` / `sproutIntervalMaxTicks` (60 / 90), `maxSprouts` (2), `sproutRadius` (5 blocks from you), `engagedTicks` (60), `burstRadius` (4.0), `burstPush` (1.4), `burstLift` (0.7), `burstRegrowBlocks` (4), `sporesMin` / `sporesMax` (5 / 7). 20 ticks = 1 second. A config written by an earlier version keeps its old numbers: delete the `giantMushrooms` block to get these.
+- **Shapes:** `mushrooms/GiantMushroomShape.java`: the stem's curve and radius as functions of height, the cap's size, squareness, thickness, rim cut and tilt. Check them with `./gradlew runScenes -PscenesOnly=mushrooms` (shots `40`–`49` in `build/scenes/screenshots`: the row of them, each close up, a cap's underside, a sprout's countdown, a stem's active layer, the mushroom sample, a cap with blighted blocks grown back, the spore counter). The blocks use vanilla's mushroom block textures, and sprouts vanilla's mushroom models.
+
+Try it (survival, with a hoe and an axe): `/frostbound mushroom place toadstool ~8 ~ ~`, `/give @s minecraft:iron_hoe`, `/give @s minecraft:iron_axe`, `/give @s minecraft:scaffolding 32` (to get up on the cap).
+
 ## Development workflow
 
 You need **JDK 21** (Temurin 21 from adoptium.net). If Gradle picks up the wrong Java on a machine, point it at JDK 21 in that machine's **own** `~/.gradle/gradle.properties` (not the project's, which is shared through git):
@@ -670,6 +709,10 @@ com.frostbound
 │                           client/PassiveTooltips draws them at the top of tooltips
 ├── nothirst/NoThirst       Tough As Nails without thirst: the removed items, and hides them from creative tabs;
 │                           mixin/nothirst does the rest (ThirstConfig, recipes, trades, enchantment tags)
+├── mushrooms/              giant mushrooms: GiantMushrooms (blocks, placed mushrooms in saved data, sprouts,
+│                           bursts, the stem's active layer, /frostbound mushroom), GiantMushroomShape (the
+│                           three shapes), GiantCapBlock, GiantStemBlock, MushroomSproutBlock(+Entity);
+│                           client/mushrooms/SproutCountdownRenderer draws the countdown
 ├── christmas/              christmas module: Christmas (registers resourcepacks/christmas when DecorationX is
 │                           installed), ChristmasPresents (what opening a tree present does)
 └── mixin/

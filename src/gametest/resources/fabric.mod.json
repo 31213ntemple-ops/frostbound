@@ -31,7 +31,8 @@
 			"com.frostbound.test.NoThirstTests",
 			"com.frostbound.test.WildlifeTests",
 			"com.frostbound.test.HabaneroTests",
-			"com.frostbound.test.GearAddonTests"
+			"com.frostbound.test.GearAddonTests",
+			"com.frostbound.test.MushroomTests"
 		]
 	},
 	"depends": {

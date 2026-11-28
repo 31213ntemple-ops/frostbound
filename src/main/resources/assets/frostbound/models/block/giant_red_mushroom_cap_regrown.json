@@ -1,0 +1,9 @@
+{
+	"parent": "minecraft:block/cube_bottom_top",
+	"textures": {
+		"top": "frostbound:block/regrown_red_mushroom_block",
+		"side": "frostbound:block/regrown_red_mushroom_block",
+		"bottom": "frostbound:block/regrown_mushroom_block_inside",
+		"particle": "frostbound:block/regrown_red_mushroom_block"
+	}
+}
